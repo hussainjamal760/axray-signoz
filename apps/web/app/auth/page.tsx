@@ -1,4 +1,4 @@
-import { AuthCard } from "@/features/auth/components/AuthCard";
+import { AuthPageClient } from "@/features/auth/components/AuthPageClient";
 
 export const metadata = {
   title: "Sign In — AXRAY",
@@ -8,7 +8,7 @@ export const metadata = {
 export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <AuthCard />
+      <AuthPageClient />
     </div>
   );
 }
