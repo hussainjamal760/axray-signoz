@@ -1,10 +1,10 @@
-import { AnalyticsHeader } from "@/components/analytics/AnalyticsHeader";
-import { MetricsRow } from "@/components/analytics/MetricsRow";
-import { SuccessRateChart } from "@/components/analytics/SuccessRateChart";
-import { FailureCategoriesChart } from "@/components/analytics/FailureCategoriesChart";
-import { CostOverTimeChart } from "@/components/analytics/CostOverTimeChart";
-import { ToolsUsageChart } from "@/components/analytics/ToolsUsageChart";
-import { AnalyticsInsightCards } from "@/components/analytics/AnalyticsInsightCards";
+import { AnalyticsHeader } from "@/features/sessions/components/AnalyticsHeader";
+import { MetricsRow } from "@/features/sessions/components/MetricsRow";
+import { SuccessRateChart } from "@/features/sessions/components/SuccessRateChart";
+import { FailureCategoriesChart } from "@/features/sessions/components/FailureCategoriesChart";
+import { CostOverTimeChart } from "@/features/sessions/components/CostOverTimeChart";
+import { ToolsUsageChart } from "@/features/sessions/components/ToolsUsageChart";
+import { AnalyticsInsightCards } from "@/features/sessions/components/AnalyticsInsightCards";
 
 export default function AnalyticsDashboardPage() {
   return (

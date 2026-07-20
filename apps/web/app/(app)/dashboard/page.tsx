@@ -1,9 +1,9 @@
-import { AppLayout } from "@/components/ui/AppLayout";
-import { InitializePanel } from "@/components/dashboard/InitializePanel";
-import { ActiveSessionTimeline } from "@/components/dashboard/ActiveSessionTimeline";
-import { LiveTraceTree } from "@/components/dashboard/LiveTraceTree";
-import { TerminalPanel } from "@/components/dashboard/TerminalPanel";
-import { SessionHistory } from "@/components/dashboard/SessionHistory";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { InitializePanel } from "@/features/sessions/components/InitializePanel";
+import { ActiveSessionTimeline } from "@/features/sessions/components/ActiveSessionTimeline";
+import { LiveTraceTree } from "@/features/sessions/components/LiveTraceTree";
+import { TerminalPanel } from "@/features/sessions/components/TerminalPanel";
+import { SessionHistory } from "@/features/sessions/components/SessionHistory";
 import Link from "next/link";
 
 export default function DashboardPage() {

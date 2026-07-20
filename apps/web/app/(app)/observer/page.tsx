@@ -1,8 +1,8 @@
-import { AppLayout } from "@/components/ui/AppLayout";
-import { TimelinePanel } from "@/components/ui/TimelinePanel";
-import { CodeViewerPanel } from "@/components/ui/CodeViewerPanel";
-import { IntelligencePanel } from "@/components/ui/IntelligencePanel";
-import { ReplayHUD } from "@/components/ui/ReplayHUD";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { TimelinePanel } from "@/features/sessions/components/TimelinePanel";
+import { CodeViewerPanel } from "@/features/sessions/components/CodeViewerPanel";
+import { IntelligencePanel } from "@/features/sessions/components/IntelligencePanel";
+import { ReplayHUD } from "@/features/sessions/components/ReplayHUD";
 import Link from "next/link";
 
 export default function ObserverDashboardPage() {

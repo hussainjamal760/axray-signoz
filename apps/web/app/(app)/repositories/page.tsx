@@ -1,5 +1,5 @@
-import { RepoListPanel } from "@/components/repositories/RepoListPanel";
-import { RepoDetailsPanel } from "@/components/repositories/RepoDetailsPanel";
+import { RepoListPanel } from "@/features/repositories/components/RepoListPanel";
+import { RepoDetailsPanel } from "@/features/repositories/components/RepoDetailsPanel";
 
 export default function RepositoriesPage() {
   return (

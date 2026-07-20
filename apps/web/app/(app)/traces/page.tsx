@@ -1,6 +1,6 @@
-import { TraceHeader } from "@/components/traces/TraceHeader";
-import { TraceCanvas } from "@/components/traces/TraceCanvas";
-import { TraceSpanDetails } from "@/components/traces/TraceSpanDetails";
+import { TraceHeader } from "@/features/sessions/components/TraceHeader";
+import { TraceCanvas } from "@/features/sessions/components/TraceCanvas";
+import { TraceSpanDetails } from "@/features/sessions/components/TraceSpanDetails";
 
 export default function TraceExplorerPage() {
   return (

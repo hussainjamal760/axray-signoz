@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import HeroSimulator from "@/components/HeroSimulator";
-import AgentBentoGrid from "@/components/AgentBentoGrid";
+import HeroSimulator from "@/features/marketing/components/HeroSimulator";
+import AgentBentoGrid from "@/features/marketing/components/AgentBentoGrid";
 
 export default function Home() {
   return (

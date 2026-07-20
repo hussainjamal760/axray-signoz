@@ -1,10 +1,10 @@
-import { AnalysisHeader } from "@/components/analysis/AnalysisHeader";
-import { RootCauseCard } from "@/components/analysis/RootCauseCard";
-import { CodeDiffCard } from "@/components/analysis/CodeDiffCard";
-import { SuggestedFixCard } from "@/components/analysis/SuggestedFixCard";
-import { FailureVisualization } from "@/components/analysis/FailureVisualization";
-import { EvidenceTimeline } from "@/components/analysis/EvidenceTimeline";
-import { StatsModule } from "@/components/analysis/StatsModule";
+import { AnalysisHeader } from "@/features/sessions/components/AnalysisHeader";
+import { RootCauseCard } from "@/features/sessions/components/RootCauseCard";
+import { CodeDiffCard } from "@/features/sessions/components/CodeDiffCard";
+import { SuggestedFixCard } from "@/features/sessions/components/SuggestedFixCard";
+import { FailureVisualization } from "@/features/sessions/components/FailureVisualization";
+import { EvidenceTimeline } from "@/features/sessions/components/EvidenceTimeline";
+import { StatsModule } from "@/features/sessions/components/StatsModule";
 
 export default function FailureAnalysisPage() {
   return (
