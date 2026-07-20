@@ -5,7 +5,7 @@ import 'express-async-errors';
 import { config } from './config';
 import { sessionMiddleware } from './middlewares/session.middleware';
 import { errorMiddleware } from './middlewares/error.middleware';
-import authRouter from './routes/auth.routes';
+import { authRouter } from './routes/auth.routes';
 
 const app = express();
 
