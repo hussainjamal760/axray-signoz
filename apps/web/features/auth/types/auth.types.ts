@@ -6,7 +6,8 @@ export interface UserProfile {
   avatarUrl?: string;
 }
 
-export interface AuthMeResponse {
+/** Mirrors the exact shape returned by GET /api/auth/me */
+export interface CurrentUserResponse {
   authenticated: boolean;
   user: UserProfile | null;
 }
