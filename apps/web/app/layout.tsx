@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { Preloader } from "@/components/ui/Preloader";
 
 export const metadata: Metadata = {
@@ -19,11 +20,13 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
       </head>
       <body className="bg-background text-on-background selection:bg-primary-fixed selection:text-on-primary antialiased">
-        <Preloader>
-          <LenisProvider>
-            {children}
-          </LenisProvider>
-        </Preloader>
+        <QueryProvider>
+          <Preloader>
+            <LenisProvider>
+              {children}
+            </LenisProvider>
+          </Preloader>
+        </QueryProvider>
       </body>
     </html>
   );

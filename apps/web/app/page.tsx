@@ -40,7 +40,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <Link href="/login" className="bg-primary-fixed text-on-primary px-6 py-2 border-2 border-on-background font-cta-label uppercase shadow-block shadow-block-hover transition-all">
+          <Link href="/auth" className="bg-primary-fixed text-on-primary px-6 py-2 border-2 border-on-background font-cta-label uppercase shadow-block shadow-block-hover transition-all">
             Login with GitHub
           </Link>
         </nav>
@@ -63,9 +63,9 @@ export default function Home() {
               The Flight Recorder for AI Coding Agents. Record every decision, tool call, and trace. Bridge the gap between autonomous execution and human oversight.
             </p>
             <div className="flex flex-wrap gap-6 pt-4">
-              <button className="bg-primary-fixed text-on-primary px-8 py-4 border-[3px] border-on-background font-cta-label text-lg uppercase shadow-block shadow-block-hover transition-all flex items-center gap-2">
+              <Link href="/auth" className="bg-primary-fixed text-on-primary px-8 py-4 border-[3px] border-on-background font-cta-label text-lg uppercase shadow-block shadow-block-hover transition-all flex items-center gap-2">
                 Connect GitHub <span className="material-symbols-outlined">bolt</span>
-              </button>
+              </Link>
               <button className="bg-surface text-on-surface px-8 py-4 border-[3px] border-on-background font-cta-label text-lg uppercase hover:bg-surface-container-high transition-all">
                 Watch Demo
               </button>
