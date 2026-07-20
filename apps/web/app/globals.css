@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/geist');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: #131408;
+    --color-on-background: #e5e3cf;
+    --color-surface: #131408;
+    --color-surface-dim: #131408;
+    --color-surface-bright: #393a2c;
+    --color-surface-container-lowest: #0e0f05;
+    --color-surface-container-low: #1c1c10;
+    --color-surface-container: #202014;
+    --color-surface-container-high: #2a2b1d;
+    --color-surface-container-highest: #353628;
+    --color-on-surface: #e5e3cf;
+    --color-on-surface-variant: #c8c8ab;
+    --color-surface-variant: #353628;
+    --color-inverse-surface: #e5e3cf;
+    --color-inverse-on-surface: #313124;
+    --color-outline: #919378;
+    --color-outline-variant: #474832;
+    --color-surface-tint: #c1d000;
+    
+    --color-primary: #ffffff;
+    --color-on-primary: #2f3300;
+    --color-primary-container: #dcee00;
+    --color-on-primary-container: #616a00;
+    --color-inverse-primary: #5c6300;
+    --color-primary-fixed: #dcee00;
+    --color-primary-fixed-dim: #c1d000;
+    --color-on-primary-fixed: #1a1d00;
+    --color-on-primary-fixed-variant: #454b00;
+
+    --color-secondary: #c4ce66;
+    --color-on-secondary: #2f3300;
+    --color-secondary-container: #5e6601;
+    --color-on-secondary-container: #dae479;
+    --color-secondary-fixed: #e0ea7e;
+    --color-secondary-fixed-dim: #c4ce66;
+    --color-on-secondary-fixed: #1a1d00;
+    --color-on-secondary-fixed-variant: #444b00;
+
+    --color-tertiary: #ffffff;
+    --color-on-tertiary: #1d343a;
+    --color-tertiary-container: #cee7ef;
+    --color-on-tertiary-container: #51686f;
+    --color-tertiary-fixed: #cee7ef;
+    --color-tertiary-fixed-dim: #b2cbd2;
+    --color-on-tertiary-fixed: #061f24;
+    --color-on-tertiary-fixed-variant: #344a51;
+
+    --color-error: #ffb4ab;
+    --color-on-error: #690005;
+    --color-error-container: #93000a;
+    --color-on-error-container: #ffdad6;
+
+    --spacing-margin: 32px;
+    --spacing-gutter: 24px;
+    --spacing-base: 4px;
+
+    --border-width-thick: 3px;
+    --border-width-standard: 2px;
+
+    --font-geist: 'Geist', sans-serif;
+    --font-jetbrains: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-background);
+    font-family: var(--font-geist);
+  }
+
+  * {
+    border-color: var(--color-on-background);
+  }
+}
+
+
+
+@layer utilities {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  .neo-shadow {
+    box-shadow: 4px 4px 0px 0px rgba(220, 238, 0, 1);
+  }
+  .neo-shadow-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px rgba(220, 238, 0, 1);
+  }
+  .neo-shadow-active:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px 0px rgba(220, 238, 0, 1);
+  }
+
+  @keyframes float-bg {
+    0%, 100% {
+      transform: translate(25%, -25%) rotate(-12deg);
+    }
+    50% {
+      transform: translate(35%, -35%) rotate(-12deg);
+    }
+  }
+  
+  .animate-float-bg {
+    animation: float-bg 8s ease-in-out infinite;
+  }
+  
+  /* Observer Specific Utilities */
+  .active-turn-shadow {
+    box-shadow: 4px 4px 0px 0px var(--color-primary-fixed);
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-primary-fixed);
+    border: 2px solid var(--color-background);
+  }
+  .fill-icon {
+    font-variation-settings: 'FILL' 1;
+  }
+  .pulse-neon {
+    animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes pulse-border {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+  .brutalist-shadow {
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1);
+  }
+  .brutalist-shadow-sm {
+    box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 1);
+  }
+  .neo-shadow-primary {
+    box-shadow: 4px 4px 0px 0px var(--color-primary-fixed);
+  }
+  .neo-shadow-blue {
+    box-shadow: 4px 4px 0px 0px var(--color-accent-blue);
+  }
+  
+  /* Data Flow Animations for Trace Canvas */
+  .data-flow-y {
+    background: linear-gradient(to bottom, transparent 20%, var(--color-primary-fixed) 50%, transparent 80%);
+    background-size: 100% 200%;
+    animation: flow-y 1.5s linear infinite;
+  }
+  .data-flow-y-blue {
+    background: linear-gradient(to bottom, transparent 20%, var(--color-accent-blue) 50%, transparent 80%);
+    background-size: 100% 200%;
+    animation: flow-y 1.5s linear infinite;
+  }
+  .data-flow-x {
+    background: linear-gradient(to right, transparent 20%, var(--color-primary-fixed) 50%, transparent 80%);
+    background-size: 200% 100%;
+    animation: flow-x 1.5s linear infinite;
+  }
+  .data-flow-x-blue {
+    background: linear-gradient(to right, transparent 20%, var(--color-accent-blue) 50%, transparent 80%);
+    background-size: 200% 100%;
+    animation: flow-x 1.5s linear infinite;
+  }
+  
+  @keyframes flow-y {
+    0% { background-position: 0 100%; }
+    100% { background-position: 0 0; }
+  }
+  @keyframes flow-x {
+    0% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+  }
+  
+  /* Failure Analysis Animations */
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .animate-pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reveal-text {
+    animation: fade-in-up 0.6s ease-out forwards;
+    opacity: 0;
+  }
+}
