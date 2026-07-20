@@ -1,3 +1,6 @@
+import { z } from 'zod';
+import { createBranchSchema } from '../schemas/github.schema';
+
 export interface RepositorySummary {
   id: number;
   name: string;
@@ -12,6 +15,4 @@ export interface BranchSummary {
   protected: boolean;
 }
 
-export interface CreateBranchInput {
-  branchName: string;
-}
+export type CreateBranchInput = z.infer<typeof createBranchSchema>;

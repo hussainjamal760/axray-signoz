@@ -1,29 +1,23 @@
-import { Octokit } from '@octokit/rest';
+import { createGithubClient } from '../lib/github';
 import { config } from '../config';
 import { RepositorySummary, BranchSummary } from '../types/github.types';
+import { AppError } from '../errors/AppError';
 
-// Helper to create Error objects containing HTTP status codes
-const createHttpError = (message: string, status: number): Error & { status: number } => {
-  const err = new Error(message) as Error & { status: number };
-  err.status = status;
-  return err;
-};
-
-// Error translator mapping raw Octokit request errors to clean API errors
+// Error translator mapping raw Octokit request errors to custom AppErrors
 const handleGithubError = (error: any): never => {
-  const status = error.status || error.statusCode;
-  const message = error.message || '';
+  const status = error.status || error.statusCode || 500;
+  const message = error.message || 'Unexpected GitHub error';
 
   if (status === 404) {
-    throw createHttpError('Repository not found', 404);
+    throw new AppError(404, 'Repository not found');
   }
   if (status === 403) {
-    throw createHttpError('Permission denied', 403);
+    throw new AppError(403, 'Permission denied');
   }
   if (status === 422 || status === 409) {
-    throw createHttpError('Branch already exists', 409);
+    throw new AppError(409, 'Branch already exists');
   }
-  throw createHttpError(message || 'Unexpected GitHub error', status || 500);
+  throw new AppError(status, message);
 };
 
 export const getAuthUrl = (): string => {
@@ -52,7 +46,7 @@ export const getAccessToken = async (code: string): Promise<string> => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to exchange GitHub code: ${response.statusText}`);
+      throw new AppError(500, `Failed to exchange GitHub code: ${response.statusText}`);
     }
 
     const data = (await response.json()) as {
@@ -62,7 +56,8 @@ export const getAccessToken = async (code: string): Promise<string> => {
     };
 
     if (data.error || !data.access_token) {
-      throw new Error(
+      throw new AppError(
+        400,
         `GitHub OAuth Error: ${data.error_description || data.error || 'Unknown error'}`
       );
     }
@@ -75,7 +70,7 @@ export const getAccessToken = async (code: string): Promise<string> => {
 
 export const getUserProfile = async (token: string) => {
   try {
-    const octokit = new Octokit({ auth: token });
+    const octokit = createGithubClient(token);
     const { data } = await octokit.users.getAuthenticated();
     return {
       githubId: String(data.id),
@@ -90,7 +85,7 @@ export const getUserProfile = async (token: string) => {
 
 export const listUserRepositories = async (accessToken: string): Promise<RepositorySummary[]> => {
   try {
-    const octokit = new Octokit({ auth: accessToken });
+    const octokit = createGithubClient(accessToken);
     const { data } = await octokit.repos.listForAuthenticatedUser({
       sort: 'updated',
       per_page: 100,
@@ -115,7 +110,7 @@ export const listRepositoryBranches = async (
   repo: string
 ): Promise<BranchSummary[]> => {
   try {
-    const octokit = new Octokit({ auth: accessToken });
+    const octokit = createGithubClient(accessToken);
     const { data } = await octokit.repos.listBranches({
       owner,
       repo,
@@ -138,7 +133,7 @@ export const createRepositoryBranch = async (
   branchName: string
 ): Promise<void> => {
   try {
-    const octokit = new Octokit({ auth: accessToken });
+    const octokit = createGithubClient(accessToken);
 
     // 1. Get default branch of the repository
     const { data: repoData } = await octokit.repos.get({

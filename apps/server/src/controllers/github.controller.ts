@@ -1,15 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
 import {
   listUserRepositories,
   listRepositoryBranches,
   createRepositoryBranch,
 } from '../services/github.service';
 import { getGithubAccessToken } from '../lib/github';
-
-const createBranchSchema = z.object({
-  branchName: z.string().min(1, 'branchName is required and cannot be empty').trim(),
-});
+import { createBranchSchema } from '../schemas/github.schema';
 
 export const getRepos = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
