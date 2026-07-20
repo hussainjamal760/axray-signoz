@@ -6,9 +6,5 @@ export const metadata = {
 };
 
 export default function AuthPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <AuthPageClient />
-    </div>
-  );
+  return <AuthPageClient />;
 }
