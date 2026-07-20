@@ -12,21 +12,21 @@ export function Preloader({ children }: { children: React.ReactNode }) {
     setHasMounted(true);
     const lastShown = localStorage.getItem("axray_preloader_time");
     const now = new Date().getTime();
-    
+
     // Show if never shown, or if it's been more than 15 mins (900000 ms)
     const shouldShow = !lastShown || (now - parseInt(lastShown) > 900000);
 
     if (shouldShow) {
       setIsPreloading(true);
       document.body.style.overflow = "hidden";
-      
+
       // Hide the preloader after 4.5 seconds (gives time for slow drop + stay)
       const timer = setTimeout(() => {
         setIsPreloading(false);
         document.body.style.overflow = "auto";
         localStorage.setItem("axray_preloader_time", now.toString());
       }, 4500);
-      
+
       return () => {
         clearTimeout(timer);
         document.body.style.overflow = "auto";

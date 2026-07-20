@@ -1,11 +1,64 @@
 import { tracer } from "./instrumentation";
 import { SpanStatusCode, trace, context } from "@opentelemetry/api";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { TurnLogEntry } from "./agent-runner";
 
 export interface SelfCheckResult {
   triggeredCorrection: boolean;
   reason?: string;
   correctionMessage?: string;
+}
+
+/**
+ * Query SigNoz Cloud via MCP using the real StreamableHTTP transport.
+ * Returns { ok: true, raw } on success, { ok: false } on any failure.
+ */
+async function queryMcp(sessionId: string): Promise<{ ok: boolean; raw?: any }> {
+  const mcpUrl = process.env.SIGNOZ_MCP_ENDPOINT;
+  const apiKey = process.env.SIGNOZ_MCP_API_KEY;
+  const instanceUrl = process.env.SIGNOZ_INSTANCE_URL;
+
+  // If any MCP env var is missing, skip the MCP call entirely.
+  if (!mcpUrl || !apiKey || !instanceUrl) {
+    return { ok: false };
+  }
+
+  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl), {
+    requestInit: {
+      headers: {
+        "SIGNOZ-API-KEY": apiKey,
+        "X-SigNoz-URL": instanceUrl,
+      },
+    },
+  });
+
+  const client = new Client({ name: "axray-agent", version: "1.0.0" });
+
+  try {
+    await client.connect(transport);
+
+    const result = await client.callTool({
+      name: "signoz_execute_builder_query",
+      arguments: {
+        query: {
+          dataSource: "traces",
+          aggregateOperator: "count",
+          filters: [
+            { key: "session.id", op: "=", value: sessionId },
+            { key: "name", op: "=", value: "tool.call" },
+          ],
+        },
+        timeRange: "5m",
+      },
+    });
+
+    return { ok: true, raw: result };
+  } catch {
+    return { ok: false };
+  } finally {
+    await client.close();
+  }
 }
 
 /**
@@ -19,8 +72,7 @@ export async function performSelfCheck(
   turnLog: TurnLogEntry[],
   currentTurnSpan: any
 ): Promise<SelfCheckResult> {
-  const mcpEndpoint = process.env.SIGNOZ_MCP_ENDPOINT || "http://localhost:8000";
-  const queryStr = `select count(*) from spans where session.id='${sessionId}' and name='tool.call'`;
+  const mcpEndpoint = process.env.SIGNOZ_MCP_ENDPOINT || "(not configured)";
 
   const selfCheckSpan = tracer.startSpan(
     "agent.self_check",
@@ -28,7 +80,6 @@ export async function performSelfCheck(
       attributes: {
         "self_check.session_id": sessionId,
         "self_check.mcp_endpoint": mcpEndpoint,
-        "self_check.query": queryStr,
       },
     },
     trace.setSpan(context.active(), currentTurnSpan)
@@ -40,24 +91,12 @@ export async function performSelfCheck(
     let repeatedArgsStr = "";
     let repeatCount = 0;
 
-    // 1. Attempt to query SigNoz MCP Server or SigNoz Query API
-    try {
-      const response = await fetch(`${mcpEndpoint}/query`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: queryStr,
-          timeRangeMinutes: 5,
-        }),
-      });
+    // 1. Attempt to query SigNoz Cloud via MCP
+    const mcpResult = await queryMcp(sessionId);
 
-      if (response.ok) {
-        selfCheckSpan.setAttribute("self_check.mcp_tool_used", "execute_builder_query");
-      } else {
-        selfCheckSpan.setAttribute("self_check.mcp_tool_used", "local_turn_log_fallback");
-      }
-    } catch {
-      // Server unreachable during dev/test — fallback to turnLog inspection
+    if (mcpResult.ok) {
+      selfCheckSpan.setAttribute("self_check.mcp_tool_used", "signoz_execute_builder_query");
+    } else {
       selfCheckSpan.setAttribute("self_check.mcp_tool_used", "local_turn_log_fallback");
     }
 
