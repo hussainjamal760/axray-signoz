@@ -1,0 +1,20 @@
+import { app } from './app';
+import { config } from './config';
+import { connectDatabase } from './lib/mongo';
+
+const startServer = async () => {
+  try {
+    // 1. Connect to MongoDB
+    await connectDatabase();
+
+    // 2. Start HTTP server
+    app.listen(config.PORT, () => {
+      console.log(`🚀 AXRAY backend running on port ${config.PORT} [${config.NODE_ENV}]`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start the server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

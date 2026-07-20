@@ -1,18 +1,14 @@
 {
   "name": "axray",
-  "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "build": "turbo run build",
     "dev": "turbo run dev",
+    "build": "turbo run build",
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "turbo": "latest",
-    "typescript": "^5.0.0"
+    "turbo": "^2",
+    "typescript": "^5"
   }
 }
