@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLogout } from "@/features/auth/hooks/useLogout";
 
 interface TopNavProps {
   onToggleSidebar: () => void;
@@ -13,6 +14,7 @@ export function TopNav({ onToggleSidebar }: TopNavProps) {
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { mutate: logout, isPending } = useLogout();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -75,9 +77,16 @@ export function TopNav({ onToggleSidebar }: TopNavProps) {
                   <span className="material-symbols-outlined text-[18px] group-hover:text-background text-on-surface-variant">person</span>
                   Account
                 </button>
-                <button className="flex items-center gap-3 px-4 py-3 hover:bg-error hover:text-white transition-colors text-error font-bold text-sm text-left w-full group border-t-[3px] border-outline-variant">
+                <button
+                  onClick={() => {
+                    setIsProfileMenuOpen(false);
+                    logout();
+                  }}
+                  disabled={isPending}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-error hover:text-white transition-colors text-error font-bold text-sm text-left w-full group border-t-[3px] border-outline-variant disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <span className="material-symbols-outlined text-[18px]">logout</span>
-                  Logout
+                  {isPending ? "Logging out..." : "Logout"}
                 </button>
               </div>
             )}
