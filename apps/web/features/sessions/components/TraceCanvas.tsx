@@ -84,7 +84,9 @@ function NodeRenderer({ node, isRoot = false, isLast = true }: { node: TraceNode
       <div 
         onClick={() => {
           if (isFailed) {
-            router.push('/analysis');
+            const sessionMatch = window.location.pathname.match(/^\/sessions\/([^/]+)/);
+            const id = sessionMatch ? sessionMatch[1] : null;
+            router.push(id ? `/sessions/${id}/analysis` : '/sessions');
           }
         }}
         className={cn(

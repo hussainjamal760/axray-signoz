@@ -1,4 +1,6 @@
-import { AppLayout } from "@/components/layout/AppLayout";
+"use client";
+
+import { useParams } from "next/navigation";
 import { TimelinePanel } from "@/features/sessions/components/TimelinePanel";
 import { CodeViewerPanel } from "@/features/sessions/components/CodeViewerPanel";
 import { IntelligencePanel } from "@/features/sessions/components/IntelligencePanel";
@@ -6,6 +8,10 @@ import { ReplayHUD } from "@/features/sessions/components/ReplayHUD";
 import Link from "next/link";
 
 export default function ObserverDashboardPage() {
+  const params = useParams();
+  const id = typeof params?.id === "string" ? params.id : "";
+  const analysisLink = id ? `/sessions/${id}/analysis` : "/sessions";
+
   return (
     <>
       {/* Context Header */}
@@ -14,7 +20,7 @@ export default function ObserverDashboardPage() {
           <div className="flex items-center gap-2 mb-2 font-mono-label text-mono-label text-on-surface-variant">
             <span className="hover:text-primary-fixed cursor-pointer">SESSIONS</span>
             <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-primary-fixed">#1042</span>
+            <span className="text-primary-fixed">#{id ? id.slice(-4).toUpperCase() : "1042"}</span>
           </div>
           <h1 className="font-headline-lg text-3xl md:text-headline-lg text-primary-fixed uppercase mb-4">Fix authentication failing tests</h1>
           
@@ -35,7 +41,7 @@ export default function ObserverDashboardPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <Link href="/analysis" className="bg-primary-fixed text-on-primary-fixed font-black px-6 py-4 border-[3px] border-on-primary-fixed neo-shadow hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center uppercase">
+          <Link href={analysisLink} className="bg-primary-fixed text-on-primary-fixed font-black px-6 py-4 border-[3px] border-on-primary-fixed neo-shadow hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center uppercase">
             EXPLAIN FAILURE
           </Link>
           <button className="bg-transparent text-primary-fixed font-black px-6 py-4 border-[3px] border-primary-fixed neo-shadow hover:bg-surface-variant active:translate-x-0 active:translate-y-0 active:shadow-none transition-all">

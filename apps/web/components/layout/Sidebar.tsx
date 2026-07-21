@@ -17,8 +17,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
     const sessionMatch = pathname?.match(/^\/sessions\/([^/]+)/);
     if (sessionMatch) {
       const id = sessionMatch[1];
-      setActiveSessionId(id);
-      localStorage.setItem("lastActiveSessionId", id);
+      if (id !== "new") {
+        setActiveSessionId(id);
+        localStorage.setItem("lastActiveSessionId", id);
+      }
     } else {
       const saved = localStorage.getItem("lastActiveSessionId");
       if (saved) {
@@ -28,7 +30,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   }, [pathname]);
 
   const getLinkClasses = (path: string) => {
-    const isActive = pathname === path || (path.startsWith('/sessions/') && pathname?.startsWith('/sessions/'));
+    const isActive = pathname === path;
     if (isActive) {
       return "flex items-center gap-4 px-4 py-3 bg-primary-fixed text-on-primary-fixed font-black uppercase border-2 border-background brutalist-shadow-sm whitespace-nowrap overflow-hidden";
     }
@@ -36,6 +38,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
   };
 
   const agentLink = activeSessionId ? `/sessions/${activeSessionId}` : "/sessions";
+  const observerLink = activeSessionId ? `/sessions/${activeSessionId}/observer` : "/sessions";
+  const tracesLink = activeSessionId ? `/sessions/${activeSessionId}/traces` : "/sessions";
+  const analyticsLink = activeSessionId ? `/sessions/${activeSessionId}/analytics` : "/sessions";
 
   return (
     <aside
@@ -64,19 +69,18 @@ export function Sidebar({ isOpen }: SidebarProps) {
             <span className="material-symbols-outlined">smart_toy</span>
             Agent
           </Link>
-          <Link href="/observer" className={getLinkClasses("/observer")}>
+          <Link href={observerLink} className={getLinkClasses(observerLink)}>
             <span className="material-symbols-outlined">play_circle</span>
             Observer
           </Link>
-          <Link href="/traces" className={getLinkClasses("/traces")}>
+          <Link href={tracesLink} className={getLinkClasses(tracesLink)}>
             <span className="material-symbols-outlined">rebase_edit</span>
             Traces
           </Link>
-          <Link href="/analytics" className={getLinkClasses("/analytics")}>
+          <Link href={analyticsLink} className={getLinkClasses(analyticsLink)}>
             <span className="material-symbols-outlined">monitoring</span>
             Analytics
           </Link>
-
 
         </nav>
 
