@@ -2,34 +2,29 @@ import Link from "next/link";
 
 export function OnboardingPanel() {
   return (
-    <div className="col-span-12 flex flex-col items-center justify-center py-16 px-6 bg-surface border-[3px] border-outline text-center relative overflow-hidden brutalist-shadow max-w-4xl mx-auto my-12">
-      {/* Accent structural frames */}
-      <div className="w-full border-b-[3px] border-outline-variant py-2 bg-surface-container-highest flex items-center justify-center font-mono-label text-[10px] text-on-surface-variant font-bold tracking-widest uppercase mb-10">
-        // AXRAY_OBSERVATORY_INITIALIZATION_INTERFACE
+    <div className="col-span-12 flex flex-col items-center justify-center py-20 px-6 bg-surface border-[3px] border-outline text-center relative overflow-hidden brutalist-shadow">
+      {/* Background cyber grid effect */}
+      <div className="absolute inset-0 opacity-[0.02] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+
+      {/* Stylized Branding Icon */}
+      <div className="relative mb-8 group">
+        <div className="absolute -inset-1 rounded bg-gradient-to-r from-primary-fixed to-secondary-fixed opacity-75 blur-md group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="relative bg-background border-[3px] border-outline p-6 flex items-center justify-center brutalist-shadow-sm group-hover:translate-x-[2px] group-hover:translate-y-[2px] group-hover:shadow-none transition-all">
+          <span className="material-symbols-outlined !text-6xl text-primary-fixed select-none">
+            terminal
+          </span>
+        </div>
       </div>
 
-      {/* Brand Label */}
-      <div className="font-headline-xl text-5xl md:text-6xl font-black text-on-surface tracking-tighter uppercase mb-6 select-none">
-        AXRAY
-      </div>
-
-      {/* Headline */}
-      <h1 className="font-headline-lg text-2xl md:text-3xl font-black text-primary-fixed uppercase tracking-tight mb-6">
-        Welcome to AXRAY
+      {/* Headlines */}
+      <h1 className="font-headline-lg text-4xl md:text-5xl font-black text-on-surface uppercase tracking-tight mb-4">
+        Welcome to <span className="text-primary-fixed">AXRAY</span>
       </h1>
       
-      {/* Description list */}
-      <div className="max-w-xl text-on-surface-variant font-mono-label text-sm md:text-base leading-relaxed mb-10 space-y-2">
-        <p>AXRAY is a session-first diagnostic</p>
-        <p>and observability dashboard for</p>
-        <p>autonomous AI agents.</p>
-        <div className="h-4"></div>
-        <p className="text-on-surface/80">Track repository status,</p>
-        <p className="text-on-surface/80 font-bold text-white">branch edits,</p>
-        <p className="text-on-surface/80">execution runs,</p>
-        <p className="text-on-surface/80">and raw LLM reasoning traces</p>
-        <p className="text-on-surface/80">in real time.</p>
-      </div>
+      <p className="max-w-2xl text-on-surface-variant font-mono-label text-sm md:text-base leading-relaxed mb-10">
+        AXRAY is a session-first diagnostic and observability dashboard for autonomous AI agents. 
+        Track repository status, branch edits, code execution runs, and raw LLM decision traces in real time.
+      </p>
 
       {/* Large CTA Button */}
       <Link 
@@ -40,16 +35,15 @@ export function OnboardingPanel() {
         <span className="material-symbols-outlined font-black">arrow_forward</span>
       </Link>
 
-      {/* Badge container at bottom */}
-      <div className="w-full border-t-[3px] border-outline-variant mt-12 pt-8 flex flex-wrap justify-center gap-6">
-        <div className="flex items-center gap-2 border-2 border-green-600 bg-green-500/10 px-3 py-1 font-mono-label text-xs font-bold text-green-500 uppercase tracking-widest">
-          ✓ Agent Core Ready
+      {/* Micro Status Indicators */}
+      <div className="flex gap-8 mt-12 text-on-surface-variant font-mono-label text-xs uppercase tracking-widest">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 bg-green-500 rounded-full animate-pulse"></span>
+          Agent Core Ready
         </div>
-        <div className="flex items-center gap-2 border-2 border-primary-fixed bg-primary-fixed-dim/10 px-3 py-1 font-mono-label text-xs font-bold text-primary-fixed uppercase tracking-widest">
-          ✓ Protected Sessions
-        </div>
-        <div className="flex items-center gap-2 border-2 border-outline bg-surface-container-high px-3 py-1 font-mono-label text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-          ✓ GitHub Connected
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined !text-[16px] text-primary-fixed">shield</span>
+          Protected Session
         </div>
       </div>
     </div>
