@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Session, ISession } from '../models/session.model';
 import { AgentRun } from '../models/agent-run.model';
 import { AppError } from '../errors/AppError';
+import * as provisionerService from './provisioner.service';
 
 export const createSession = async (
   userId: string,
@@ -15,8 +16,26 @@ export const createSession = async (
     userId,
     ...data,
     status: 'active',
+    workspaceInitialized: false,
   });
-  return session.save();
+
+  const savedSession = await session.save();
+
+  try {
+    // Delegate infrastructure setup to provisionerService
+    const provisionResult = await provisionerService.provisionSessionInfrastructure({
+      repositoryFullName: savedSession.repositoryFullName,
+      branch: savedSession.branch,
+    });
+
+    savedSession.containerId = provisionResult.containerId;
+    return await savedSession.save();
+  } catch (error: unknown) {
+    // Rollback session document if container provisioning fails
+    await Session.deleteOne({ _id: savedSession._id });
+    const message = error instanceof Error ? error.message : String(error);
+    throw new AppError(500, `Failed to provision session infrastructure: ${message}`);
+  }
 };
 
 export const getUserSessions = async (userId: string): Promise<ISession[]> => {

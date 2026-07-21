@@ -3,6 +3,7 @@ import { AgentRun, IAgentRun } from '../models/agent-run.model';
 import { getSession } from './sessions.service';
 import { Session } from '../models/session.model';
 import { AppError } from '../errors/AppError';
+import * as runnerService from './runner.service';
 
 export const createRun = async (
   userId: string,
@@ -27,6 +28,9 @@ export const createRun = async (
     { _id: session._id },
     { $set: { latestRunId: savedRun._id } }
   );
+
+  // Trigger fire-and-forget background execution
+  void runnerService.executeRun(savedRun._id.toString());
 
   return savedRun;
 };

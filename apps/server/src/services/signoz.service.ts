@@ -1,4 +1,6 @@
+// @ts-ignore
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+// @ts-ignore
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
 export class SigNozService {

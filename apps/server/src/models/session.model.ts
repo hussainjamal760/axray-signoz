@@ -8,6 +8,8 @@ export interface ISession extends Document {
   repositoryFullName: string;
   branch: string;
   status: SessionStatus;
+  containerId?: string;
+  workspaceInitialized: boolean;
   latestRunId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +26,8 @@ const SessionSchema: Schema = new Schema(
       enum: ['active', 'archived'],
       default: 'active',
     },
+    containerId: { type: String },
+    workspaceInitialized: { type: Boolean, default: false, required: true },
     latestRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
   },
   {

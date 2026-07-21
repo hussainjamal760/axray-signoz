@@ -13,7 +13,7 @@ export const createRun = async (req: Request, res: Response, next: NextFunction)
     const { prompt } = req.body;
 
     const run = await agentRunsService.createRun(userId, sessionId, prompt);
-    res.status(201).json(run);
+    res.status(202).json(run);
   } catch (error) {
     next(error);
   }
