@@ -29,18 +29,24 @@ export const executePrompt = async (
   console.log(`[Agent] Starting prompt execution in container ${options.containerId}`);
   console.log(`[Agent] Prompt: "${options.prompt}"`);
 
-  // Simulated AI agent thinking loop with realistic delays
+  // Simulated AI agent thinking loop with realistic step delays
+  // Later: Socket.IO streams each step event directly to the frontend client
+
   await sleep(1000);
   console.log(`[Agent] Planning...`);
+  // TODO (Streaming): socket.emit('run:step', { step: 'planning', message: 'Planning agent steps...' });
 
   await sleep(1500);
-  console.log(`[Agent] Editing...`);
+  console.log(`[Agent] Editing files...`);
+  // TODO (Streaming): socket.emit('run:step', { step: 'editing', message: 'Editing codebase files...' });
 
   await sleep(1200);
-  console.log(`[Agent] Generating...`);
+  console.log(`[Agent] Running tests...`);
+  // TODO (Streaming): socket.emit('run:step', { step: 'testing', message: 'Running test verification suite...' });
 
   await sleep(800);
   console.log(`[Agent] Finished prompt execution.`);
+  // TODO (Streaming): socket.emit('run:step', { step: 'finished', message: 'Execution complete.' });
 
   return {
     response: 'Dummy agent successfully executed prompt.',

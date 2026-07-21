@@ -9,7 +9,7 @@ import * as agentService from './agent.service';
  * Orchestrates background execution by connecting Container, Workspace, Agent, and Session services.
  * 
  * Flow:
- * Find Run -> Find Session -> Get Container -> Ensure Workspace Ready -> Update Status (running) -> Execute Agent -> Complete Run
+ * Find Run -> Find Session -> Ensure Container -> Ensure Workspace -> Status: Running (Socket) -> Execute Agent (Socket steps) -> Status: Completed (Socket)
  */
 
 export const executeRun = async (runId: string): Promise<void> => {
@@ -46,6 +46,7 @@ export const executeRun = async (runId: string): Promise<void> => {
     // 2. Ensure Workspace Initialized (clone & checkout if not yet initialized)
     if (!session.workspaceInitialized) {
       console.log(`[Runner] Preparing workspace for session ${session._id}...`);
+      // TODO (Streaming): io.to(`session:${session._id}`).emit('workspace:status', { status: 'preparing' });
       await workspaceService.prepareWorkspace({
         repositoryFullName: session.repositoryFullName,
         branch: session.branch,
@@ -55,6 +56,7 @@ export const executeRun = async (runId: string): Promise<void> => {
       // Update database state after workspace preparation succeeds
       session.workspaceInitialized = true;
       await session.save();
+      // TODO (Streaming): io.to(`session:${session._id}`).emit('workspace:status', { status: 'ready' });
     } else {
       console.log(`[Runner] Workspace already initialized for session ${session._id}. Skipping preparation.`);
     }
@@ -64,10 +66,11 @@ export const executeRun = async (runId: string): Promise<void> => {
     run.startedAt = new Date();
     run.containerId = session.containerId;
     await run.save();
+    // TODO (Streaming): io.to(`session:${session._id}`).emit('run:status', { runId: run._id, status: 'running' });
 
     console.log(`[Runner] Executing agent for run ${run._id} in container ${session.containerId}`);
 
-    // 4. Delegate prompt execution to AgentService
+    // 4. Delegate prompt execution to AgentService (which streams execution steps)
     const result = await agentService.executePrompt({
       containerId: session.containerId!,
       prompt: run.prompt,
@@ -83,6 +86,7 @@ export const executeRun = async (runId: string): Promise<void> => {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     await run.save();
+    // TODO (Streaming): io.to(`session:${session._id}`).emit('run:status', { runId: run._id, status: 'completed', result });
 
     console.log(`[Runner] Run ${run._id} completed successfully in ${run.durationMs}ms`);
   } catch (error: unknown) {
@@ -96,5 +100,6 @@ export const executeRun = async (runId: string): Promise<void> => {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     await run.save();
+    // TODO (Streaming): io.to(`session:${session._id}`).emit('run:status', { runId: run._id, status: 'failed', error: errMessage });
   }
 };
