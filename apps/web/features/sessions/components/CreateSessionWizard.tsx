@@ -218,8 +218,7 @@ export function CreateSessionWizard() {
             </div>
           ) : (
             <div className="p-4 bg-surface-container border-2 border-outline space-y-4 brutalist-shadow-sm">
-              <h4 className="font-mono-label text-xs font-black uppercase text-primary-fixed flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">git_branch</span>
+              <h4 className="font-mono-label text-xs font-black uppercase text-primary-fixed">
                 New Branch Setup
               </h4>
 
