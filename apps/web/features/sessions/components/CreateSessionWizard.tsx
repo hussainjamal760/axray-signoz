@@ -207,10 +207,10 @@ export function CreateSessionWizard() {
                 type="button"
                 onClick={handleOpenBranchPanel}
                 disabled={isBranchDisabled}
-                className="text-xs font-black uppercase text-primary-fixed flex items-center gap-1 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group text-xs font-black uppercase text-primary-fixed flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                <span className="material-symbols-outlined text-sm">add</span>
-                Create New Branch
+                <span className="material-symbols-outlined text-sm transition-transform duration-200 group-hover:rotate-90">add</span>
+                <span className="border-b border-transparent group-hover:border-primary-fixed transition-colors">Create New Branch</span>
               </button>
               <p className="font-mono-label text-[10px] text-on-surface-variant mt-1">
                 Creates the branch immediately on GitHub.
