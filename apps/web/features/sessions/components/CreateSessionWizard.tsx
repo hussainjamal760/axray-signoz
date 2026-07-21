@@ -189,6 +189,7 @@ export function CreateSessionWizard() {
           value={selectedRepoId}
           onChange={(id) => setSelectedRepoId(Number(id))}
           disabled={isRepoDisabled}
+          isLoading={repositoriesLoading}
         />
         
         <div className="space-y-3">
