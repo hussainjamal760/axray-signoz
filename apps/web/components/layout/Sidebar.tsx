@@ -67,10 +67,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
             <span className="material-symbols-outlined">play_circle</span>
             Observer
           </Link>
-          <Link href="/repositories" className={getLinkClasses("/repositories")}>
-            <span className="material-symbols-outlined">folder_special</span>
-            Repositories
-          </Link>
           <Link href="/traces" className={getLinkClasses("/traces")}>
             <span className="material-symbols-outlined">rebase_edit</span>
             Traces
