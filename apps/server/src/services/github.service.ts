@@ -3,18 +3,33 @@ import { config } from '../config';
 import { RepositorySummary, BranchSummary } from '../types/github.types';
 import { AppError } from '../errors/AppError';
 
+export interface CreateBranchOptions {
+  branchName: string;
+  sourceBranch?: string;
+}
+
+export interface CreatedBranchDetails {
+  name: string;
+  sourceBranch: string;
+  sha: string;
+}
+
 // Error translator mapping raw Octokit request errors to custom AppErrors
-const handleGithubError = (error: any): never => {
-  const status = error.status || error.statusCode || 500;
-  const message = error.message || 'Unexpected GitHub error';
+const handleGithubError = (error: unknown): never => {
+  const err = error as { status?: number; statusCode?: number; message?: string };
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Unexpected GitHub error';
 
   if (status === 404) {
-    throw new AppError(404, 'Repository not found');
+    throw new AppError(404, 'Resource or source branch not found');
   }
   if (status === 403) {
     throw new AppError(403, 'Permission denied');
   }
-  if (status === 422 || status === 409) {
+  if (
+    status === 409 ||
+    (status === 422 && (message.toLowerCase().includes('already exists') || message.toLowerCase().includes('reference')))
+  ) {
     throw new AppError(409, 'Branch already exists');
   }
   throw new AppError(status, message);
@@ -130,34 +145,43 @@ export const createRepositoryBranch = async (
   accessToken: string,
   owner: string,
   repo: string,
-  branchName: string
-): Promise<void> => {
+  options: CreateBranchOptions
+): Promise<CreatedBranchDetails> => {
   try {
     const octokit = createGithubClient(accessToken);
+    let targetSourceBranch = options.sourceBranch;
 
-    // 1. Get default branch of the repository
-    const { data: repoData } = await octokit.repos.get({
-      owner,
-      repo,
-    });
-    const defaultBranch = repoData.default_branch;
+    // Only query repository default branch if sourceBranch is omitted
+    if (!targetSourceBranch) {
+      const { data: repoData } = await octokit.repos.get({
+        owner,
+        repo,
+      });
+      targetSourceBranch = repoData.default_branch;
+    }
 
-    // 2. Get latest commit SHA of default branch
+    // Get latest commit SHA of source branch
     const { data: refData } = await octokit.git.getRef({
       owner,
       repo,
-      ref: `heads/${defaultBranch}`,
+      ref: `heads/${targetSourceBranch}`,
     });
     const sha = refData.object.sha;
 
-    // 3. Create the new reference refs/heads/<branchName>
+    // Create new reference refs/heads/<branchName>
     await octokit.git.createRef({
       owner,
       repo,
-      ref: `refs/heads/${branchName}`,
+      ref: `refs/heads/${options.branchName}`,
       sha,
     });
-  } catch (error) {
+
+    return {
+      name: options.branchName,
+      sourceBranch: targetSourceBranch,
+      sha,
+    };
+  } catch (error: unknown) {
     return handleGithubError(error);
   }
 };
