@@ -1,21 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RepositoryDropdown, BranchDropdown } from "@/features/repositories/components";
+import { useRepositories, useBranches } from "@/features/repositories/hooks";
 
 export function InitializePanel() {
-  const mockRepos = [
-    { id: 1, name: "core-engine", owner: "agent-black-box", fullName: "agent-black-box/core-engine", defaultBranch: "main", private: true },
-    { id: 2, name: "dashboard-ui", owner: "agent-black-box", fullName: "agent-black-box/dashboard-ui", defaultBranch: "main", private: false }
-  ];
+  const {
+    data: repositories = [],
+    isLoading: repositoriesLoading,
+    isError: isReposError,
+    error: reposError,
+  } = useRepositories();
 
-  const mockBranches = [
-    { name: "main", protected: true },
-    { name: "feature/auth-rework", protected: false }
-  ];
+  const [selectedRepoId, setSelectedRepoId] = useState<number | "">("");
 
-  const [selectedRepo, setSelectedRepo] = useState("agent-black-box/core-engine");
-  const [selectedBranch, setSelectedBranch] = useState("main");
+  const selectedRepoObj = repositories.find((r) => r.id === selectedRepoId);
+  const owner = selectedRepoObj?.owner;
+  const repoName = selectedRepoObj?.name;
+
+  const {
+    data: branches = [],
+    isLoading: branchesLoading,
+    isError: isBranchesError,
+    error: branchesError,
+  } = useBranches(owner, repoName);
+
+  const [selectedBranch, setSelectedBranch] = useState("");
+
+  // Log error exceptions
+  useEffect(() => {
+    if (isReposError) {
+      console.error("Failed to fetch repositories:", reposError);
+    }
+  }, [isReposError, reposError]);
+
+  useEffect(() => {
+    if (isBranchesError) {
+      console.error("Failed to fetch branches:", branchesError);
+    }
+  }, [isBranchesError, branchesError]);
+
+  // Handle repository selection logic
+  useEffect(() => {
+    if (repositories.length > 0) {
+      const hasSelected = repositories.some((r) => r.id === selectedRepoId);
+      if (!hasSelected) {
+        setSelectedRepoId(repositories[0].id);
+      }
+    } else {
+      setSelectedRepoId("");
+    }
+  }, [repositories]);
+
+  // Handle branch selection logic
+  useEffect(() => {
+    if (branches.length > 0) {
+      const hasSelected = branches.some((b) => b.name === selectedBranch);
+      if (!hasSelected) {
+        setSelectedBranch(branches[0].name);
+      }
+    } else {
+      setSelectedBranch("");
+    }
+  }, [branches]);
+
+  const isRepoDisabled = repositoriesLoading || isReposError || repositories.length === 0;
+  const isBranchDisabled = branchesLoading || isBranchesError || isReposError || branches.length === 0;
 
   return (
     <section className="col-span-12 lg:col-span-7 bg-surface border-[3px] border-outline p-8 flex flex-col gap-8 brutalist-shadow">
@@ -29,14 +79,16 @@ export function InitializePanel() {
       
       <div className="grid grid-cols-2 gap-6">
         <RepositoryDropdown
-          repositories={mockRepos}
-          value={selectedRepo}
-          onChange={setSelectedRepo}
+          repositories={repositories}
+          value={selectedRepoId}
+          onChange={(id) => setSelectedRepoId(Number(id))}
+          disabled={isRepoDisabled}
         />
         <BranchDropdown
-          branches={mockBranches}
+          branches={branches}
           value={selectedBranch}
           onChange={setSelectedBranch}
+          disabled={isBranchDisabled}
         />
       </div>
       
