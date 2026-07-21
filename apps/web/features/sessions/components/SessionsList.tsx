@@ -66,8 +66,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
                     <td className="px-6 py-5 font-black text-on-surface group-hover:text-primary-fixed transition-colors text-sm">
                       {session.repositoryFullName}
                     </td>
-                    <td className="px-6 py-5 text-on-surface-variant flex items-center gap-2 h-full">
-                      <span className="material-symbols-outlined text-[16px] text-outline">git_branch</span>
+                    <td className="px-6 py-5 text-on-surface-variant">
                       {session.branch}
                     </td>
                     <td className="px-6 py-5">

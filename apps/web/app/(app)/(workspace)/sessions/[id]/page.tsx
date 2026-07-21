@@ -2,13 +2,12 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/features/sessions/hooks";
-import { TimelinePanel, CodeViewerPanel, IntelligencePanel, ReplayHUD } from "@/features/sessions/components";
-import Link from "next/link";
+import { SessionHeader } from "@/features/sessions/components";
+import { PromptComposer, AgentRunsList, RunStatusBadge } from "@/features/agent-runs/components";
+import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
 
-const badgeStyles: Record<string, string> = {
-  active: "bg-green-500/10 border-green-600 text-green-600",
-  archived: "bg-surface-container border-outline text-on-surface-variant",
-};
+// Keep imports of the legacy three-pane layout panels to preserve them in the codebase
+import { TimelinePanel, CodeViewerPanel, IntelligencePanel, ReplayHUD } from "@/features/sessions/components";
 
 export default function SessionIdPage() {
   const params = useParams();
@@ -16,9 +15,11 @@ export default function SessionIdPage() {
   const id = typeof params?.id === "string" ? params.id : "";
   const isValidId = !!id && id !== "undefined" && id !== "null";
 
-  const { data: session, isLoading, isError } = useSession(id);
+  const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id);
+  const { data: runs = [], isLoading: runsLoading } = useRuns(id);
+  const { mutate: createRun, isPending: isCreating } = useCreateRun(id);
 
-  if (isLoading) {
+  if (sessionLoading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-screen">
         <div className="font-mono-label text-sm uppercase animate-pulse text-primary-fixed font-black">
@@ -28,7 +29,7 @@ export default function SessionIdPage() {
     );
   }
 
-  if (isError || !session || !isValidId) {
+  if (sessionError || !session || !isValidId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <h2 className="text-2xl font-black uppercase text-error mb-4">Workspace Error</h2>
@@ -45,61 +46,59 @@ export default function SessionIdPage() {
     );
   }
 
-  const badgeClass = badgeStyles[session.status] || badgeStyles.active;
+  // Handle run creation
+  const handleCreateRun = (prompt: string) => {
+    createRun({ prompt });
+  };
+
+  // Find if there is an active run in execution (pending, queued, or running)
+  const currentRun = runs.find(
+    (r) => r.status === "running" || r.status === "pending" || r.status === "queued"
+  );
+  
+  // Filter history runs
+  const historyRuns = runs.filter((r) => r.id !== currentRun?.id);
+
+  const handleSelectRun = (run: any) => {
+    console.log("Selected run for tracing:", run);
+  };
 
   return (
-    <>
-      {/* Context Header */}
-      <section className="p-gutter border-b-[3px] border-primary-fixed bg-surface-container flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
-        <div>
-          <div className="flex items-center gap-2 mb-2 font-mono-label text-mono-label text-on-surface-variant">
-            <Link href="/dashboard" className="hover:text-primary-fixed cursor-pointer uppercase">
-              SESSIONS
-            </Link>
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-primary-fixed">#{session.id.slice(-6).toUpperCase()}</span>
-          </div>
-          <h1 className="font-headline-lg text-3xl md:text-headline-lg text-primary-fixed uppercase mb-4">
-            Session Workspace
-          </h1>
-          
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-mono-label text-on-surface">
-              <span className="material-symbols-outlined text-[16px] text-on-surface-variant">folder</span>
-              {session.repositoryFullName}
-            </div>
-            <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-mono-label text-on-surface">
-              <span className="material-symbols-outlined text-[16px] text-on-surface-variant">git_branch</span>
-              {session.branch}
-            </div>
-            <div className={`flex items-center gap-2 border-2 px-3 py-1 font-black font-mono-label text-mono-label ${badgeClass}`}>
-              <span className="material-symbols-outlined text-[16px] fill-icon">
-                {session.status === "active" ? "check_circle" : "archive"}
-              </span>
-              {session.status.toUpperCase()}
-            </div>
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Session Workspace Header */}
+      <SessionHeader session={session} />
+
+      {/* Main Workspace Layout */}
+      <div className="flex-1 overflow-y-auto p-gutter space-y-8 custom-scrollbar bg-background" data-lenis-prevent="true">
         
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <Link href="/analysis" className="bg-primary-fixed text-on-primary-fixed font-black px-6 py-4 border-[3px] border-on-primary-fixed neo-shadow hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center uppercase">
-            EXPLAIN FAILURE
-          </Link>
-          <button className="bg-transparent text-primary-fixed font-black px-6 py-4 border-[3px] border-primary-fixed neo-shadow hover:bg-surface-variant active:translate-x-0 active:translate-y-0 active:shadow-none transition-all uppercase">
-            CREATE PULL REQUEST
-          </button>
-        </div>
-      </section>
+        {/* Prompt Composer Section */}
+        <PromptComposer onSubmit={handleCreateRun} loading={isCreating} disabled={!!currentRun} />
 
-      {/* Three-Pane View */}
-      <section className="flex flex-1 overflow-hidden min-h-0 z-10 relative" data-lenis-prevent="true">
-        <TimelinePanel />
-        <CodeViewerPanel />
-        <IntelligencePanel />
-      </section>
+        {/* Current Active Run Panel */}
+        {currentRun && (
+          <div className="border-[3px] border-primary-fixed bg-surface p-6 brutalist-shadow">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-black uppercase text-primary-fixed flex items-center gap-2">
+                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                Current Active Execution
+              </h3>
+              <RunStatusBadge status={currentRun.status} />
+            </div>
+            
+            <div className="font-mono-label text-sm text-on-surface bg-surface-container p-4 border-2 border-outline-variant">
+              <p className="font-bold text-white mb-2 uppercase text-xs text-primary-fixed tracking-wider">// Prompt Input</p>
+              <p className="mb-4 text-white font-bold">{currentRun.prompt}</p>
+              <div className="flex justify-between items-center text-xs text-on-surface-variant pt-3 border-t border-outline-variant/30">
+                <span>Created: {new Date(currentRun.createdAt).toLocaleString()}</span>
+                <span>Model: {currentRun.modelName || "Default Engine"}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Bottom Replay HUD */}
-      <ReplayHUD />
-    </>
+        {/* Historical Agent Runs List */}
+        <AgentRunsList runs={historyRuns} onSelectRun={handleSelectRun} loading={runsLoading} />
+      </div>
+    </div>
   );
 }

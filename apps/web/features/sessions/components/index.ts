@@ -2,6 +2,7 @@ export * from './OnboardingPanel';
 export * from './SessionsList';
 export * from './CreateSessionWizard';
 export * from './DashboardContent';
+export * from './SessionHeader';
 export * from './ActiveSessionTimeline';
 export * from './LiveTraceTree';
 export * from './TerminalPanel';
