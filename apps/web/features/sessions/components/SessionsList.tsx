@@ -59,32 +59,35 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b-[3px] border-black pb-6">
         <div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">AI Agent Sessions</h2>
-          <p className="text-sm text-primary-fixed mt-2 flex items-center gap-2">
-            <Activity size={16} /> Active Workspaces & Tasks
+          <h2 className="font-headline-xl text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic flex items-center gap-3">
+            <span className="bg-primary-fixed text-black px-2 not-italic">LIVE</span>
+            SESSIONS
+          </h2>
+          <p className="font-mono-label text-[10px] text-on-surface-variant mt-2 flex items-center gap-2 uppercase tracking-widest font-bold">
+            <Activity size={14} className="text-primary-fixed" /> Total Monitored Workspaces: {sessions.length}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="w-full sm:w-64 bg-surface-container-highest border-2 border-outline-variant text-on-surface-variant font-medium px-4 py-3 rounded-xl hover:border-primary-fixed/50 transition-all flex items-center justify-between group shadow-sm"
+            className="w-full sm:w-64 bg-surface-container-lowest border-[3px] border-black text-on-surface-variant font-mono-label font-bold text-xs uppercase tracking-wider px-4 py-3 hover:border-primary-fixed transition-all flex items-center justify-between group shadow-[4px_4px_0px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0px_0px_#000]"
           >
             <div className="flex items-center gap-3">
-              <Search size={18} className="text-on-surface-variant group-hover:text-primary-fixed transition-colors" />
-              <span className="text-sm">Search sessions...</span>
+              <Search size={16} className="text-on-surface-variant group-hover:text-primary-fixed transition-colors" />
+              <span>Search sessions...</span>
             </div>
-            <kbd className="hidden sm:flex items-center gap-1 rounded-md border border-outline-variant bg-surface-container px-1.5 py-0.5 font-sans text-xs font-bold text-on-surface-variant shadow-sm">
+            <kbd className="hidden sm:flex items-center gap-1 border-2 border-black bg-surface-container px-1.5 py-0.5 text-[9px] font-black text-white shadow-[2px_2px_0px_0px_#000]">
               <span>⌘</span>K
             </kbd>
           </button>
           <button
             onClick={() => onSelect('new')}
-            className="bg-primary-fixed text-on-primary font-bold px-6 py-3 rounded-xl shadow-[0_4px_14px_rgba(var(--color-primary-fixed),0.4)] hover:shadow-[0_6px_20px_rgba(var(--color-primary-fixed),0.6)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+            className="bg-primary-fixed text-black font-mono-label font-black text-xs uppercase tracking-wider px-6 py-3 border-[3px] border-black shadow-[4px_4px_0px_0px_#000] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0px_0px_#000] transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
           >
-            <span className="material-symbols-outlined font-bold">add</span>
-            Initialize New Session
+            <span className="material-symbols-outlined text-[18px] font-black">add</span>
+            INITIALIZE_NEW
           </button>
         </div>
       </div>
@@ -100,78 +103,99 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
         }}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      {/* Awwwards-Level Interactive List */}
+      <div className="space-y-4 relative">
         {sessions.map((session, index) => {
-          // Generate deterministic mock data based on index
           const agentStatus = session.agentStatus || mockStatuses[index % mockStatuses.length];
           const cost = session.metrics?.cost || ((index + 1) * 0.14).toFixed(4);
           const tokens = session.metrics?.tokens || ((index + 1) * 1420);
           const colors = statusColors[session.status] || statusColors.active;
 
           return (
-            <div
+            <div 
               key={session.id}
               onClick={() => onSelect(session.id)}
-              className="group bg-surface-container border-2 border-outline-variant hover:border-primary-fixed transition-all duration-300 ease-out cursor-pointer rounded-2xl flex flex-col h-full overflow-hidden shadow-2xl hover:shadow-[0_8px_30px_rgba(var(--color-primary-fixed),0.15)] hover:-translate-y-1.5"
+              className="group relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 bg-surface-container-lowest border-[3px] border-black cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[10px_10px_0px_0px_theme(colors.primary-fixed)] hover:border-primary-fixed z-10 hover:z-20 overflow-hidden"
             >
-              {/* Header */}
-              <div className="p-5 border-b-2 border-outline-variant group-hover:bg-primary-fixed/5 group-hover:border-primary-fixed/30 transition-colors bg-surface-container-highest flex justify-between items-start gap-4">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="p-2.5 bg-primary-fixed/10 text-primary-fixed rounded-xl shrink-0">
-                    <FolderGit2 size={24} />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-white text-lg truncate" title={session.repositoryFullName}>
-                      {session.repositoryFullName}
-                    </h3>
-                    <div className="flex items-center gap-2 text-on-surface-variant text-sm mt-1">
-                      <GitBranch size={14} />
-                      <span className="truncate">{session.branch}</span>
-                    </div>
+              {/* Awwards Slide-up Background Reveal */}
+              <div className="absolute inset-0 bg-primary-fixed translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] -z-10" />
+
+              {/* Left: Repo & Branch */}
+              <div className="flex items-center gap-4 lg:w-[30%]">
+                <div className="p-2.5 border-[3px] border-black bg-surface-container-highest group-hover:bg-black group-hover:scale-110 transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)]">
+                  <FolderGit2 size={20} className="text-primary-fixed" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-black text-white group-hover:text-black text-base truncate transition-colors duration-300">
+                    {session.repositoryFullName}
+                  </h3>
+                  <div className="flex items-center gap-2 text-on-surface-variant group-hover:text-black/70 text-xs mt-1 transition-colors duration-300 font-bold">
+                    <GitBranch size={14} />
+                    <span className="truncate">{session.branch}</span>
                   </div>
                 </div>
-                <div className={`shrink-0 px-3 py-1.5 rounded-lg border-2 text-xs font-bold capitalize ${colors.bg} ${colors.text} ${colors.border}`}>
+              </div>
+
+              {/* Middle: Status Badges */}
+              <div className="flex items-center gap-4 lg:w-[25%]">
+                <div className={`px-3 py-1.5 border-[3px] text-[10px] font-black uppercase tracking-widest ${colors.bg} ${colors.text} ${colors.border} group-hover:bg-black group-hover:text-primary-fixed group-hover:border-black transition-colors duration-300`}>
                   {session.status}
                 </div>
-              </div>
-
-              {/* Agent Status */}
-              <div className="p-5 flex-1 flex flex-col gap-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Cpu size={20} className="text-primary-fixed" />
-                    <span className="font-bold text-base text-white">AXRAY agent</span>
-                  </div>
-                  {getAgentStatusUI(agentStatus)}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div className="bg-background border-2 border-outline-variant rounded-xl p-4 flex flex-col gap-1.5 shadow-inner">
-                    <span className="text-xs font-semibold text-on-surface-variant flex items-center gap-1.5">
-                      <Terminal size={14} /> Tokens Used
-                    </span>
-                    <span className="font-bold text-white text-xl">{tokens.toLocaleString()}</span>
-                  </div>
-                  <div className="bg-background border-2 border-outline-variant rounded-xl p-4 flex flex-col gap-1.5 shadow-inner">
-                    <span className="text-xs font-semibold text-on-surface-variant flex items-center gap-1.5">
-                      <DollarSign size={14} /> Est. Cost
-                    </span>
-                    <span className="font-bold text-white text-xl">${cost}</span>
-                  </div>
+                
+                {/* Agent State (Dynamic overriding colors for hover) */}
+                <div className={`flex items-center gap-2 border-[3px] px-3 py-1.5 transition-colors duration-300 group-hover:bg-black group-hover:border-black ${
+                  agentStatus === 'running' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                  agentStatus === 'failed' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                  'bg-surface-container border-outline-variant text-on-surface-variant'
+                }`}>
+                  {agentStatus === 'running' && <Loader2 size={14} className="animate-spin group-hover:text-primary-fixed transition-colors" />}
+                  {agentStatus === 'failed' && <AlertCircle size={14} className="group-hover:text-primary-fixed transition-colors" />}
+                  {agentStatus !== 'running' && agentStatus !== 'failed' && <CheckCircle2 size={14} className="group-hover:text-primary-fixed transition-colors" />}
+                  <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-primary-fixed transition-colors duration-300">
+                    {agentStatus === 'running' ? 'Running' : agentStatus === 'failed' ? 'Failed' : 'Idle'}
+                  </span>
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="p-5 border-t-2 border-outline-variant bg-surface-container-highest flex items-center justify-between text-on-surface-variant text-xs font-semibold">
-                <div className="flex items-center gap-2">
-                  <Clock size={14} />
-                  <span>Updated {getFormattedDate(session.updatedAt)}</span>
+              {/* Right: Metrics */}
+              <div className="flex items-center gap-8 lg:w-[25%] lg:justify-end">
+                <div className="flex flex-col items-start lg:items-end">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-black/60 transition-colors duration-300">Tokens</span>
+                  <span className="font-black text-white group-hover:text-black text-lg transition-colors duration-300 font-mono-label flex items-center gap-1.5">
+                    <Terminal size={14} className="opacity-50" />
+                    {tokens.toLocaleString()}
+                  </span>
                 </div>
-                <ArrowRight size={18} className="group-hover:text-primary-fixed group-hover:translate-x-1.5 transition-all" />
+                <div className="flex flex-col items-start lg:items-end">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-black/60 transition-colors duration-300">Cost</span>
+                  <span className="font-black text-white group-hover:text-black text-lg transition-colors duration-300 font-mono-label flex items-center gap-1.5">
+                    <DollarSign size={14} className="opacity-50" />
+                    {cost}
+                  </span>
+                </div>
+              </div>
+
+              {/* Far Right: Arrow & Time */}
+              <div className="flex items-center gap-4 lg:w-[20%] justify-end">
+                <div className="text-right hidden sm:flex flex-col items-end">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-black/60 transition-colors duration-300">Updated</span>
+                  <span className="text-xs font-bold text-white group-hover:text-black transition-colors duration-300 whitespace-nowrap">{getFormattedDate(session.updatedAt)}</span>
+                </div>
+                <div className="w-12 h-12 shrink-0 border-[3px] border-black bg-surface-container-highest group-hover:bg-black text-white group-hover:text-primary-fixed flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:rotate-[-45deg] group-hover:scale-110 shadow-[4px_4px_0px_0px_#000] group-hover:shadow-[0px_0px_0px_0px_#000]">
+                  <ArrowRight size={24} className="transition-transform duration-500 group-hover:translate-x-1" />
+                </div>
               </div>
             </div>
           );
         })}
+        
+        {sessions.length === 0 && (
+          <div className="p-12 border-[3px] border-black bg-surface-container-lowest text-center">
+            <span className="text-on-surface-variant font-mono-label text-sm uppercase font-bold tracking-widest">
+              No sessions found. Initialize a new session to begin.
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
