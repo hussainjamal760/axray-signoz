@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { AgentRun, IAgentRun } from '../models/agent-run.model';
 import { getSession } from './sessions.service';
 import { Session } from '../models/session.model';
@@ -8,6 +9,9 @@ export const createRun = async (
   sessionId: string,
   prompt: string
 ): Promise<IAgentRun> => {
+  if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+    throw new AppError(400, 'Invalid Session ID format');
+  }
   const session = await getSession(userId, sessionId);
 
   const run = new AgentRun({
@@ -31,11 +35,17 @@ export const getRunsForSession = async (
   userId: string,
   sessionId: string
 ): Promise<IAgentRun[]> => {
+  if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+    throw new AppError(400, 'Invalid Session ID format');
+  }
   await getSession(userId, sessionId);
   return AgentRun.find({ sessionId }).sort({ createdAt: -1 });
 };
 
 export const getRun = async (userId: string, runId: string): Promise<IAgentRun> => {
+  if (!mongoose.Types.ObjectId.isValid(runId)) {
+    throw new AppError(400, 'Invalid Run ID format');
+  }
   const run = await AgentRun.findById(runId);
   if (!run) {
     throw new AppError(404, 'Agent run not found');

@@ -1,30 +1,58 @@
 import { apiClient } from '@/lib/api-client';
 import { SessionSummary } from '../types/sessions.types';
 
-export const getSessions = (): Promise<SessionSummary[]> => {
-  return apiClient<SessionSummary[]>('/api/sessions');
+interface BackendSession {
+  _id: string;
+  repositoryId: number;
+  repositoryFullName: string;
+  branch: string;
+  status: 'active' | 'archived';
+  latestRunId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapSession(session: BackendSession): SessionSummary {
+  return {
+    id: session._id,
+    repositoryId: session.repositoryId,
+    repositoryFullName: session.repositoryFullName,
+    branch: session.branch,
+    status: session.status,
+    latestRunId: session.latestRunId,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+  };
+}
+
+export const getSessions = async (): Promise<SessionSummary[]> => {
+  const data = await apiClient<BackendSession[]>('/api/sessions');
+  return data.map(mapSession);
 };
 
-export const getSessionById = (id: string): Promise<SessionSummary> => {
-  return apiClient<SessionSummary>(`/api/sessions/${id}`);
+export const getSessionById = async (id: string): Promise<SessionSummary> => {
+  const data = await apiClient<BackendSession>(`/api/sessions/${id}`);
+  return mapSession(data);
 };
 
-export const createSession = (data: {
+export const createSession = async (data: {
   repositoryId: number;
   repositoryFullName: string;
   branch: string;
 }): Promise<SessionSummary> => {
-  return apiClient<SessionSummary>('/api/sessions', {
+  const res = await apiClient<BackendSession>('/api/sessions', {
     method: 'POST',
     body: data,
   });
+  return mapSession(res);
 };
 
-export const updateSession = (id: string, data: { status: 'active' | 'archived' }): Promise<SessionSummary> => {
-  return apiClient<SessionSummary>(`/api/sessions/${id}`, {
+export const updateSession = async (id: string, data: { status: 'active' | 'archived' }): Promise<SessionSummary> => {
+  const res = await apiClient<BackendSession>(`/api/sessions/${id}`, {
     method: 'PATCH',
     body: data,
   });
+  return mapSession(res);
 };
 
 export const deleteSession = (id: string): Promise<void> => {

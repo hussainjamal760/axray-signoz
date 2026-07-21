@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Session, ISession } from '../models/session.model';
 import { AgentRun } from '../models/agent-run.model';
 import { AppError } from '../errors/AppError';
@@ -23,6 +24,9 @@ export const getUserSessions = async (userId: string): Promise<ISession[]> => {
 };
 
 export const getSession = async (userId: string, sessionId: string): Promise<ISession> => {
+  if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+    throw new AppError(400, 'Invalid Session ID format');
+  }
   const session = await Session.findById(sessionId).populate('latestRunId');
   if (!session || session.userId.toString() !== userId) {
     throw new AppError(404, 'Session not found');

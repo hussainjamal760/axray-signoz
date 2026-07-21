@@ -84,7 +84,12 @@ export function CreateSessionWizard() {
       },
       {
         onSuccess: (data) => {
-          router.push(`/sessions/${data.id}`);
+          if (data?.id) {
+            router.push(`/sessions/${data.id}`);
+          } else {
+            console.error("Created session response missing id:", data);
+            alert("Error: Session was created but response is missing an ID.");
+          }
         },
       }
     );

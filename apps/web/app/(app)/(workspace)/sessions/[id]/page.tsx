@@ -14,6 +14,7 @@ export default function SessionIdPage() {
   const params = useParams();
   const router = useRouter();
   const id = typeof params?.id === "string" ? params.id : "";
+  const isValidId = !!id && id !== "undefined" && id !== "null";
 
   const { data: session, isLoading, isError } = useSession(id);
 
@@ -27,7 +28,7 @@ export default function SessionIdPage() {
     );
   }
 
-  if (isError || !session) {
+  if (isError || !session || !isValidId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <h2 className="text-2xl font-black uppercase text-error mb-4">Workspace Error</h2>
