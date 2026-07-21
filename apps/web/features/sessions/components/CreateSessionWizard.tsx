@@ -29,7 +29,6 @@ export function CreateSessionWizard() {
   } = useBranches(owner, repoName);
 
   const [selectedBranch, setSelectedBranch] = useState("");
-  const [prompt, setPrompt] = useState("");
 
   // Mutation
   const { mutate: runSession, isPending: isCreating } = useCreateSession();
@@ -73,7 +72,7 @@ export function CreateSessionWizard() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedRepoObj || !selectedBranch || !prompt.trim() || isCreating) {
+    if (!selectedRepoObj || !selectedBranch || isCreating) {
       return;
     }
 
@@ -81,9 +80,7 @@ export function CreateSessionWizard() {
       {
         repositoryId: selectedRepoObj.id,
         repositoryFullName: selectedRepoObj.fullName,
-        owner: selectedRepoObj.owner,
-        branchName: selectedBranch,
-        prompt: prompt.trim(),
+        branch: selectedBranch,
       },
       {
         onSuccess: (data) => {
@@ -101,9 +98,9 @@ export function CreateSessionWizard() {
       <div className="flex justify-between items-start">
         <h3 className="text-2xl font-black uppercase flex items-center gap-3 text-on-surface">
           <span className="material-symbols-outlined text-primary-fixed !text-3xl">rocket_launch</span>
-          Initialize Coding Session
+          Create Workspace Session
         </h3>
-        <span className="font-mono-label text-xs font-bold bg-primary-fixed text-on-primary-fixed px-2 py-1">AGENT_V2</span>
+        <span className="font-mono-label text-xs font-bold bg-primary-fixed text-on-primary-fixed px-2 py-1">WORKSPACE_V2</span>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -121,19 +118,6 @@ export function CreateSessionWizard() {
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="font-mono-label text-xs font-black uppercase text-primary-fixed">Task Objective</label>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={isCreating}
-          className="w-full bg-background border-2 border-outline p-4 text-on-surface font-mono-label text-sm focus:border-primary-fixed ring-0 outline-none resize-none disabled:opacity-50"
-          placeholder="DESCRIBE_TASK_HERE (e.g. Fix authentication failing tests)..."
-          rows={4}
-          required
-        />
-      </div>
-
       <div className="flex justify-between items-center pt-6 border-t-2 border-outline-variant">
         <div className="flex gap-6">
           <div className="flex items-center gap-2 font-mono-label text-xs font-bold uppercase text-on-surface">
@@ -148,10 +132,10 @@ export function CreateSessionWizard() {
 
         <button
           type="submit"
-          disabled={isCreating || !selectedRepoObj || !selectedBranch || !prompt.trim()}
+          disabled={isCreating || !selectedRepoObj || !selectedBranch}
           className="px-10 py-4 bg-primary-fixed text-on-primary-fixed font-black uppercase text-lg border-[3px] border-background brutalist-shadow-sm flex items-center gap-4 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isCreating ? "Launching..." : "Run Agent"}
+          {isCreating ? "Creating..." : "Create Session"}
           <span className="material-symbols-outlined font-black">arrow_forward</span>
         </button>
       </div>

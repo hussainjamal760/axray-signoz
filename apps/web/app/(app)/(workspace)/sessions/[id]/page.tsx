@@ -6,11 +6,8 @@ import { TimelinePanel, CodeViewerPanel, IntelligencePanel, ReplayHUD } from "@/
 import Link from "next/link";
 
 const badgeStyles: Record<string, string> = {
-  pending: "bg-surface-container-highest border-outline text-on-surface-variant",
-  running: "bg-primary-fixed-dim/20 border-primary-fixed text-primary-fixed animate-pulse",
-  completed: "bg-green-500/10 border-green-600 text-green-600",
-  failed: "bg-error-container border-error text-error",
-  cancelled: "bg-surface-container border-outline text-on-surface-variant",
+  active: "bg-green-500/10 border-green-600 text-green-600",
+  archived: "bg-surface-container border-outline text-on-surface-variant",
 };
 
 export default function SessionIdPage() {
@@ -47,7 +44,7 @@ export default function SessionIdPage() {
     );
   }
 
-  const badgeClass = badgeStyles[session.status] || badgeStyles.pending;
+  const badgeClass = badgeStyles[session.status] || badgeStyles.active;
 
   return (
     <>
@@ -62,7 +59,7 @@ export default function SessionIdPage() {
             <span className="text-primary-fixed">#{session.id.slice(-6).toUpperCase()}</span>
           </div>
           <h1 className="font-headline-lg text-3xl md:text-headline-lg text-primary-fixed uppercase mb-4">
-            {session.prompt}
+            Session Workspace
           </h1>
           
           <div className="flex flex-wrap gap-4 items-center">
@@ -72,11 +69,11 @@ export default function SessionIdPage() {
             </div>
             <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-mono-label text-on-surface">
               <span className="material-symbols-outlined text-[16px] text-on-surface-variant">git_branch</span>
-              {session.branchName}
+              {session.branch}
             </div>
             <div className={`flex items-center gap-2 border-2 px-3 py-1 font-black font-mono-label text-mono-label ${badgeClass}`}>
               <span className="material-symbols-outlined text-[16px] fill-icon">
-                {session.status === "completed" ? "check_circle" : session.status === "failed" ? "error" : "schedule"}
+                {session.status === "active" ? "check_circle" : "archive"}
               </span>
               {session.status.toUpperCase()}
             </div>

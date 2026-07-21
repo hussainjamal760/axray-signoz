@@ -1,15 +1,12 @@
-export type SessionStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type SessionStatus = 'active' | 'archived';
 
 export interface SessionSummary {
   id: string;
   repositoryId: number;
   repositoryFullName: string;
-  owner: string;
-  branchName: string;
-  prompt: string;
+  branch: string;
   status: SessionStatus;
-  agentId?: string;
-  containerId?: string;
+  latestRunId?: string;
   createdAt: string;
   updatedAt: string;
 }

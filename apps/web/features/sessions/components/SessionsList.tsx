@@ -6,12 +6,8 @@ export interface SessionsListProps {
 }
 
 const statusColors: Record<SessionStatus, { bg: string; text: string; border: string }> = {
-  pending: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50' },
-  queued: { bg: 'bg-surface-container-highest', text: 'text-on-surface', border: 'border-outline' },
-  running: { bg: 'bg-primary-fixed-dim/20', text: 'text-primary-fixed', border: 'border-primary-fixed' },
-  completed: { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-600' },
-  failed: { bg: 'bg-error-container', text: 'text-error', border: 'border-error' },
-  cancelled: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50' }
+  active: { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-600' },
+  archived: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50' }
 };
 
 export function SessionsList({ sessions, onSelect }: SessionsListProps) {
@@ -60,7 +56,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
             </thead>
             <tbody className="divide-y-2 divide-outline-variant">
               {sessions.map((session) => {
-                const colors = statusColors[session.status] || statusColors.pending;
+                const colors = statusColors[session.status] || statusColors.active;
                 return (
                   <tr
                     key={session.id}
@@ -72,7 +68,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
                     </td>
                     <td className="px-6 py-5 text-on-surface-variant flex items-center gap-2 h-full">
                       <span className="material-symbols-outlined text-[16px] text-outline">git_branch</span>
-                      {session.branchName}
+                      {session.branch}
                     </td>
                     <td className="px-6 py-5">
                       <span className={`px-2.5 py-0.5 border-2 text-[10px] font-black uppercase tracking-wider ${colors.bg} ${colors.text} ${colors.border}`}>

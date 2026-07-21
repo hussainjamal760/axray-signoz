@@ -12,12 +12,23 @@ export const getSessionById = (id: string): Promise<SessionSummary> => {
 export const createSession = (data: {
   repositoryId: number;
   repositoryFullName: string;
-  owner: string;
-  branchName: string;
-  prompt: string;
+  branch: string;
 }): Promise<SessionSummary> => {
   return apiClient<SessionSummary>('/api/sessions', {
     method: 'POST',
     body: JSON.stringify(data),
+  });
+};
+
+export const updateSession = (id: string, data: { status: 'active' | 'archived' }): Promise<SessionSummary> => {
+  return apiClient<SessionSummary>(`/api/sessions/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+};
+
+export const deleteSession = (id: string): Promise<void> => {
+  return apiClient<void>(`/api/sessions/${id}`, {
+    method: 'DELETE',
   });
 };
