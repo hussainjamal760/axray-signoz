@@ -122,10 +122,14 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
                     {currentUserData?.user?.email || currentUserData?.user?.username || "Guest"}
                   </p>
                 </div>
-                <button className="flex items-center gap-3 px-4 py-3 hover:bg-primary-fixed hover:text-background transition-colors text-white font-bold text-sm text-left w-full group">
+                <Link 
+                  href="/account"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-primary-fixed hover:text-background transition-colors text-white font-bold text-sm text-left w-full group"
+                >
                   <span className="material-symbols-outlined text-[18px] group-hover:text-background text-on-surface-variant">person</span>
                   Account
-                </button>
+                </Link>
                 <button
                   onClick={() => {
                     setIsProfileMenuOpen(false);
