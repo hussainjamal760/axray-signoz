@@ -2,6 +2,9 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { SimpleLogRecordProcessor } from "@opentelemetry/sdk-logs";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
+import { HostMetrics } from "@opentelemetry/host-metrics";
 import { logs, SeverityNumber } from "@opentelemetry/api-logs";
 import { resourceFromAttributes, defaultResource } from "@opentelemetry/resources";
 import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
@@ -33,8 +36,20 @@ function getLogsUrl(): string {
   return "http://localhost:4318/v1/logs";
 }
 
+function getMetricsUrl(): string {
+  if (process.env.OTLP_ENDPOINT) {
+    return `${process.env.OTLP_ENDPOINT}/v1/metrics`;
+  }
+  const region = process.env.SIGNOZ_REGION;
+  if (region) {
+    return `https://ingest.${region}.signoz.cloud:443/v1/metrics`;
+  }
+  return "http://localhost:4318/v1/metrics";
+}
+
 const ingestUrl = getIngestUrl();
 const logsUrl = getLogsUrl();
+const metricsUrl = getMetricsUrl();
 
 // Build headers — include the ingestion key when sending to SigNoz Cloud.
 const exporterHeaders: Record<string, string> = {};
@@ -58,6 +73,12 @@ const sdk = new NodeSDK({
       headers: exporterHeaders,
     }),
   }),
+  metricReader: new PeriodicExportingMetricReader({
+    exporter: new OTLPMetricExporter({
+      url: metricsUrl,
+      headers: exporterHeaders,
+    }),
+  }),
 });
 
 /**
@@ -65,6 +86,10 @@ const sdk = new NodeSDK({
  */
 export function startTelemetry() {
   sdk.start();
+
+  // Start capturing Host Metrics (CPU, Memory, etc.)
+  const hostMetrics = new HostMetrics({ name: "axray-agent-host-metrics" });
+  hostMetrics.start();
 
   // Patch console to capture logs
   const logger = logs.getLogger("axray-agent");
