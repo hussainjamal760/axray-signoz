@@ -1,4 +1,17 @@
 import { SessionSummary, SessionStatus } from '../types/sessions.types';
+import { 
+  GitBranch, 
+  Clock, 
+  Terminal, 
+  Activity, 
+  DollarSign, 
+  Cpu, 
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  FolderGit2
+} from "lucide-react";
 
 export interface SessionsListProps {
   sessions: SessionSummary[];
@@ -6,8 +19,8 @@ export interface SessionsListProps {
 }
 
 const statusColors: Record<SessionStatus, { bg: string; text: string; border: string }> = {
-  active: { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-600' },
-  archived: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50' }
+  active: { bg: 'bg-green-500/10', text: 'text-green-500', border: 'border-green-500/30' },
+  archived: { bg: 'bg-surface-container-high', text: 'text-on-surface-variant', border: 'border-outline/50' }
 };
 
 export function SessionsList({ sessions, onSelect }: SessionsListProps) {
@@ -19,73 +32,116 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: true
       });
     } catch {
       return dateStr;
     }
   };
 
+  const getAgentStatusUI = (status: string) => {
+    switch(status) {
+      case 'running':
+        return <div className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20"><Loader2 size={14} className="animate-spin" /><span className="text-xs font-semibold tracking-wide">Running</span></div>;
+      case 'failed':
+        return <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2.5 py-1 rounded-md border border-red-500/20"><AlertCircle size={14} /><span className="text-xs font-semibold tracking-wide">Failed</span></div>;
+      default:
+        return <div className="flex items-center gap-1.5 text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-md border border-outline/50"><CheckCircle2 size={14} /><span className="text-xs font-semibold tracking-wide">Idle</span></div>;
+    }
+  };
+
+  const mockStatuses = ['running', 'idle', 'failed', 'idle'];
+
   return (
-    <div className="col-span-12 space-y-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="font-headline-lg text-3xl font-black uppercase text-on-surface">AI Agent Sessions</h2>
-          <p className="font-mono-label text-xs text-on-surface-variant mt-1">SELECT A ROW TO OPEN WORKSPACE OBSERVATORY</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">AI Agent Sessions</h2>
+          <p className="text-sm text-primary-fixed mt-2 flex items-center gap-2">
+            <Activity size={16} /> Active Workspaces & Tasks
+          </p>
         </div>
         <button
           onClick={() => onSelect('new')}
-          className="bg-primary-fixed text-on-primary-fixed font-black uppercase px-6 py-3 border-[3px] border-background brutalist-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center gap-2"
+          className="bg-primary-fixed text-on-primary font-bold px-6 py-3 rounded-lg shadow-lg hover:shadow-primary-fixed/20 hover:-translate-y-0.5 transition-all flex items-center gap-2"
         >
-          <span className="material-symbols-outlined font-black">add</span>
-          New Session
+          <span className="material-symbols-outlined font-bold">add</span>
+          Initialize New Session
         </button>
       </div>
 
-      <div className="bg-surface border-[3px] border-outline brutalist-shadow overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse font-mono-label text-xs">
-            <thead>
-              <tr className="bg-surface-container-high border-b-[3px] border-outline">
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Repository</th>
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Branch</th>
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Status</th>
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Started</th>
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Updated</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y-2 divide-outline-variant">
-              {sessions.map((session) => {
-                const colors = statusColors[session.status] || statusColors.active;
-                return (
-                  <tr
-                    key={session.id}
-                    onClick={() => onSelect(session.id)}
-                    className="hover:bg-surface-container cursor-pointer transition-colors group"
-                  >
-                    <td className="px-6 py-5 font-black text-on-surface group-hover:text-primary-fixed transition-colors text-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {sessions.map((session, index) => {
+          // Generate deterministic mock data based on index
+          const agentStatus = session.agentStatus || mockStatuses[index % mockStatuses.length];
+          const cost = session.metrics?.cost || ((index + 1) * 0.14).toFixed(4);
+          const tokens = session.metrics?.tokens || ((index + 1) * 1420);
+          const colors = statusColors[session.status] || statusColors.active;
+
+          return (
+            <div
+              key={session.id}
+              onClick={() => onSelect(session.id)}
+              className="group bg-surface-container border-2 border-outline-variant hover:border-primary-fixed transition-all duration-300 ease-out cursor-pointer rounded-2xl flex flex-col h-full overflow-hidden shadow-2xl hover:shadow-[0_8px_30px_rgba(var(--color-primary-fixed),0.15)] hover:-translate-y-1.5"
+            >
+              {/* Header */}
+              <div className="p-5 border-b-2 border-outline-variant group-hover:bg-primary-fixed/5 group-hover:border-primary-fixed/30 transition-colors bg-surface-container-highest flex justify-between items-start gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="p-2.5 bg-primary-fixed/10 text-primary-fixed rounded-xl shrink-0">
+                    <FolderGit2 size={24} />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-white text-lg truncate" title={session.repositoryFullName}>
                       {session.repositoryFullName}
-                    </td>
-                    <td className="px-6 py-5 text-on-surface-variant">
-                      {session.branch}
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className={`px-2.5 py-0.5 border-2 text-[10px] font-black uppercase tracking-wider ${colors.bg} ${colors.text} ${colors.border}`}>
-                        {session.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5 text-on-surface-variant">
-                      {getFormattedDate(session.createdAt)}
-                    </td>
-                    <td className="px-6 py-5 text-on-surface-variant">
-                      {getFormattedDate(session.updatedAt)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </h3>
+                    <div className="flex items-center gap-2 text-on-surface-variant text-sm mt-1">
+                      <GitBranch size={14} />
+                      <span className="truncate">{session.branch}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={`shrink-0 px-3 py-1.5 rounded-lg border-2 text-xs font-bold capitalize ${colors.bg} ${colors.text} ${colors.border}`}>
+                  {session.status}
+                </div>
+              </div>
+
+              {/* Agent Status */}
+              <div className="p-5 flex-1 flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Cpu size={20} className="text-primary-fixed" />
+                    <span className="font-bold text-base text-white">AXRAY agent</span>
+                  </div>
+                  {getAgentStatusUI(agentStatus)}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div className="bg-background border-2 border-outline-variant rounded-xl p-4 flex flex-col gap-1.5 shadow-inner">
+                    <span className="text-xs font-semibold text-on-surface-variant flex items-center gap-1.5">
+                      <Terminal size={14} /> Tokens Used
+                    </span>
+                    <span className="font-bold text-white text-xl">{tokens.toLocaleString()}</span>
+                  </div>
+                  <div className="bg-background border-2 border-outline-variant rounded-xl p-4 flex flex-col gap-1.5 shadow-inner">
+                    <span className="text-xs font-semibold text-on-surface-variant flex items-center gap-1.5">
+                      <DollarSign size={14} /> Est. Cost
+                    </span>
+                    <span className="font-bold text-white text-xl">${cost}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-5 border-t-2 border-outline-variant bg-surface-container-highest flex items-center justify-between text-on-surface-variant text-xs font-semibold">
+                <div className="flex items-center gap-2">
+                  <Clock size={14} />
+                  <span>Updated {getFormattedDate(session.updatedAt)}</span>
+                </div>
+                <ArrowRight size={18} className="group-hover:text-primary-fixed group-hover:translate-x-1.5 transition-all" />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

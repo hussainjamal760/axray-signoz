@@ -13,4 +13,11 @@ export interface SessionSummary {
   latestRunId?: string;
   createdAt: string;
   updatedAt: string;
+  // UI Mock fields
+  agentName?: string;
+  agentStatus?: 'running' | 'idle' | 'failed';
+  metrics?: {
+    cost: number;
+    tokens: number;
+  };
 }
