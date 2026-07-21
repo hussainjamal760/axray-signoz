@@ -56,10 +56,6 @@ export default function SessionIdPage() {
       {/* Header */}
       <header className="h-[72px] border-b-[3px] border-outline-variant flex items-center justify-between px-8 flex-shrink-0 z-10 bg-background">
         <div className="flex items-center gap-6">
-          <h2 className="text-3xl font-black uppercase tracking-tight text-on-background flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary-fixed !text-4xl">dashboard</span>
-            Session Dashboard
-          </h2>
           <div className="flex gap-2">
             <div className="bg-outline-variant text-on-surface px-3 py-1 font-mono-label text-xs font-bold">
               {session.repositoryFullName}
@@ -71,12 +67,6 @@ export default function SessionIdPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => router.push('/sessions')}
-            className="px-6 py-2 border-2 border-outline text-on-surface font-black uppercase hover:bg-surface-container transition-none"
-          >
-            Back
-          </button>
           <button className="px-6 py-2 bg-primary-fixed text-on-primary-fixed border-2 border-on-background font-black uppercase flex items-center gap-2 brutalist-shadow-sm transition-none hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none">
             <span className="material-symbols-outlined font-bold">settings</span>
             Options

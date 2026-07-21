@@ -15,7 +15,7 @@ export default function Home() {
       href={isAuthenticated ? "/sessions" : "/auth"}
       className="bg-primary-fixed text-on-primary px-6 py-2 border-2 border-on-background font-cta-label uppercase shadow-block shadow-block-hover transition-all"
     >
-      {isAuthenticated ? "Go to Dashboard" : "Login with GitHub"}
+      {isAuthenticated ? "View Sessions" : "Login with GitHub"}
     </Link>
   );
 
@@ -25,7 +25,7 @@ export default function Home() {
       className="bg-primary-fixed text-on-primary px-8 py-4 border-[3px] border-on-background font-cta-label text-lg uppercase shadow-block shadow-block-hover transition-all flex items-center gap-2"
     >
       {isAuthenticated ? (
-        "Go to Dashboard"
+        "View Sessions"
       ) : (
         <>
           Connect GitHub <span className="material-symbols-outlined">bolt</span>

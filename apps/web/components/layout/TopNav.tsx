@@ -14,6 +14,10 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
   const pathname = usePathname();
   const currentPath = (pathname?.split('/')[1] || 'dashboard').replace(/-/g, ' ');
 
+  const sessionMatch = pathname?.match(/^\/sessions\/([^/]+)/);
+  const isInsideSession = !!sessionMatch || pathname?.startsWith('/sessions/new');
+  const isSessionHub = pathname === "/sessions" || pathname === "/sessions/";
+
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { mutate: logout, isPending } = useLogout();
@@ -29,6 +33,30 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const renderBreadcrumb = () => {
+    if (isSessionHub) {
+      return (
+        <span className="text-xl md:text-2xl font-black text-white uppercase">
+          Sessions
+        </span>
+      );
+    }
+
+    if (isInsideSession) {
+      return (
+        <span className="text-xl md:text-2xl font-black text-white uppercase">
+          Session Dashboard
+        </span>
+      );
+    }
+
+    return (
+      <span className="text-xl md:text-2xl font-black text-white uppercase">
+        {currentPath}
+      </span>
+    );
+  };
+
   return (
     <header className="w-full h-16 shrink-0 border-b-[3px] border-primary-fixed bg-background flex justify-between items-center px-gutter z-50">
       <div className="flex items-center gap-4 md:gap-8 h-full">
@@ -41,18 +69,26 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
           </button>
         )}
 
-        {/* Desktop home button */}
-        <Link
-          href="/"
-          className="hidden lg:block material-symbols-outlined text-primary-fixed hover:text-white cursor-pointer transition-colors"
-        >
-          home
-        </Link>
-        <div className="flex items-center gap-2 font-headline-lg tracking-tighter">
-          <span className="text-xl md:text-2xl font-black text-on-surface-variant uppercase hidden md:inline">Workspace</span>
-          <span className="material-symbols-outlined text-xl md:text-2xl text-on-surface-variant hidden md:inline">chevron_right</span>
-          <span className="text-xl md:text-2xl font-black text-primary-fixed uppercase">{currentPath}</span>
-        </div>
+        {/* Dynamic Desktop Icon: Back to Sessions vs Home */}
+        {isInsideSession ? (
+          <Link
+            href="/sessions"
+            className="hidden lg:block material-symbols-outlined text-primary-fixed hover:text-white cursor-pointer transition-colors"
+            title="Back to Sessions"
+          >
+            arrow_back
+          </Link>
+        ) : (
+          <Link
+            href="/"
+            className="hidden lg:block material-symbols-outlined text-primary-fixed hover:text-white cursor-pointer transition-colors"
+            title="Home"
+          >
+            home
+          </Link>
+        )}
+
+        {renderBreadcrumb()}
       </div>
       <div className="flex items-center gap-4 md:gap-6 h-full">
         <div className="hidden lg:flex items-center bg-surface-container border-2 border-outline px-4 py-1.5 focus-within:border-primary-fixed transition-all">
