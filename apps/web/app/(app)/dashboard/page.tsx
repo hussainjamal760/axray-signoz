@@ -1,12 +1,14 @@
-import { AppLayout } from "@/components/layout/AppLayout";
-import { InitializePanel } from "@/features/sessions/components/InitializePanel";
-import { ActiveSessionTimeline } from "@/features/sessions/components/ActiveSessionTimeline";
-import { LiveTraceTree } from "@/features/sessions/components/LiveTraceTree";
-import { TerminalPanel } from "@/features/sessions/components/TerminalPanel";
-import { SessionHistory } from "@/features/sessions/components/SessionHistory";
+"use client";
+
+import { useSessions } from "@/features/sessions/hooks";
+import { OnboardingPanel, SessionsList } from "@/features/sessions/components";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { data: sessions = [], isLoading, isError } = useSessions();
+
   return (
     <>
       {/* Header */}
@@ -21,29 +23,40 @@ export default function DashboardPage() {
           <Link href="/repositories" className="px-6 py-2 border-2 border-outline text-on-surface font-black uppercase hover:bg-surface-container transition-colors inline-block">
             Connect Repo
           </Link>
-          <button className="px-6 py-2 bg-primary-fixed text-on-primary-fixed border-2 border-background font-black uppercase flex items-center gap-2 brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
-            <span className="material-symbols-outlined font-bold">add</span>
-            New Session
-          </button>
+          {sessions.length > 0 && (
+            <Link
+              href="/dashboard/new"
+              className="px-6 py-2 bg-primary-fixed text-on-primary-fixed border-2 border-background font-black uppercase flex items-center gap-2 brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            >
+              <span className="material-symbols-outlined font-bold">add</span>
+              New Session
+            </Link>
+          )}
         </div>
       </header>
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
-        <div className="grid grid-cols-12 gap-8">
-          
-          <InitializePanel />
-          
-          <ActiveSessionTimeline />
-          
-          <section className="col-span-12 grid grid-cols-12 gap-8">
-            <LiveTraceTree />
-            <TerminalPanel />
-          </section>
-          
-          <SessionHistory />
-          
-        </div>
+        {isLoading ? (
+          <div className="col-span-12 flex justify-center py-20">
+            <div className="font-mono-label text-sm uppercase animate-pulse text-primary-fixed font-black">
+              Loading Sessions...
+            </div>
+          </div>
+        ) : isError || sessions.length === 0 ? (
+          <OnboardingPanel />
+        ) : (
+          <SessionsList
+            sessions={sessions}
+            onSelect={(id) => {
+              if (id === 'new') {
+                router.push('/dashboard/new');
+              } else {
+                router.push(`/sessions/${id}`);
+              }
+            }}
+          />
+        )}
       </div>
       
       {/* Footer */}

@@ -7,6 +7,7 @@ import { sessionMiddleware } from './middlewares/session.middleware';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { authRouter } from './routes/auth.routes';
 import { githubRouter } from './routes/github.routes';
+import { sessionsRouter } from './routes/sessions.routes';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get('/health', (req: Request, res: Response) => {
 // App routes
 app.use('/api/auth', authRouter);
 app.use('/api/github', githubRouter);
+app.use('/api/sessions', sessionsRouter);
 
 // Global Error Handler (must be registered last)
 app.use(errorMiddleware);
