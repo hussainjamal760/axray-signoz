@@ -27,7 +27,7 @@ export const callback = async (req: Request, res: Response, next: NextFunction):
       if (err) {
         return next(err);
       }
-      res.redirect(`${config.FRONTEND_URL}/session`);
+      res.redirect(`${config.FRONTEND_URL}/sessions`);
     });
   } catch (error) {
     next(error);
