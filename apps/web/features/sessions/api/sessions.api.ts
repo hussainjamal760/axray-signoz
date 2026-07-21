@@ -16,14 +16,14 @@ export const createSession = (data: {
 }): Promise<SessionSummary> => {
   return apiClient<SessionSummary>('/api/sessions', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: data,
   });
 };
 
 export const updateSession = (id: string, data: { status: 'active' | 'archived' }): Promise<SessionSummary> => {
   return apiClient<SessionSummary>(`/api/sessions/${id}`, {
     method: 'PATCH',
-    body: JSON.stringify(data),
+    body: data,
   });
 };
 
