@@ -2,12 +2,14 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/features/sessions/hooks";
-import { SessionHeader } from "@/features/sessions/components";
-import { PromptComposer, AgentRunsList, RunStatusBadge } from "@/features/agent-runs/components";
-import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
-
-// Keep imports of the legacy three-pane layout panels to preserve them in the codebase
-import { TimelinePanel, CodeViewerPanel, IntelligencePanel, ReplayHUD } from "@/features/sessions/components";
+import { useRuns } from "@/features/agent-runs/hooks";
+import { AgentRunsList } from "@/features/agent-runs/components";
+import { 
+  InitializeContextPanel, 
+  TimelinePanel, 
+  LiveTraceTree, 
+  TerminalPanel, 
+} from "@/features/sessions/components";
 
 export default function SessionIdPage() {
   const params = useParams();
@@ -17,13 +19,12 @@ export default function SessionIdPage() {
 
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id);
   const { data: runs = [], isLoading: runsLoading } = useRuns(id);
-  const { mutate: createRun, isPending: isCreating } = useCreateRun(id);
 
   if (sessionLoading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-screen">
         <div className="font-mono-label text-sm uppercase animate-pulse text-primary-fixed font-black">
-          Loading Session workspace...
+          Loading Workspace Details...
         </div>
       </div>
     );
@@ -37,7 +38,7 @@ export default function SessionIdPage() {
           The requested session is either invalid or could not be loaded.
         </p>
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push("/session")}
           className="bg-primary-fixed text-on-primary px-6 py-3 border-2 border-on-background font-black uppercase brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
         >
           Back to Dashboard
@@ -46,59 +47,94 @@ export default function SessionIdPage() {
     );
   }
 
-  // Handle run creation
-  const handleCreateRun = (prompt: string) => {
-    createRun({ prompt });
-  };
-
-  // Find if there is an active run in execution (pending, queued, or running)
-  const currentRun = runs.find(
-    (r) => r.status === "running" || r.status === "pending" || r.status === "queued"
-  );
-  
-  // Filter history runs
-  const historyRuns = runs.filter((r) => r.id !== currentRun?.id);
-
   const handleSelectRun = (run: any) => {
     console.log("Selected run for tracing:", run);
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Session Workspace Header */}
-      <SessionHeader session={session} />
-
-      {/* Main Workspace Layout */}
-      <div className="flex-1 overflow-y-auto p-gutter space-y-8 custom-scrollbar bg-background" data-lenis-prevent="true">
-        
-        {/* Prompt Composer Section */}
-        <PromptComposer onSubmit={handleCreateRun} loading={isCreating} disabled={!!currentRun} />
-
-        {/* Current Active Run Panel */}
-        {currentRun && (
-          <div className="border-[3px] border-primary-fixed bg-surface p-6 brutalist-shadow">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-black uppercase text-primary-fixed flex items-center gap-2">
-                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
-                Current Active Execution
-              </h3>
-              <RunStatusBadge status={currentRun.status} />
+    <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden">
+      {/* Header */}
+      <header className="h-[72px] border-b-[3px] border-outline-variant flex items-center justify-between px-8 flex-shrink-0 z-10 bg-background">
+        <div className="flex items-center gap-6">
+          <h2 className="text-3xl font-black uppercase tracking-tight text-on-background flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary-fixed !text-4xl">dashboard</span>
+            Session Dashboard
+          </h2>
+          <div className="flex gap-2">
+            <div className="bg-outline-variant text-on-surface px-3 py-1 font-mono-label text-xs font-bold">
+              {session.repositoryFullName}
             </div>
-            
-            <div className="font-mono-label text-sm text-on-surface bg-surface-container p-4 border-2 border-outline-variant">
-              <p className="font-bold text-white mb-2 uppercase text-xs text-primary-fixed tracking-wider">// Prompt Input</p>
-              <p className="mb-4 text-white font-bold">{currentRun.prompt}</p>
-              <div className="flex justify-between items-center text-xs text-on-surface-variant pt-3 border-t border-outline-variant/30">
-                <span>Created: {new Date(currentRun.createdAt).toLocaleString()}</span>
-                <span>Model: {currentRun.modelName || "Default Engine"}</span>
-              </div>
+            <div className="bg-primary-fixed text-on-primary-fixed px-3 py-1 font-mono-label text-xs font-bold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">commit</span>
+              {session.branch}
             </div>
           </div>
-        )}
+        </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.push('/session')}
+            className="px-6 py-2 border-2 border-outline text-on-surface font-black uppercase hover:bg-surface-container transition-none"
+          >
+            Back
+          </button>
+          <button className="px-6 py-2 bg-primary-fixed text-on-primary-fixed border-2 border-on-background font-black uppercase flex items-center gap-2 brutalist-shadow-sm transition-none hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none">
+            <span className="material-symbols-outlined font-bold">settings</span>
+            Options
+          </button>
+        </div>
+      </header>
 
-        {/* Historical Agent Runs List */}
-        <AgentRunsList runs={historyRuns} onSelectRun={handleSelectRun} loading={runsLoading} />
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
+        <div className="grid grid-cols-12 gap-8">
+          
+          {/* Top Left: Initialize Context */}
+          <div className="col-span-12 lg:col-span-7">
+            <InitializeContextPanel />
+          </div>
+
+          {/* Top Right: Timeline */}
+          <div className="col-span-12 lg:col-span-5 h-full">
+            <TimelinePanel />
+          </div>
+
+          {/* Bottom Grid: Trace Tree and Terminal */}
+          <section className="col-span-12 grid grid-cols-12 gap-8">
+            {/* Live Trace Tree */}
+            <div className="col-span-12 md:col-span-5 h-full">
+              <LiveTraceTree />
+            </div>
+
+            {/* Terminal Window */}
+            <div className="col-span-12 md:col-span-7 h-full">
+              <TerminalPanel />
+            </div>
+          </section>
+
+          {/* Past Runs Section */}
+          <section className="col-span-12 mt-8">
+            <div className="bg-surface border-[3px] border-outline p-6 brutalist-shadow">
+              <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary-fixed">history</span>
+                Past Execution Runs
+              </h3>
+              <AgentRunsList runs={runs} onSelectRun={handleSelectRun} loading={runsLoading} />
+            </div>
+          </section>
+
+        </div>
       </div>
+
+      {/* Footer */}
+      <footer className="h-[56px] border-t-[3px] border-outline-variant bg-background flex items-center justify-between px-8 flex-shrink-0">
+        <p className="font-mono-label text-[10px] font-bold uppercase text-outline-variant">© 2024 AGENT_BLACK_BOX // RADICAL_SYNTAX_MODE</p>
+        <div className="hidden sm:flex items-center gap-8">
+          <a className="font-mono-label text-[10px] font-bold uppercase text-outline-variant hover:text-primary-fixed" href="#">Privacy</a>
+          <a className="font-mono-label text-[10px] font-bold uppercase text-outline-variant hover:text-primary-fixed" href="#">Terms</a>
+          <a className="font-mono-label text-[10px] font-bold uppercase text-outline-variant hover:text-primary-fixed" href="#">Sec_Policy</a>
+          <a className="font-mono-label text-[10px] font-bold uppercase text-primary-fixed border border-primary-fixed px-2 py-0.5" href="#">Github_Link</a>
+        </div>
+      </footer>
     </div>
   );
 }

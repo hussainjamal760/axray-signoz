@@ -145,6 +145,7 @@ export function CreateSessionWizard() {
       {
         onSuccess: (data) => {
           if (data?.id) {
+            // Redirect to the specific Session Dashboard command center
             router.push(`/sessions/${data.id}`);
           } else {
             console.error("Created session response missing id:", data);
@@ -159,13 +160,16 @@ export function CreateSessionWizard() {
   const isBranchDisabled = branchesLoading || isBranchesError || isReposError || branches.length === 0 || isCreatingSession || isBranchMutationPending;
 
   return (
-    <form onSubmit={handleSessionSubmit} className="col-span-12 lg:col-span-8 bg-surface border-[3px] border-outline p-8 flex flex-col gap-8 brutalist-shadow">
+    <form onSubmit={handleSessionSubmit} className="col-span-12 lg:col-span-8 glass-panel rounded-2xl p-8 flex flex-col gap-8 shadow-2xl mt-4">
       <div className="flex justify-between items-start">
-        <h3 className="text-2xl font-black uppercase flex items-center gap-3 text-on-surface">
-          <span className="material-symbols-outlined text-primary-fixed !text-3xl">rocket_launch</span>
-          Create Workspace Session
-        </h3>
-        <span className="font-mono-label text-xs font-bold bg-primary-fixed text-on-primary-fixed px-2 py-1">WORKSPACE_V2</span>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-2xl font-medium tracking-tight flex items-center gap-3 text-on-surface">
+            <span className="material-symbols-outlined text-primary-fixed !text-3xl font-light">rocket_launch</span>
+            Initialize Context
+          </h3>
+          <p className="text-sm text-on-surface-variant max-w-md">Select your repository and branch to instantiate a secure, isolated agent container.</p>
+        </div>
+        <span className="font-mono-label text-[10px] font-bold bg-primary-fixed/10 text-primary-fixed px-3 py-1.5 rounded-full border border-primary-fixed/20 tracking-widest uppercase">GPU_ACCELERATED</span>
       </div>
 
       {/* Toast Feedback Notification Banner */}
@@ -217,8 +221,9 @@ export function CreateSessionWizard() {
               </p>
             </div>
           ) : (
-            <div className="p-4 bg-surface-container border-2 border-outline space-y-4 brutalist-shadow-sm">
-              <h4 className="font-mono-label text-xs font-black uppercase text-primary-fixed">
+            <div className="p-5 bg-black/20 rounded-xl border border-outline-variant/30 space-y-4">
+              <h4 className="font-mono-label text-[11px] font-medium tracking-widest uppercase text-primary-fixed flex items-center gap-2">
+                <span className="material-symbols-outlined text-[14px]">alt_route</span>
                 New Branch Setup
               </h4>
 
@@ -230,7 +235,7 @@ export function CreateSessionWizard() {
                   onChange={(e) => setNewBranchName(e.target.value)}
                   placeholder="feature/auth"
                   disabled={isBranchMutationPending}
-                  className="w-full bg-background border-2 border-outline p-2.5 text-on-surface font-mono-label text-xs focus:border-primary-fixed ring-0 outline-none"
+                  className="w-full bg-background/50 border border-outline-variant/50 rounded-lg p-2.5 text-on-surface font-mono-label text-xs focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed/30 outline-none transition-all"
                 />
               </div>
 
@@ -240,7 +245,7 @@ export function CreateSessionWizard() {
                   value={newSourceBranch}
                   onChange={(e) => setNewSourceBranch(e.target.value)}
                   disabled={isBranchMutationPending || branches.length === 0}
-                  className="w-full bg-background border-2 border-outline p-2.5 text-on-surface font-bold text-xs focus:border-primary-fixed ring-0 outline-none disabled:opacity-50"
+                  className="w-full bg-background/50 border border-outline-variant/50 rounded-lg p-2.5 text-on-surface font-mono-label text-xs focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed/30 outline-none transition-all disabled:opacity-50"
                 >
                   {branches.length === 0 ? (
                     <option value="">No source branches available</option>
@@ -259,7 +264,7 @@ export function CreateSessionWizard() {
                   type="button"
                   onClick={handleCancelCreateBranch}
                   disabled={isBranchMutationPending}
-                  className="px-3 py-1.5 bg-surface-container-high border border-outline text-xs font-bold uppercase text-on-surface hover:bg-surface-container-highest transition-colors"
+                  className="px-4 py-2 text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors rounded-lg"
                 >
                   Cancel
                 </button>
@@ -267,7 +272,7 @@ export function CreateSessionWizard() {
                   type="button"
                   onClick={handleConfirmCreateBranch}
                   disabled={isBranchMutationPending || !newBranchName.trim() || branches.length === 0}
-                  className="px-4 py-1.5 bg-primary-fixed text-on-primary-fixed text-xs font-black uppercase border-2 border-background flex items-center gap-2 brutalist-shadow-sm disabled:opacity-50"
+                  className="px-5 py-2 bg-primary-fixed text-on-primary-fixed text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary-fixed-dim transition-colors disabled:opacity-50 shadow-lg shadow-primary-fixed/10"
                 >
                   {isBranchMutationPending ? (
                     <>
@@ -275,7 +280,7 @@ export function CreateSessionWizard() {
                       Creating...
                     </>
                   ) : (
-                    'Create'
+                    'Create Branch'
                   )}
                 </button>
               </div>
@@ -284,14 +289,14 @@ export function CreateSessionWizard() {
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-6 border-t-2 border-outline-variant">
-        <div className="flex gap-6">
-          <div className="flex items-center gap-2 font-mono-label text-xs font-bold uppercase text-on-surface">
-            <span className="material-symbols-outlined text-primary-fixed">bolt</span>
+      <div className="flex justify-between items-center pt-8 mt-2 border-t border-outline-variant/30">
+        <div className="flex gap-8 opacity-70">
+          <div className="flex items-center gap-2 font-mono-label text-[10px] tracking-widest uppercase text-on-surface-variant">
+            <span className="material-symbols-outlined text-[16px] font-light">bolt</span>
             Low_Latency
           </div>
-          <div className="flex items-center gap-2 font-mono-label text-xs font-bold uppercase text-on-surface">
-            <span className="material-symbols-outlined text-primary-fixed">visibility</span>
+          <div className="flex items-center gap-2 font-mono-label text-[10px] tracking-widest uppercase text-on-surface-variant">
+            <span className="material-symbols-outlined text-[16px] font-light">visibility</span>
             Full_Trace
           </div>
         </div>
@@ -299,10 +304,10 @@ export function CreateSessionWizard() {
         <button
           type="submit"
           disabled={isCreatingSession || isBranchMutationPending || !selectedRepoObj || !selectedBranch}
-          className="px-10 py-4 bg-primary-fixed text-on-primary-fixed font-black uppercase text-lg border-[3px] border-background brutalist-shadow-sm flex items-center gap-4 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3.5 bg-primary-fixed text-on-primary-fixed font-medium rounded-xl flex items-center gap-3 hover:bg-primary-fixed-dim transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-primary-fixed/20 active:scale-95"
         >
-          {isCreatingSession ? "Creating..." : "Create Session"}
-          <span className="material-symbols-outlined font-black">arrow_forward</span>
+          {isCreatingSession ? "Initializing..." : "Launch Workspace"}
+          <span className="material-symbols-outlined font-light">arrow_forward</span>
         </button>
       </div>
     </form>

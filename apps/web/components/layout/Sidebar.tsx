@@ -35,14 +35,14 @@ export function Sidebar({ isOpen }: SidebarProps) {
     return "flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-container border border-transparent font-bold uppercase transition-colors whitespace-nowrap overflow-hidden";
   };
 
-  const agentLink = activeSessionId ? `/sessions/${activeSessionId}` : "/dashboard";
+  const agentLink = activeSessionId ? `/sessions/${activeSessionId}` : "/session";
 
   return (
     <aside
       className={cn(
         "group h-full border-r-[3px] border-primary-fixed bg-background transition-all duration-300 ease-in-out z-40 overflow-hidden shrink-0",
-        isOpen 
-          ? "w-64 absolute lg:relative translate-x-0 lg:w-[72px] lg:hover:w-64" 
+        isOpen
+          ? "w-64 absolute lg:relative translate-x-0 lg:w-[72px] lg:hover:w-64"
           : "w-64 absolute lg:relative -translate-x-full lg:translate-x-0 border-r-0 lg:border-r-[3px] lg:w-[72px] lg:hover:w-64"
       )}
     >
@@ -59,6 +59,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+          <Link href="/session" className={getLinkClasses("/session")}>
+            <span className="material-symbols-outlined">dashboard</span>
+            Sessions
+          </Link>
           <Link href={agentLink} className={getLinkClasses(agentLink)}>
             <span className="material-symbols-outlined">smart_toy</span>
             Agent
