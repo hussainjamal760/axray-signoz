@@ -41,7 +41,6 @@ export function SessionHeader({ session }: { session: SessionSummary }) {
             <span className="font-bold text-white">{session.repositoryFullName}</span>
           </div>
           <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-mono-label text-on-surface">
-            <span className="material-symbols-outlined text-[16px] text-on-surface-variant">git_branch</span>
             <span className="font-bold text-white">{session.branch}</span>
           </div>
           <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-mono-label text-on-surface-variant">
