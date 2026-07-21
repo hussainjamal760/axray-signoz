@@ -1,0 +1,50 @@
+import { Request, Response, NextFunction } from 'express';
+import * as agentRunsService from '../services/agent-runs.service';
+import { AppError } from '../errors/AppError';
+
+export const createRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) {
+      throw new AppError(401, 'Unauthorized');
+    }
+
+    const { sessionId } = req.params;
+    const { prompt } = req.body;
+
+    const run = await agentRunsService.createRun(userId, sessionId, prompt);
+    res.status(201).json(run);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listRunsForSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) {
+      throw new AppError(401, 'Unauthorized');
+    }
+
+    const { sessionId } = req.params;
+    const runs = await agentRunsService.getRunsForSession(userId, sessionId);
+    res.json(runs);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRunById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) {
+      throw new AppError(401, 'Unauthorized');
+    }
+
+    const { id } = req.params;
+    const run = await agentRunsService.getRun(userId, id);
+    res.json(run);
+  } catch (error) {
+    next(error);
+  }
+};

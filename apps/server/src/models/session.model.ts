@@ -1,17 +1,14 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type SessionStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type SessionStatus = 'active' | 'archived';
 
 export interface ISession extends Document {
   userId: mongoose.Types.ObjectId;
   repositoryId: number;
   repositoryFullName: string;
-  owner: string;
-  branchName: string;
-  prompt: string;
+  branch: string;
   status: SessionStatus;
-  agentId?: string;
-  containerId?: string;
+  currentRunId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,20 +18,20 @@ const SessionSchema: Schema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     repositoryId: { type: Number, required: true },
     repositoryFullName: { type: String, required: true },
-    owner: { type: String, required: true },
-    branchName: { type: String, required: true },
-    prompt: { type: String, required: true },
+    branch: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled'],
-      default: 'pending',
+      enum: ['active', 'archived'],
+      default: 'active',
     },
-    agentId: { type: String },
-    containerId: { type: String },
+    currentRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
   },
   {
     timestamps: true,
   }
 );
+
+// Optimize session lists lookup
+SessionSchema.index({ userId: 1, createdAt: -1 });
 
 export const Session = mongoose.model<ISession>('Session', SessionSchema);

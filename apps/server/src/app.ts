@@ -8,6 +8,7 @@ import { errorMiddleware } from './middlewares/error.middleware';
 import { authRouter } from './routes/auth.routes';
 import { githubRouter } from './routes/github.routes';
 import { sessionsRouter } from './routes/sessions.routes';
+import { agentRunsRouter } from './routes/agent-runs.routes';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/sessions', sessionsRouter);
+app.use('/api/runs', agentRunsRouter);
 
 // Global Error Handler (must be registered last)
 app.use(errorMiddleware);
