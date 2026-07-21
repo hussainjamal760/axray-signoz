@@ -19,11 +19,11 @@ export const createSession = async (
 };
 
 export const getUserSessions = async (userId: string): Promise<ISession[]> => {
-  return Session.find({ userId }).populate('currentRunId').sort({ createdAt: -1 });
+  return Session.find({ userId }).populate('latestRunId').sort({ createdAt: -1 });
 };
 
 export const getSession = async (userId: string, sessionId: string): Promise<ISession> => {
-  const session = await Session.findById(sessionId).populate('currentRunId');
+  const session = await Session.findById(sessionId).populate('latestRunId');
   if (!session || session.userId.toString() !== userId) {
     throw new AppError(404, 'Session not found');
   }

@@ -21,7 +21,7 @@ export const createRun = async (
   // Atomically update the Session's current active run mapping
   await Session.updateOne(
     { _id: session._id },
-    { $set: { currentRunId: savedRun._id } }
+    { $set: { latestRunId: savedRun._id } }
   );
 
   return savedRun;
@@ -42,4 +42,26 @@ export const getRun = async (userId: string, runId: string): Promise<IAgentRun> 
   }
   await getSession(userId, run.sessionId.toString());
   return run;
+};
+
+export const updateRunStatus = async (
+  userId: string,
+  runId: string,
+  status: 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+): Promise<IAgentRun> => {
+  const run = await getRun(userId, runId);
+  run.status = status;
+  if (status === 'running' && !run.startedAt) {
+    run.startedAt = new Date();
+  }
+  if (
+    (status === 'completed' || status === 'failed' || status === 'cancelled') &&
+    !run.completedAt
+  ) {
+    run.completedAt = new Date();
+    if (run.startedAt) {
+      run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
+    }
+  }
+  return run.save();
 };

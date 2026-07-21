@@ -8,7 +8,7 @@ export interface ISession extends Document {
   repositoryFullName: string;
   branch: string;
   status: SessionStatus;
-  currentRunId?: mongoose.Types.ObjectId;
+  latestRunId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,7 +24,7 @@ const SessionSchema: Schema = new Schema(
       enum: ['active', 'archived'],
       default: 'active',
     },
-    currentRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
+    latestRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
   },
   {
     timestamps: true,

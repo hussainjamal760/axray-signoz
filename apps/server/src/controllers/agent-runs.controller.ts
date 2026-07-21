@@ -48,3 +48,20 @@ export const getRunById = async (req: Request, res: Response, next: NextFunction
     next(error);
   }
 };
+
+export const updateRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) {
+      throw new AppError(401, 'Unauthorized');
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const run = await agentRunsService.updateRunStatus(userId, id, status);
+    res.json(run);
+  } catch (error) {
+    next(error);
+  }
+};

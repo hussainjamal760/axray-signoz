@@ -13,3 +13,7 @@ export const updateSessionSchema = z.object({
 export const createAgentRunSchema = z.object({
   prompt: z.string({ message: 'prompt is required' }).trim().min(1, 'prompt cannot be empty'),
 });
+
+export const updateAgentRunSchema = z.object({
+  status: z.enum(['pending', 'queued', 'running', 'completed', 'failed', 'cancelled'] as const, { message: 'status is invalid' }),
+});
