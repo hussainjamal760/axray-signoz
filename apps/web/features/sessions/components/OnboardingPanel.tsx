@@ -28,7 +28,7 @@ export function OnboardingPanel() {
 
       {/* Large CTA Button */}
       <Link 
-        href="/session/new"
+        href="/sessions/new"
         className="px-12 py-5 bg-primary-fixed text-on-primary-fixed font-black text-xl uppercase tracking-wider border-[3px] border-background brutalist-shadow flex items-center gap-4 hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none transition-all active:translate-x-0 active:translate-y-0"
       >
         Start Your First Session

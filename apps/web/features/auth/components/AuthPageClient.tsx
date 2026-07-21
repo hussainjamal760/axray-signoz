@@ -12,7 +12,7 @@ export const AuthPageClient = () => {
 
   useEffect(() => {
     if (!isLoading && data?.authenticated) {
-      router.replace("/session");
+      router.replace("/sessions");
     }
   }, [isLoading, data, router]);
 

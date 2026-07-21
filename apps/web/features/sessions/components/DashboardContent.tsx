@@ -26,7 +26,7 @@ export function DashboardContent() {
       sessions={sessions}
       onSelect={(id) => {
         if (id === "new") {
-          router.push("/session/new");
+          router.push("/sessions/new");
         } else {
           router.push(`/sessions/${id}`);
         }

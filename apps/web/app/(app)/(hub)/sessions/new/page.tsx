@@ -13,7 +13,7 @@ export default function NewSessionPage() {
       <header className="relative z-10 h-[80px] flex items-center justify-between px-8">
         <div className="flex items-center gap-6">
           <Link
-            href="/session"
+            href="/sessions"
             className="flex items-center justify-center p-2 text-on-surface-variant hover:text-primary-fixed hover:bg-primary-fixed/10 rounded-full transition-colors"
           >
             <span className="material-symbols-outlined font-light">arrow_back</span>

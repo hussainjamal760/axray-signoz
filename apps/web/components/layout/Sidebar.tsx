@@ -35,7 +35,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
     return "flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-container border border-transparent font-bold uppercase transition-colors whitespace-nowrap overflow-hidden";
   };
 
-  const agentLink = activeSessionId ? `/sessions/${activeSessionId}` : "/session";
+  const agentLink = activeSessionId ? `/sessions/${activeSessionId}` : "/sessions";
 
   return (
     <aside

@@ -38,7 +38,7 @@ export default function SessionIdPage() {
           The requested session is either invalid or could not be loaded.
         </p>
         <button
-          onClick={() => router.push("/session")}
+          onClick={() => router.push("/sessions")}
           className="bg-primary-fixed text-on-primary px-6 py-3 border-2 border-on-background font-black uppercase brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
         >
           Back to Dashboard
@@ -72,7 +72,7 @@ export default function SessionIdPage() {
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => router.push('/session')}
+            onClick={() => router.push('/sessions')}
             className="px-6 py-2 border-2 border-outline text-on-surface font-black uppercase hover:bg-surface-container transition-none"
           >
             Back
