@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type SessionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type SessionStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export interface ISession extends Document {
   userId: mongoose.Types.ObjectId;
@@ -26,7 +26,7 @@ const SessionSchema: Schema = new Schema(
     prompt: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'running', 'completed', 'failed', 'cancelled'],
+      enum: ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled'],
       default: 'pending',
     },
     agentId: { type: String },

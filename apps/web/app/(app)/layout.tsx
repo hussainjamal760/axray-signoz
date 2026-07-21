@@ -1,16 +1,13 @@
-"use client";
-
-import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/features/auth/components/AuthGuard";
 
-export default function DashboardLayout({
+export default function AppGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <AuthGuard>
-      <AppLayout>{children}</AppLayout>
+      {children}
     </AuthGuard>
   );
 }

@@ -6,11 +6,12 @@ export interface SessionsListProps {
 }
 
 const statusColors: Record<SessionStatus, { bg: string; text: string; border: string }> = {
-  pending: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline' },
+  pending: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50' },
+  queued: { bg: 'bg-surface-container-highest', text: 'text-on-surface', border: 'border-outline' },
   running: { bg: 'bg-primary-fixed-dim/20', text: 'text-primary-fixed', border: 'border-primary-fixed' },
   completed: { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-600' },
   failed: { bg: 'bg-error-container', text: 'text-error', border: 'border-error' },
-  cancelled: { bg: 'bg-surface-container-highest', text: 'text-on-surface-variant', border: 'border-outline' }
+  cancelled: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50' }
 };
 
 export function SessionsList({ sessions, onSelect }: SessionsListProps) {
@@ -31,10 +32,10 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
 
   return (
     <div className="col-span-12 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="font-headline-lg text-3xl font-black uppercase text-on-surface">Active Workspaces</h2>
-          <p className="font-mono-label text-xs text-on-surface-variant mt-1">SELECT A SESSION TO INSPECT LOGS OR LIVE TRACES</p>
+          <h2 className="font-headline-lg text-3xl font-black uppercase text-on-surface">AI Agent Sessions</h2>
+          <p className="font-mono-label text-xs text-on-surface-variant mt-1">SELECT A ROW TO OPEN WORKSPACE OBSERVATORY</p>
         </div>
         <button
           onClick={() => onSelect('new')}
@@ -45,51 +46,51 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sessions.map((session) => {
-          const colors = statusColors[session.status] || statusColors.pending;
-          return (
-            <div
-              key={session.id}
-              onClick={() => onSelect(session.id)}
-              className="bg-surface border-[3px] border-outline p-6 flex flex-col justify-between cursor-pointer group hover:-translate-x-1 hover:-translate-y-1 transition-all brutalist-shadow hover:brutalist-shadow-lg"
-            >
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <span className="font-mono-label text-xs font-bold text-on-surface-variant">
-                    SESSION #{session.id.slice(-6).toUpperCase()}
-                  </span>
-                  <span className={`px-2.5 py-0.5 border-2 text-[10px] font-black uppercase tracking-wider ${colors.bg} ${colors.text} ${colors.border}`}>
-                    {session.status}
-                  </span>
-                </div>
-
-                <h3 className="font-headline-sm text-lg font-black uppercase text-on-surface line-clamp-1 mb-2 group-hover:text-primary-fixed transition-colors">
-                  {session.repositoryFullName}
-                </h3>
-
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="material-symbols-outlined text-[16px] text-on-surface-variant">git_branch</span>
-                  <span className="font-mono-label text-xs text-on-surface-variant">{session.branchName}</span>
-                </div>
-
-                <p className="font-mono-label text-xs text-on-surface-variant line-clamp-3 bg-surface-container border border-outline/30 p-3 mb-6">
-                  {session.prompt}
-                </p>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t border-outline/10">
-                <span className="font-mono-label text-[10px] text-on-surface-variant">
-                  {getFormattedDate(session.createdAt)}
-                </span>
-                <span className="font-mono-label text-xs font-black uppercase group-hover:underline text-primary-fixed flex items-center gap-1">
-                  Inspect
-                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                </span>
-              </div>
-            </div>
-          );
-        })}
+      <div className="bg-surface border-[3px] border-outline brutalist-shadow overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse font-mono-label text-xs">
+            <thead>
+              <tr className="bg-surface-container-high border-b-[3px] border-outline">
+                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Repository</th>
+                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Branch</th>
+                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Status</th>
+                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Started</th>
+                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Updated</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y-2 divide-outline-variant">
+              {sessions.map((session) => {
+                const colors = statusColors[session.status] || statusColors.pending;
+                return (
+                  <tr
+                    key={session.id}
+                    onClick={() => onSelect(session.id)}
+                    className="hover:bg-surface-container cursor-pointer transition-colors group"
+                  >
+                    <td className="px-6 py-5 font-black text-on-surface group-hover:text-primary-fixed transition-colors text-sm">
+                      {session.repositoryFullName}
+                    </td>
+                    <td className="px-6 py-5 text-on-surface-variant flex items-center gap-2 h-full">
+                      <span className="material-symbols-outlined text-[16px] text-outline">git_branch</span>
+                      {session.branchName}
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`px-2.5 py-0.5 border-2 text-[10px] font-black uppercase tracking-wider ${colors.bg} ${colors.text} ${colors.border}`}>
+                        {session.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5 text-on-surface-variant">
+                      {getFormattedDate(session.createdAt)}
+                    </td>
+                    <td className="px-6 py-5 text-on-surface-variant">
+                      {getFormattedDate(session.updatedAt)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

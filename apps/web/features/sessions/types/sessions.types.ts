@@ -1,4 +1,4 @@
-export type SessionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type SessionStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export interface SessionSummary {
   id: string;

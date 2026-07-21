@@ -7,9 +7,10 @@ import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
 interface TopNavProps {
   onToggleSidebar: () => void;
+  showSidebarButton?: boolean;
 }
 
-export function TopNav({ onToggleSidebar }: TopNavProps) {
+export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProps) {
   const pathname = usePathname();
   const currentPath = (pathname?.split('/')[1] || 'dashboard').replace(/-/g, ' ');
 
@@ -31,6 +32,14 @@ export function TopNav({ onToggleSidebar }: TopNavProps) {
   return (
     <header className="w-full h-16 shrink-0 border-b-[3px] border-primary-fixed bg-background flex justify-between items-center px-gutter z-50">
       <div className="flex items-center gap-4 md:gap-8 h-full">
+        {showSidebarButton && (
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden material-symbols-outlined text-on-surface-variant hover:text-white cursor-pointer transition-colors p-2 rounded-none"
+          >
+            menu
+          </button>
+        )}
 
         {/* Desktop home button */}
         <Link
