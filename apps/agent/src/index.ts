@@ -5,7 +5,7 @@ dotenv.config({ override: true });
 import { Command } from "commander";
 import * as path from "path";
 import { runAgent } from "./agent-runner";
-import { startTelemetry, shutdownTelemetry } from "./instrumentation";
+import { startTelemetry, shutdownTelemetry, agentRunsCounter, agentErrorsCounter, agentTokensInputCounter, agentTokensOutputCounter } from "./instrumentation";
 import { commitAndPushChanges } from "./github-commit";
 
 // Initialize OpenTelemetry immediately
@@ -76,6 +76,23 @@ async function main() {
     }
     console.log(`\nSummary:\n${result.summary}`);
 
+    const { logs, SeverityNumber } = require("@opentelemetry/api-logs");
+    const summaryLogger = logs.getLogger("axray-agent");
+    summaryLogger.emit({
+      severityNumber: SeverityNumber.INFO,
+      severityText: "INFO",
+      body: "Agent Run Complete",
+      attributes: {
+        "agent.run.status": result.success ? "SUCCESS" : "FAILED",
+        "agent.run.turns_used": result.totalTurns,
+        "agent.run.tokens_in": result.totalInputTokens,
+        "agent.run.tokens_out": result.totalOutputTokens,
+        "agent.run.files_modified": result.diff ? result.diff.filesChanged.length : 0,
+        "agent.run.task": opts.task,
+        "agent.run.model": opts.model,
+      }
+    });
+
     if (result.success && (opts.commit || opts.pushBranch)) {
       console.log("\n📦 Committing changes...");
       const commitRes = commitAndPushChanges({
@@ -86,6 +103,11 @@ async function main() {
       console.log(commitRes.message);
     }
 
+    // Increment metrics
+    agentRunsCounter.add(1, { status: result.success ? "success" : "failure" });
+    agentTokensInputCounter.add(result.totalInputTokens);
+    agentTokensOutputCounter.add(result.totalOutputTokens);
+
     await shutdownTelemetry();
     if (!result.success) {
       process.exit(1);
@@ -95,6 +117,7 @@ async function main() {
     if (err.stack) {
       console.error(err.stack);
     }
+    agentErrorsCounter.add(1);
     await shutdownTelemetry();
     process.exit(2);
   }

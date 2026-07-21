@@ -9,6 +9,7 @@ import { authRouter } from './routes/auth.routes';
 import { githubRouter } from './routes/github.routes';
 import { sessionsRouter } from './routes/sessions.routes';
 import { agentRunsRouter } from './routes/agent-runs.routes';
+import { signozRouter } from './routes/signoz.routes';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/runs', agentRunsRouter);
+app.use('/api/signoz', signozRouter);
 
 // Global Error Handler (must be registered last)
 app.use(errorMiddleware);
