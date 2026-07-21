@@ -60,14 +60,6 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
   return (
     <header className="w-full h-16 shrink-0 border-b-[3px] border-primary-fixed bg-background flex justify-between items-center px-gutter z-50">
       <div className="flex items-center gap-4 md:gap-8 h-full">
-        {showSidebarButton && (
-          <button
-            onClick={onToggleSidebar}
-            className="lg:hidden material-symbols-outlined text-on-surface-variant hover:text-white cursor-pointer transition-colors p-2 rounded-none"
-          >
-            menu
-          </button>
-        )}
 
         {/* Dynamic Desktop Icon: Back to Sessions vs Home */}
         {isInsideSession ? (
@@ -122,7 +114,7 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
                     {currentUserData?.user?.email || currentUserData?.user?.username || "Guest"}
                   </p>
                 </div>
-                <Link 
+                <Link
                   href="/account"
                   onClick={() => setIsProfileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-primary-fixed hover:text-background transition-colors text-white font-bold text-sm text-left w-full group"
