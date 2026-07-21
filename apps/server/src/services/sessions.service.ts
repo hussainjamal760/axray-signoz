@@ -29,6 +29,7 @@ export const createSession = async (
     });
 
     savedSession.containerId = provisionResult.containerId;
+    savedSession.containerStatus = provisionResult.containerStatus;
     return await savedSession.save();
   } catch (error: unknown) {
     // Rollback session document if container provisioning fails

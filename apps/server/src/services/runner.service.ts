@@ -32,14 +32,15 @@ export const executeRun = async (runId: string): Promise<void> => {
 
   try {
     // 1. Ensure Container exists and is running
-    const { containerId } = await containerService.ensureContainerRunning({
+    const { containerId, containerStatus } = await containerService.ensureContainerRunning({
       containerId: session.containerId,
       repositoryFullName: session.repositoryFullName,
       branch: session.branch,
     });
 
-    if (session.containerId !== containerId) {
+    if (session.containerId !== containerId || session.containerStatus !== containerStatus) {
       session.containerId = containerId;
+      session.containerStatus = containerStatus;
       await session.save();
     }
 

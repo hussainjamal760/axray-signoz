@@ -9,6 +9,8 @@
  * - Port binding and network configuration.
  */
 
+import { ContainerStatus } from '../models/session.model';
+
 export interface ContainerInfo {
   containerId: string;
   status: 'created' | 'running' | 'stopped' | 'removed';
@@ -33,19 +35,19 @@ export const ensureContainerRunning = async (params: {
   containerId?: string;
   repositoryFullName: string;
   branch: string;
-}): Promise<{ containerId: string }> => {
+}): Promise<{ containerId: string; containerStatus: ContainerStatus }> => {
   if (!params.containerId) {
     console.log(`[Container] Container missing for repo=${params.repositoryFullName}, creating new container...`);
     const container = await createContainer({
       repositoryFullName: params.repositoryFullName,
       branch: params.branch,
     });
-    return { containerId: container.containerId };
+    return { containerId: container.containerId, containerStatus: 'running' };
   }
 
   // TODO: Check container status via getContainer(params.containerId) and start if stopped
   console.log(`[Container] Container ${params.containerId} is running.`);
-  return { containerId: params.containerId };
+  return { containerId: params.containerId, containerStatus: 'running' };
 };
 
 export const getContainer = async (containerId: string): Promise<ContainerInfo> => {

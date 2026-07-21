@@ -1,4 +1,5 @@
 import * as containerService from './container.service';
+import { ContainerStatus } from '../models/session.model';
 
 /**
  * Provisioner Service
@@ -17,6 +18,7 @@ export interface SessionProvisionParams {
 
 export interface SessionProvisionResult {
   containerId: string;
+  containerStatus: ContainerStatus;
 }
 
 export const provisionSessionInfrastructure = async (
@@ -34,5 +36,6 @@ export const provisionSessionInfrastructure = async (
 
   return {
     containerId: container.containerId,
+    containerStatus: 'running',
   };
 };

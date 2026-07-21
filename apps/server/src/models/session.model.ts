@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export type SessionStatus = 'active' | 'archived';
+export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
 
 export interface ISession extends Document {
   userId: mongoose.Types.ObjectId;
@@ -9,6 +10,7 @@ export interface ISession extends Document {
   branch: string;
   status: SessionStatus;
   containerId?: string;
+  containerStatus?: ContainerStatus;
   workspaceInitialized: boolean;
   latestRunId?: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -27,6 +29,11 @@ const SessionSchema: Schema = new Schema(
       default: 'active',
     },
     containerId: { type: String },
+    containerStatus: {
+      type: String,
+      enum: ['creating', 'running', 'stopped', 'failed'],
+      default: 'creating',
+    },
     workspaceInitialized: { type: Boolean, default: false, required: true },
     latestRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
   },
