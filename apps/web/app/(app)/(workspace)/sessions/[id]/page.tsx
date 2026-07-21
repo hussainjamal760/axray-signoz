@@ -2,9 +2,11 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/features/sessions/hooks";
-import { useRuns } from "@/features/agent-runs/hooks";
-import { AgentRunsList } from "@/features/agent-runs/components";
+import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
+import { ACTIVE_RUN_STATUSES } from "@/features/agent-runs/types";
+import { AgentRunsList, PromptComposer } from "@/features/agent-runs/components";
 import { 
+  SessionHeader,
   InitializeContextPanel, 
   TimelinePanel, 
   LiveTraceTree, 
@@ -17,8 +19,25 @@ export default function SessionIdPage() {
   const id = typeof params?.id === "string" ? params.id : "";
   const isValidId = !!id && id !== "undefined" && id !== "null";
 
-  const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id);
-  const { data: runs = [], isLoading: runsLoading } = useRuns(id);
+  // First fetch runs to evaluate active run statuses
+  const { data: initialRuns = [] } = useRuns(id);
+
+  // Initial session fetch to evaluate infrastructure status
+  const { data: initialSession } = useSession(id);
+
+  // Evaluate polling strategy: poll if runs are active or infrastructure is provisioning
+  const isAnyRunActive = initialRuns.some(r => (ACTIVE_RUN_STATUSES as readonly string[]).includes(r.status));
+  const isInfraProvisioning = initialSession && (
+    initialSession.containerStatus === 'creating' ||
+    (!initialSession.workspaceInitialized && initialSession.containerStatus !== 'failed' && initialSession.containerStatus !== 'stopped')
+  );
+  const shouldPoll = isAnyRunActive || isInfraProvisioning;
+  const refetchInterval = shouldPoll ? 1500 : false;
+
+  // Generic hooks with dynamic refetchInterval options
+  const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval });
+  const { data: runs = [], isLoading: runsLoading } = useRuns(id, { refetchInterval });
+  const { mutate: createRun, isPending: isCreatingRun } = useCreateRun(id);
 
   if (sessionLoading) {
     return (
@@ -41,7 +60,7 @@ export default function SessionIdPage() {
           onClick={() => router.push("/sessions")}
           className="bg-primary-fixed text-on-primary px-6 py-3 border-2 border-on-background font-black uppercase brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
         >
-          Back to Dashboard
+          Back to Sessions
         </button>
       </div>
     );
@@ -51,28 +70,14 @@ export default function SessionIdPage() {
     console.log("Selected run for tracing:", run);
   };
 
+  const handlePromptSubmit = (promptText: string) => {
+    createRun({ prompt: promptText });
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden">
-      {/* Header */}
-      <header className="h-[72px] border-b-[3px] border-outline-variant flex items-center justify-between px-8 flex-shrink-0 z-10 bg-background">
-        <div className="flex items-center gap-6">
-          <div className="flex gap-2">
-            <div className="bg-outline-variant text-on-surface px-3 py-1 font-mono-label text-xs font-bold">
-              {session.repositoryFullName}
-            </div>
-            <div className="bg-primary-fixed text-on-primary-fixed px-3 py-1 font-mono-label text-xs font-bold flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">commit</span>
-              {session.branch}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="px-6 py-2 bg-primary-fixed text-on-primary-fixed border-2 border-on-background font-black uppercase flex items-center gap-2 brutalist-shadow-sm transition-none hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none">
-            <span className="material-symbols-outlined font-bold">settings</span>
-            Options
-          </button>
-        </div>
-      </header>
+      {/* Infrastructure Overview Header */}
+      <SessionHeader session={session} />
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
@@ -88,6 +93,15 @@ export default function SessionIdPage() {
             <TimelinePanel />
           </div>
 
+          {/* Prompt Composer Section */}
+          <div className="col-span-12">
+            <PromptComposer
+              onSubmit={handlePromptSubmit}
+              loading={isCreatingRun}
+              disabled={!session.workspaceInitialized || session.containerStatus !== 'running'}
+            />
+          </div>
+
           {/* Bottom Grid: Trace Tree and Terminal */}
           <section className="col-span-12 grid grid-cols-12 gap-8">
             {/* Live Trace Tree */}
@@ -101,12 +115,12 @@ export default function SessionIdPage() {
             </div>
           </section>
 
-          {/* Past Runs Section */}
+          {/* Execution History Section */}
           <section className="col-span-12 mt-8">
             <div className="bg-surface border-[3px] border-outline p-6 brutalist-shadow">
               <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary-fixed">history</span>
-                Past Execution Runs
+                Execution History
               </h3>
               <AgentRunsList runs={runs} onSelectRun={handleSelectRun} loading={runsLoading} />
             </div>

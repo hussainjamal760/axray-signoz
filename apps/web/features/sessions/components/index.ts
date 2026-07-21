@@ -11,3 +11,5 @@ export * from './CodeViewerPanel';
 export * from './IntelligencePanel';
 export * from './ReplayHUD';
 export * from './InitializeContextPanel';
+export * from './ContainerStatusBadge';
+export * from './WorkspaceStatusBadge';

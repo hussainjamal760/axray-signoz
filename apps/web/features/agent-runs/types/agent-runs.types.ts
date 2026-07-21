@@ -1,5 +1,7 @@
 export type RunStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
+export const ACTIVE_RUN_STATUSES = ['pending', 'queued', 'running'] as const;
+
 export interface AgentRunSummary {
   id: string;
   sessionId: string;

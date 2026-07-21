@@ -1,4 +1,5 @@
 export type SessionStatus = 'active' | 'archived';
+export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
 
 export interface SessionSummary {
   id: string;
@@ -6,6 +7,9 @@ export interface SessionSummary {
   repositoryFullName: string;
   branch: string;
   status: SessionStatus;
+  containerId?: string;
+  containerStatus?: ContainerStatus;
+  workspaceInitialized: boolean;
   latestRunId?: string;
   createdAt: string;
   updatedAt: string;

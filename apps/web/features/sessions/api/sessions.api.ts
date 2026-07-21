@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { SessionSummary } from '../types/sessions.types';
+import { SessionSummary, ContainerStatus } from '../types/sessions.types';
 
 interface BackendSession {
   _id: string;
@@ -7,6 +7,10 @@ interface BackendSession {
   repositoryFullName: string;
   branch: string;
   status: 'active' | 'archived';
+  containerId?: string;
+  containerStatus?: ContainerStatus;
+  workspaceReady?: boolean;
+  workspaceInitialized?: boolean;
   latestRunId?: string;
   createdAt: string;
   updatedAt: string;
@@ -19,6 +23,9 @@ function mapSession(session: BackendSession): SessionSummary {
     repositoryFullName: session.repositoryFullName,
     branch: session.branch,
     status: session.status,
+    containerId: session.containerId,
+    containerStatus: session.containerStatus,
+    workspaceInitialized: session.workspaceInitialized ?? session.workspaceReady ?? false,
     latestRunId: session.latestRunId,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
