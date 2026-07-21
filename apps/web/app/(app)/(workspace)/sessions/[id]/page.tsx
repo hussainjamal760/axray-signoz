@@ -4,13 +4,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/features/sessions/hooks";
 import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
 import { ACTIVE_RUN_STATUSES } from "@/features/agent-runs/types";
-import { AgentRunsList, PromptComposer } from "@/features/agent-runs/components";
-import { 
+import { AgentRunsList } from "@/features/agent-runs/components";
+import {
   SessionHeader,
-  InitializeContextPanel, 
-  TimelinePanel, 
-  LiveTraceTree, 
-  TerminalPanel, 
+  InitializeContextPanel,
+  TimelinePanel,
+  LiveTraceTree,
+  TerminalPanel,
 } from "@/features/sessions/components";
 
 export default function SessionIdPage() {
@@ -82,7 +82,7 @@ export default function SessionIdPage() {
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
         <div className="grid grid-cols-12 gap-8">
-          
+
           {/* Top Left: Initialize Context */}
           <div className="col-span-12 lg:col-span-7">
             <InitializeContextPanel />
@@ -91,15 +91,6 @@ export default function SessionIdPage() {
           {/* Top Right: Timeline */}
           <div className="col-span-12 lg:col-span-5 h-full">
             <TimelinePanel />
-          </div>
-
-          {/* Prompt Composer Section */}
-          <div className="col-span-12">
-            <PromptComposer
-              onSubmit={handlePromptSubmit}
-              loading={isCreatingRun}
-              disabled={!session.workspaceInitialized || session.containerStatus !== 'running'}
-            />
           </div>
 
           {/* Bottom Grid: Trace Tree and Terminal */}
