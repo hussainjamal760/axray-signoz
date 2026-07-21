@@ -13,3 +13,4 @@ export * from './ReplayHUD';
 export * from './InitializeContextPanel';
 export * from './ContainerStatusBadge';
 export * from './WorkspaceStatusBadge';
+export * from './SessionSearchModal';
