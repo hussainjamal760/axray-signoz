@@ -85,11 +85,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
         </nav>
 
         <div className="p-4 border-t-[3px] border-outline-variant bg-surface shrink-0 flex flex-col gap-4">
-          <button className="w-full bg-primary-fixed border-2 border-background py-3 font-black text-background uppercase tracking-widest text-xs brutalist-shadow-sm hover:-translate-y-0.5 hover:-translate-x-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center justify-start px-2 gap-3 overflow-hidden">
-            <span className="material-symbols-outlined shrink-0 text-sm ml-1">rocket_launch</span>
-            <span className="whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">Deploy Agent</span>
-          </button>
-          
           <div className="flex items-center gap-3 px-2 overflow-hidden">
             <div className="w-3 h-3 bg-primary-fixed shrink-0 animate-pulse ml-1.5"></div>
             <span className="font-mono-label text-[10px] font-bold uppercase tracking-widest text-primary-fixed whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">SYSTEM_READY</span>
