@@ -59,10 +59,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-          <Link href="/session" className={getLinkClasses("/session")}>
-            <span className="material-symbols-outlined">dashboard</span>
-            Sessions
-          </Link>
+
           <Link href={agentLink} className={getLinkClasses(agentLink)}>
             <span className="material-symbols-outlined">smart_toy</span>
             Agent
@@ -80,12 +77,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
             Analytics
           </Link>
 
-          <div className="h-px bg-outline-variant my-6"></div>
 
-          <Link href="#" className={getLinkClasses("/settings")}>
-            <span className="material-symbols-outlined">settings</span>
-            Settings
-          </Link>
         </nav>
 
         <div className="p-4 border-t-[3px] border-outline-variant bg-surface shrink-0 flex flex-col gap-4">
