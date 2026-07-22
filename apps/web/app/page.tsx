@@ -75,8 +75,7 @@ export default function Home() {
             <div className="hidden lg:flex gap-6 items-center shrink-0">
               <Link className="text-primary-fixed font-cta-label underline decoration-3 underline-offset-8 transition-transform active:translate-x-[2px] active:translate-y-[2px]" href="/">Home</Link>
               <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="/features">Features</Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">How it Works</Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">GitHub Integration</Link>
+              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="/how-it-works">How it Works</Link>
               <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">Docs</Link>
             </div>
 
@@ -247,7 +246,7 @@ export default function Home() {
         <section className="py-32 relative overflow-hidden bg-background">
           {/* Background noise/grid */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "linear-gradient(var(--color-primary-fixed) 1px, transparent 1px), linear-gradient(90deg, var(--color-primary-fixed) 1px, transparent 1px)", backgroundSize: "64px 64px" }}></div>
-          
+
           <div className="px-margin max-w-[1600px] mx-auto relative z-10">
             {/* Header */}
             <div className="flex flex-col xl:flex-row items-start xl:items-end justify-between mb-20 gap-12">
@@ -276,12 +275,12 @@ export default function Home() {
 
             {/* Asymmetric Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[280px]">
-              
+
               {/* Card 1: Agent Replay (Large) */}
               <div className="lg:col-span-2 lg:row-span-2 relative group cursor-pointer border-[3px] border-black bg-surface-container p-8 transition-all duration-500 overflow-hidden flex flex-col shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)] hover:shadow-[16px_16px_0px_0px_theme(colors.primary-fixed)] hover:-translate-y-2 hover:-translate-x-2">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_theme(colors.primary-fixed)_0%,_transparent_50%)] opacity-0 group-hover:opacity-20 transition-opacity duration-700"></div>
                 <div className="absolute top-4 right-4 font-headline-xl text-[180px] text-black/20 leading-none select-none group-hover:text-primary-fixed/20 transition-colors duration-500 -z-0">01</div>
-                
+
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex items-start justify-between mb-auto">
                     <div className="border-[3px] border-black bg-primary-fixed w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_#000] group-hover:rotate-12 transition-transform duration-300">
@@ -329,11 +328,11 @@ export default function Home() {
               <div className="lg:col-span-2 lg:row-span-1 relative group cursor-pointer border-[3px] border-black bg-surface-container-high p-8 transition-all duration-300 overflow-hidden flex flex-col justify-end hover:bg-secondary-fixed hover:-translate-y-1 shadow-[6px_6px_0px_0px_#000]">
                 {/* Scrolling Marquee Background on hover */}
                 <div className="absolute inset-0 bg-secondary-fixed opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0 flex items-center overflow-hidden">
-                   <div className="animate-marquee whitespace-nowrap flex text-[120px] font-headline-xl font-black text-black/10 uppercase tracking-tighter select-none">
-                     <span>SELF-CORRECTING LOOP • SELF-CORRECTING LOOP • </span>
-                   </div>
+                  <div className="animate-marquee whitespace-nowrap flex text-[120px] font-headline-xl font-black text-black/10 uppercase tracking-tighter select-none">
+                    <span>SELF-CORRECTING LOOP • SELF-CORRECTING LOOP • </span>
+                  </div>
                 </div>
-                
+
                 <div className="relative z-10 flex flex-col h-full md:flex-row md:items-end justify-between gap-6">
                   <div>
                     <div className="flex items-center gap-4 mb-6">
@@ -374,10 +373,10 @@ export default function Home() {
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 h-full">
                   <div className="flex items-center gap-6 md:gap-8">
                     <div className="w-16 h-16 md:w-24 md:h-24 bg-black border-[3px] border-primary-fixed rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
-                       {/* GitHub logo placeholder or icon */}
-                       <svg className="w-10 h-10 md:w-14 md:h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
-                         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                       </svg>
+                      {/* GitHub logo placeholder or icon */}
+                      <svg className="w-10 h-10 md:w-14 md:h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                      </svg>
                     </div>
                     <div>
                       <div className="flex items-center gap-4 mb-2">
