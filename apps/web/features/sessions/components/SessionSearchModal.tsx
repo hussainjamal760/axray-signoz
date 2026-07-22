@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Building2,
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SessionSummary } from "../types/sessions.types";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export interface SearchTag {
   label: string;
@@ -68,6 +69,8 @@ export interface SearchModalProps {
   hotkey?: string | null;
   closeOnEscape?: boolean;
   overlayClassName?: string;
+  /** Whether to show the Pages / Quick Actions section. Defaults to true. */
+  showPages?: boolean;
 }
 
 const ICON = "h-[18px] w-[18px] text-on-surface-variant";
@@ -94,12 +97,18 @@ export function SessionSearchModal({
   hotkey = "k",
   closeOnEscape = true,
   overlayClassName,
+  showPages = true,
 }: SearchModalProps) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultQuery);
   const [activeTags, setActiveTags] = useState<SearchTag[]>(tags);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isControlled = open !== undefined;
   const [internalOpen, setInternalOpen] = useState(defaultOpen);
@@ -141,6 +150,67 @@ export function SessionSearchModal({
     }
   }, [modal, actualOpen]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (!modal || !actualOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [modal, actualOpen]);
+
+  const pathname = usePathname();
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sessionMatch = pathname?.match(/^\/sessions\/([^/]+)/);
+    if (sessionMatch) {
+      const id = sessionMatch[1];
+      if (id !== "new") {
+        setActiveSessionId(id);
+      }
+    } else {
+      const saved = localStorage.getItem("lastActiveSessionId");
+      if (saved) {
+        setActiveSessionId(saved);
+      }
+    }
+  }, [pathname]);
+
+  const mergedQuickActions: QuickAction[] = useMemo(() => {
+    const pages: QuickAction[] = activeSessionId ? [
+      {
+        label: "Agent Dashboard",
+        icon: <span className="material-symbols-outlined text-[18px]">smart_toy</span>,
+        onClick: () => router.push(`/sessions/${activeSessionId}`),
+      },
+      {
+        label: "Observer View",
+        icon: <span className="material-symbols-outlined text-[18px]">play_circle</span>,
+        onClick: () => router.push(`/sessions/${activeSessionId}/observer`),
+      },
+      {
+        label: "Session Traces",
+        icon: <span className="material-symbols-outlined text-[18px]">rebase_edit</span>,
+        onClick: () => router.push(`/sessions/${activeSessionId}/traces`),
+      },
+      {
+        label: "Analytics",
+        icon: <span className="material-symbols-outlined text-[18px]">monitoring</span>,
+        onClick: () => router.push(`/sessions/${activeSessionId}/analytics`),
+      }
+    ] : [];
+
+    return [...quickActions, ...pages];
+  }, [activeSessionId, quickActions, router]);
+
+  const filteredQuickActions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return mergedQuickActions;
+    return mergedQuickActions.filter(a => a.label.toLowerCase().includes(q));
+  }, [query, mergedQuickActions]);
+
   const results: SearchResult[] = useMemo(() => {
     return sessions.map(session => ({
       name: session.repositoryFullName,
@@ -155,7 +225,7 @@ export function SessionSearchModal({
     let filtered = results;
 
     if (q) {
-      filtered = filtered.filter((r) => 
+      filtered = filtered.filter((r) =>
         `${r.name} ${r.meta ?? ""}`.toLowerCase().includes(q)
       );
     }
@@ -164,7 +234,7 @@ export function SessionSearchModal({
       // Basic mock filtering based on tags
       const hasActive = activeTags.some(t => t.label === "Active");
       const hasArchived = activeTags.some(t => t.label === "Archived");
-      
+
       if (hasActive && !hasArchived) {
         filtered = filtered.filter(r => r.originalSession?.status === 'active');
       } else if (!hasActive && hasArchived) {
@@ -206,13 +276,14 @@ export function SessionSearchModal({
       role={modal ? "dialog" : undefined}
       aria-modal={modal ? true : undefined}
       className={cn(
-        "mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border-2 backdrop-blur-xl",
-        "border-outline bg-surface/90 text-on-surface shadow-2xl",
+        "mx-auto w-full max-w-2xl rounded-2xl border-[3px] backdrop-blur-xl",
+        "border-outline bg-surface/95 text-on-surface shadow-2xl flex flex-col max-h-[85vh]",
         className
       )}
+      style={{ overflow: "clip" }}
     >
       {/* Search bar */}
-      <div className="flex items-center gap-2 border-b-2 border-outline-variant px-4 py-4">
+      <div className="flex shrink-0 items-center gap-2 border-b-[3px] border-outline-variant px-4 py-4">
         <Search className={ICON} />
         <input
           ref={inputRef}
@@ -237,142 +308,152 @@ export function SessionSearchModal({
               <SlidersHorizontal className="h-5 w-5" />
             </button>
             {filtersOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-outline-variant bg-surface-container-high p-2 shadow-xl z-50">
+              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border-[3px] border-outline-variant bg-surface-container-high p-2 shadow-xl z-50">
                 {tags.map((tag) => {
                   const isActive = activeTags.some((t) => t.label === tag.label);
                   return (
-                    <button
+                     <button
                       key={tag.label}
                       onClick={() => toggleTag(tag)}
                       className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-surface-container-highest"
                     >
-                      <div className="flex h-4 w-4 items-center justify-center rounded border border-outline-variant">
+                      <div className="flex h-4 w-4 items-center justify-center rounded border-[2px] border-outline-variant">
                         {isActive && <CheckCheck className="h-3 w-3 text-primary-fixed" />}
                       </div>
-                      <span className="text-on-surface">{tag.label}</span>
+                      <span className="text-on-surface font-bold text-xs uppercase">{tag.label}</span>
                     </button>
                   );
                 })}
               </div>
             )}
           </div>
-          <kbd className="flex items-center gap-1 rounded-md border border-outline-variant bg-surface-container px-2 py-1 font-sans text-xs font-bold text-on-surface-variant">
+          <kbd className="flex items-center gap-1 border-[2px] border-outline-variant bg-surface-container px-2 py-1 text-[10px] font-black text-on-surface-variant shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
             <span className="text-sm leading-none">⌘</span>
-            {modal && hotkey ? hotkey.toUpperCase() : "F"}
+            {modal && hotkey ? hotkey.toUpperCase() : "K"}
           </kbd>
         </div>
       </div>
 
-      {/* Tags */}
-      {activeTags.length > 0 ? (
-        <div className="border-b-2 border-outline-variant px-5 py-4 bg-surface-container-low">
-          <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Filter by</span>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {activeTags.map((tag, i) => (
-              <span
-                key={`${tag.label}-${i}`}
-                className="flex items-center gap-1.5 rounded-full bg-surface-container px-3 py-1.5 text-xs font-bold ring-1 ring-inset ring-outline-variant text-white"
-              >
-                {tag.icon}
-                <span>{tag.label}</span>
-                <button
-                  type="button"
-                  onClick={() => removeTag(i)}
-                  aria-label={`Remove ${tag.label}`}
-                  className="text-on-surface-variant transition-colors hover:text-red-400 ml-1"
+      {/* Scrollable Body Container */}
+      <div
+        className="flex-1 min-h-0 custom-scrollbar"
+        style={{ overflowY: "auto", overscrollBehavior: "contain" }}
+      >
+        {/* Tags */}
+        {activeTags.length > 0 ? (
+          <div className="border-b-[3px] border-outline-variant px-5 py-4 bg-surface-container-low">
+            <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Filter by</span>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {activeTags.map((tag, i) => (
+                <span
+                  key={`${tag.label}-${i}`}
+                  className="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 text-[10px] font-black uppercase ring-2 ring-inset ring-outline-variant text-white shadow-[2px_2px_0px_0px_#000]"
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </span>
+                  {tag.icon}
+                  <span>{tag.label}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeTag(i)}
+                    aria-label={`Remove ${tag.label}`}
+                    className="text-on-surface-variant transition-colors hover:text-primary-fixed ml-1"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {/* Results */}
+        {filteredResults.length > 0 ? (
+          <div className="border-b-[3px] border-outline-variant pb-2">
+            <p className="px-5 pt-4 pb-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+              Sessions&nbsp;&nbsp;<span className="text-primary-fixed">{filteredResults.length}</span>
+            </p>
+            <ul className="px-2">
+              {filteredResults.map((result, i) => (
+                <li key={`${result.name}-${i}`}>
+                  <button
+                    onClick={() => handleSelectResult(result, i)}
+                    className="group relative flex w-full items-center text-left px-4 py-3 transition-colors hover:bg-surface-container-highest focus:bg-surface-container-highest outline-none border-[3px] border-transparent hover:border-outline-variant hover:shadow-[3px_3px_0px_0px_#000]"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-background border-[2px] border-outline-variant shadow-[2px_2px_0px_0px_#000] group-hover:border-primary-fixed transition-colors">
+                      {result.icon}
+                    </span>
+                    <span className="ml-4 flex-1 truncate">
+                      <span className="block text-sm font-black text-white truncate uppercase tracking-widest group-hover:text-primary-fixed transition-colors">{result.name}</span>
+                      {result.meta ? <span className="block text-[10px] font-bold text-on-surface-variant mt-0.5 truncate uppercase tracking-wider">{result.meta}</span> : null}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="py-12 text-center text-on-surface-variant">
+            <p className="text-xs font-black uppercase tracking-widest">No sessions found matching your search.</p>
+          </div>
+        )}
+
+        {/* Pages / Quick actions */}
+        {showPages && filteredQuickActions.length > 0 ? (
+          <div className="px-2 py-4 bg-surface-container-low">
+            <p className="px-3 pb-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">Pages</p>
+            {filteredQuickActions.map((action, i) => (
+              <button
+                key={`${action.label}-${i}`}
+                type="button"
+                onClick={() => {
+                  action.onClick?.();
+                  setOpen(false);
+                }}
+                className="group relative flex w-full items-center px-4 py-3 text-left transition-colors hover:bg-surface-container-highest outline-none border-[3px] border-transparent hover:border-outline-variant hover:shadow-[3px_3px_0px_0px_#000]"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-background border-[2px] border-outline-variant shadow-[2px_2px_0px_0px_#000] text-on-surface-variant group-hover:text-primary-fixed group-hover:border-primary-fixed transition-colors">
+                  {action.icon ?? <Plus className="h-4 w-4" />}
+                </span>
+                <span className="pl-4 text-xs font-black uppercase tracking-widest text-white group-hover:text-primary-fixed transition-colors">{action.label}</span>
+                {action.shortcut ? (
+                  <kbd className="ml-auto flex h-[26px] w-[26px] items-center justify-center border-[2px] border-outline-variant bg-background text-[10px] font-black text-on-surface-variant shadow-[2px_2px_0px_0px_#000]">
+                    {action.shortcut}
+                  </kbd>
+                ) : null}
+              </button>
             ))}
           </div>
-        </div>
-      ) : null}
-
-      {/* Results */}
-      {filteredResults.length > 0 ? (
-        <div className="border-b-2 border-outline-variant">
-          <p className="px-5 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
-            Sessions&nbsp;&nbsp;<span className="text-primary-fixed">{filteredResults.length}</span>
-          </p>
-          <ul className="px-2 pb-2 max-h-[40vh] overflow-y-auto custom-scrollbar">
-            {filteredResults.map((result, i) => (
-              <li key={`${result.name}-${i}`}>
-                <button
-                  onClick={() => handleSelectResult(result, i)}
-                  className="group relative flex w-full items-center text-left rounded-xl px-4 py-3 transition-colors hover:bg-surface-container-highest focus:bg-surface-container-highest outline-none"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container border border-outline-variant">
-                    {result.icon}
-                  </span>
-                  <span className="ml-4 flex-1 truncate">
-                    <span className="block text-base font-bold text-white truncate">{result.name}</span>
-                    {result.meta ? <span className="block text-sm text-on-surface-variant mt-0.5 truncate">{result.meta}</span> : null}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div className="py-12 text-center text-on-surface-variant">
-          <p className="text-sm">No sessions found matching your search.</p>
-        </div>
-      )}
-
-      {/* Quick actions */}
-      {quickActions.length > 0 ? (
-        <div className="px-2 py-2 bg-surface-container-low">
-          <p className="px-3 pt-3 pb-2 text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Quick actions</p>
-          {quickActions.map((action, i) => (
-            <button
-              key={`${action.label}-${i}`}
-              type="button"
-              onClick={() => {
-                action.onClick?.();
-                setOpen(false);
-              }}
-              className="relative flex w-full items-center rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-container-highest"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface-container border border-outline-variant text-on-surface-variant">
-                {action.icon ?? <Plus className="h-4 w-4" />}
-              </span>
-              <span className="pl-3 text-sm font-semibold text-white">{action.label}</span>
-              {action.shortcut ? (
-                <kbd className="ml-auto flex h-[26px] w-[26px] items-center justify-center rounded-md bg-surface-container font-sans text-xs font-bold text-on-surface-variant border border-outline-variant">
-                  {action.shortcut}
-                </kbd>
-              ) : null}
-            </button>
-          ))}
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 
   if (!modal) return panel;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <div
       onClick={() => setOpen(false)}
+      onWheel={(e) => e.stopPropagation()}
       aria-hidden={!actualOpen}
       className={cn(
-        "fixed inset-0 z-50 flex items-start justify-center p-4 pt-[15vh] transition-opacity duration-200",
-        actualOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        "fixed inset-0 z-[99999] flex items-start justify-center p-4 pt-[15vh] transition-opacity duration-200",
+        actualOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         overlayClassName
       )}
+      style={actualOpen ? { overflow: "hidden" } : undefined}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className={cn("absolute inset-0 bg-black/60 backdrop-blur-sm", actualOpen ? "pointer-events-auto" : "pointer-events-none")} />
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
           "relative z-10 w-full max-w-2xl transition-all duration-200 ease-out",
-          actualOpen ? "translate-y-0 scale-100 opacity-100" : "-translate-y-4 scale-[0.98] opacity-0"
+          actualOpen ? "translate-y-0 scale-100 opacity-100 pointer-events-auto" : "-translate-y-4 scale-[0.98] opacity-0 pointer-events-none"
         )}
       >
         {panel}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

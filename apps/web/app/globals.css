@@ -130,6 +130,10 @@
   .active-turn-shadow {
     box-shadow: 4px 4px 0px 0px var(--color-primary-fixed);
   }
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary-fixed) var(--color-background);
+  }
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }

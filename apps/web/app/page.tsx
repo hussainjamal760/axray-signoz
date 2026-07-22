@@ -13,65 +13,95 @@ export default function Home() {
   const navCta = isLoading ? null : (
     <Link
       href={isAuthenticated ? "/sessions" : "/auth"}
-      className="bg-primary-fixed text-on-primary px-6 py-2 border-2 border-on-background font-cta-label uppercase shadow-block shadow-block-hover transition-all"
+      className="group relative inline-flex h-8 md:h-9 items-center justify-center overflow-hidden border-[3px] border-primary-fixed bg-background px-4 md:px-6 font-cta-label text-[10px] md:text-xs uppercase text-primary-fixed transition-all hover:scale-105 active:scale-95"
     >
-      {isAuthenticated ? "View Sessions" : "Login with GitHub"}
+      <span className="absolute inset-0 -translate-y-full bg-primary-fixed transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] group-hover:translate-y-0"></span>
+      <span className="relative z-10 flex items-center gap-2 transition-colors duration-300 group-hover:text-black font-black tracking-widest whitespace-nowrap">
+        {isAuthenticated ? "Sessions" : "Login GitHub"}
+        <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300">
+          arrow_outward
+        </span>
+      </span>
     </Link>
   );
 
   const heroCta = isLoading ? null : (
-    <Link
-      href={isAuthenticated ? "/sessions" : "/auth"}
-      className="bg-primary-fixed text-on-primary px-8 py-4 border-[3px] border-on-background font-cta-label text-lg uppercase shadow-block shadow-block-hover transition-all flex items-center gap-2"
-    >
-      {isAuthenticated ? (
-        "View Sessions"
-      ) : (
-        <>
-          Connect GitHub <span className="material-symbols-outlined">bolt</span>
-        </>
-      )}
-    </Link>
+    <div className="relative inline-block group">
+      <div className="absolute inset-0 translate-x-2 translate-y-2 border-[3px] border-primary-fixed bg-transparent transition-transform group-hover:translate-x-3 group-hover:translate-y-3 group-active:translate-x-0 group-active:translate-y-0"></div>
+      <Link
+        href={isAuthenticated ? "/sessions" : "/auth"}
+        className="relative flex h-14 md:h-16 items-center justify-center border-[3px] border-primary-fixed bg-background px-6 md:px-8 font-cta-label text-sm md:text-lg uppercase text-primary-fixed transition-all group-hover:-translate-x-1 group-hover:-translate-y-1 group-active:translate-x-0 group-active:translate-y-0 overflow-hidden"
+      >
+        <span className="absolute inset-0 -translate-y-full bg-primary-fixed transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] group-hover:translate-y-0"></span>
+        <span className="relative z-10 flex items-center gap-3 font-black tracking-widest transition-colors duration-300 group-hover:text-black">
+          {isAuthenticated ? "Access Sessions" : "Initialize Protocol"}
+          <span className="material-symbols-outlined text-[20px] md:text-[24px] group-hover:rotate-90 group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)]">
+            rocket_launch
+          </span>
+        </span>
+      </Link>
+    </div>
   );
 
   return (
     <>
-      {/* TopNavBar */}
-      <header className="w-full top-0 sticky z-50 bg-background border-b-[3px] border-on-background flat shadow-block">
-        <nav className="flex justify-between items-center w-full px-margin py-4 max-w-full mx-auto">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <Image
-                src="/logo/axray-logo.png"
-                alt="AXRAY Logo"
-                width={32}
-                height={32}
-                className="object-contain w-auto h-auto"
-              />
-              <span className="font-headline-lg text-headline-lg font-black tracking-tighter text-on-background uppercase hidden sm:inline-block">
-                AXRAY
-              </span>
-            </Link>
-            <div className="hidden md:flex gap-6 items-center">
-              <Link className="text-primary-fixed font-cta-label underline decoration-3 underline-offset-8 transition-transform active:translate-x-[2px] active:translate-y-[2px]" href="#">
-                Product
-              </Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">
-                Features
-              </Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">
-                How it Works
-              </Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">
-                GitHub Integration
-              </Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">
-                Docs
-              </Link>
-            </div>
+      {/* NotchNavBar */}
+      <header className="sticky top-0 z-50 h-16 flex w-full pointer-events-none">
+        
+        {/* Left Side Bar - Flexible width */}
+        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto">
+          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-primary-fixed" />
+        </div>
+
+        {/* Responsive Notch Container */}
+        <div className="flex h-16 relative z-10 shrink-0 flex-1 pointer-events-auto">
+          
+          {/* Left Curve */}
+          <div className="w-[30px] h-full relative shrink-0">
+            <div className="absolute inset-0 bg-background" style={{ clipPath: "path('M0 0 H30 V64 C15 64 15 40 0 40 Z')" }} />
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 30 64">
+              <path d="M0 38.5 C15 38.5 15 62.5 30 62.5" fill="none" className="stroke-primary-fixed" strokeWidth="3" />
+            </svg>
           </div>
-          {navCta}
-        </nav>
+
+          {/* Center Content Area */}
+          <div className="flex-1 h-full relative min-w-0 bg-background border-b-[3px] border-primary-fixed flex items-end justify-between pb-2.5 px-4 md:px-8">
+            
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 shrink-0 group">
+              <Image src="/logo/axray-logo.png" alt="AXRAY Logo" width={28} height={28} className="object-contain w-auto h-auto group-hover:rotate-12 transition-transform" />
+              <span className="font-headline-lg text-lg font-black tracking-tighter text-white uppercase hidden sm:inline-block">AXRAY</span>
+            </Link>
+
+            {/* Links */}
+            <div className="hidden lg:flex gap-6 items-center shrink-0">
+              <Link className="text-primary-fixed font-cta-label underline decoration-3 underline-offset-8 transition-transform active:translate-x-[2px] active:translate-y-[2px]" href="#">Product</Link>
+              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">Features</Link>
+              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">How it Works</Link>
+              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">GitHub Integration</Link>
+              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">Docs</Link>
+            </div>
+
+            {/* CTA */}
+            <div className="shrink-0 flex items-center mb-1">
+              {navCta}
+            </div>
+            
+          </div>
+
+          {/* Right Curve */}
+          <div className="w-[30px] h-full relative shrink-0">
+            <div className="absolute inset-0 bg-background" style={{ clipPath: "path('M0 0 H30 V40 C15 40 15 64 0 64 Z')" }} />
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 30 64">
+              <path d="M0 62.5 C15 62.5 15 38.5 30 38.5" fill="none" className="stroke-primary-fixed" strokeWidth="3" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Right Side Bar - Empty space */}
+        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto">
+          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-primary-fixed" />
+        </div>
       </header>
 
       <main>

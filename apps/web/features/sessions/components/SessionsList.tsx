@@ -11,10 +11,7 @@ import {
   AlertCircle,
   Loader2,
   FolderGit2,
-  Search
 } from "lucide-react";
-import { useState } from 'react';
-import { SessionSearchModal } from './SessionSearchModal';
 
 export interface SessionsListProps {
   sessions: SessionSummary[];
@@ -27,8 +24,6 @@ const statusColors: Record<SessionStatus, { bg: string; text: string; border: st
 };
 
 export function SessionsList({ sessions, onSelect }: SessionsListProps) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-
   const getFormattedDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
@@ -69,19 +64,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
             <Activity size={14} className="text-primary-fixed" /> Total Monitored Workspaces: {sessions.length}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="w-full sm:w-64 bg-surface-container-lowest border-[3px] border-black text-on-surface-variant font-mono-label font-bold text-xs uppercase tracking-wider px-4 py-3 hover:border-primary-fixed transition-all flex items-center justify-between group shadow-[4px_4px_0px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0px_0px_#000]"
-          >
-            <div className="flex items-center gap-3">
-              <Search size={16} className="text-on-surface-variant group-hover:text-primary-fixed transition-colors" />
-              <span>Search sessions...</span>
-            </div>
-            <kbd className="hidden sm:flex items-center gap-1 border-2 border-black bg-surface-container px-1.5 py-0.5 text-[9px] font-black text-white shadow-[2px_2px_0px_0px_#000]">
-              <span>⌘</span>K
-            </kbd>
-          </button>
+        <div className="flex items-center gap-4 w-full md:w-auto">
           <button
             onClick={() => onSelect('new')}
             className="bg-primary-fixed text-black font-mono-label font-black text-xs uppercase tracking-wider px-6 py-3 border-[3px] border-black shadow-[4px_4px_0px_0px_#000] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0px_0px_#000] transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
@@ -91,17 +74,6 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
           </button>
         </div>
       </div>
-
-      <SessionSearchModal
-        sessions={sessions}
-        open={isSearchOpen}
-        onOpenChange={setIsSearchOpen}
-        onSelectResult={(result) => {
-          if (result.originalSession) {
-            onSelect(result.originalSession.id);
-          }
-        }}
-      />
 
       {/* Awwwards-Level Interactive List */}
       <div className="space-y-4 relative">
