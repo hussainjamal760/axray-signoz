@@ -26,16 +26,16 @@ export default function Home() {
   );
 
   const heroCta = isLoading ? null : (
-    <div className="relative inline-block group">
-      <div className="absolute inset-0 translate-x-2 translate-y-2 border-[3px] border-primary-fixed bg-transparent transition-transform group-hover:translate-x-3 group-hover:translate-y-3 group-active:translate-x-0 group-active:translate-y-0"></div>
+    <div className="relative inline-block group w-full sm:w-auto">
+      <div className="absolute inset-0 translate-x-2 translate-y-2 border-[3px] border-primary-fixed bg-primary-fixed/20 transition-transform group-hover:translate-x-3 group-hover:translate-y-3 group-active:translate-x-0 group-active:translate-y-0"></div>
       <Link
         href={isAuthenticated ? "/sessions" : "/auth"}
-        className="relative flex h-14 md:h-16 items-center justify-center border-[3px] border-primary-fixed bg-background px-6 md:px-8 font-cta-label text-sm md:text-lg uppercase text-primary-fixed transition-all group-hover:-translate-x-1 group-hover:-translate-y-1 group-active:translate-x-0 group-active:translate-y-0 overflow-hidden"
+        className="relative flex h-16 md:h-20 items-center justify-center border-[3px] border-primary-fixed bg-background px-6 md:px-12 font-cta-label text-base md:text-xl uppercase text-primary-fixed transition-all group-hover:-translate-x-1 group-hover:-translate-y-1 group-active:translate-x-0 group-active:translate-y-0 overflow-hidden"
       >
-        <span className="absolute inset-0 -translate-y-full bg-primary-fixed transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] group-hover:translate-y-0"></span>
-        <span className="relative z-10 flex items-center gap-3 font-black tracking-widest transition-colors duration-300 group-hover:text-black">
-          {isAuthenticated ? "Access Sessions" : "Initialize Protocol"}
-          <span className="material-symbols-outlined text-[20px] md:text-[24px] group-hover:rotate-90 group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)]">
+        <span className="absolute inset-0 -translate-y-full bg-primary-fixed transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] group-hover:translate-y-0"></span>
+        <span className="relative z-10 flex items-center gap-3 font-black tracking-[0.2em] transition-colors duration-300 group-hover:text-black">
+          {isAuthenticated ? "ACCESS SESSIONS" : "INITIALIZE PROTOCOL"}
+          <span className="material-symbols-outlined text-[24px] md:text-[28px] group-hover:rotate-90 group-hover:scale-110 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)]">
             rocket_launch
           </span>
         </span>
@@ -47,15 +47,13 @@ export default function Home() {
     <>
       {/* NotchNavBar */}
       <header className="sticky top-0 z-50 h-16 flex w-full pointer-events-none">
-        
+
         {/* Left Side Bar - Flexible width */}
-        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto">
-          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-primary-fixed" />
-        </div>
+        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto border-b-[3px] border-primary-fixed"></div>
 
         {/* Responsive Notch Container */}
         <div className="flex h-16 relative z-10 shrink-0 flex-1 pointer-events-auto">
-          
+
           {/* Left Curve */}
           <div className="w-[30px] h-full relative shrink-0">
             <div className="absolute inset-0 bg-background" style={{ clipPath: "path('M0 0 H30 V64 C15 64 15 40 0 40 Z')" }} />
@@ -66,7 +64,7 @@ export default function Home() {
 
           {/* Center Content Area */}
           <div className="flex-1 h-full relative min-w-0 bg-background border-b-[3px] border-primary-fixed flex items-end justify-between pb-2.5 px-4 md:px-8">
-            
+
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0 group">
               <Image src="/logo/axray-logo.png" alt="AXRAY Logo" width={28} height={28} className="object-contain w-auto h-auto group-hover:rotate-12 transition-transform" />
@@ -86,7 +84,7 @@ export default function Home() {
             <div className="shrink-0 flex items-center mb-1">
               {navCta}
             </div>
-            
+
           </div>
 
           {/* Right Curve */}
@@ -99,181 +97,239 @@ export default function Home() {
         </div>
 
         {/* Right Side Bar - Empty space */}
-        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto">
-          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-primary-fixed" />
-        </div>
+        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto border-b-[3px] border-primary-fixed"></div>
       </header>
 
       <main>
-        {/* Hero Section */}
-        <section className="grid grid-cols-1 md:grid-cols-12 px-margin py-20 gap-gutter items-center">
-          <div className="md:col-span-6 space-y-8">
-            <div className="inline-block px-3 py-1 bg-secondary-container border-2 border-on-background">
-              <span className="font-mono-label text-mono-label text-on-secondary-container uppercase tracking-widest">
-                v2.0.0 - Live Observability
-              </span>
-            </div>
-            <h1 className="font-headline-xl text-headline-xl md:text-[64px] md:leading-[68px] text-on-background">
-              AI agents can write code. <br />
-              <span className="text-primary-fixed">But who watches them fail?</span>
-            </h1>
-            <p className="font-body-md text-body-md text-on-surface-variant max-w-xl">
-              The Flight Recorder for AI Coding Agents. Record every decision, tool call, and trace. Bridge the gap between autonomous execution and human oversight.
-            </p>
-            <div className="flex flex-wrap gap-6 pt-4">
-              {heroCta}
-              <button className="bg-surface text-on-surface px-8 py-4 border-[3px] border-on-background font-cta-label text-lg uppercase hover:bg-surface-container-high transition-all">
-                Watch Demo
-              </button>
-            </div>
+        {/* Brutalist Marquee Ticker */}
+        <div className="relative flex overflow-hidden border-b-[3px] border-primary-fixed bg-primary-fixed text-black py-2 md:py-3 z-10">
+          <div className="flex whitespace-nowrap animate-marquee font-mono-label text-[10px] md:text-xs font-black uppercase tracking-[0.3em]">
+            <span className="mx-4">✦ BUILT FOR WEMAKEDEVS HACKATHON</span>
+            <span className="mx-4">✦ TRACK 01: AI & AGENT OBSERVABILITY</span>
+            <span className="mx-4">✦ POWERED BY SIGNOZ</span>
+            <span className="mx-4">✦ THE FLIGHT RECORDER FOR AI AGENTS</span>
+            <span className="mx-4">✦ FULL OPENTELEMETRY INTEGRATION</span>
+            {/* Duplicated for seamless scrolling */}
+            <span className="mx-4">✦ BUILT FOR WEMAKEDEVS HACKATHON</span>
+            <span className="mx-4">✦ TRACK 01: AI & AGENT OBSERVABILITY</span>
+            <span className="mx-4">✦ POWERED BY SIGNOZ</span>
+            <span className="mx-4">✦ THE FLIGHT RECORDER FOR AI AGENTS</span>
+            <span className="mx-4">✦ FULL OPENTELEMETRY INTEGRATION</span>
           </div>
-          <div className="md:col-span-6 relative">
-            <div className="border-[3px] border-on-background bg-surface-container shadow-block relative aspect-video overflow-hidden flex flex-col">
-              <HeroSimulator />
+        </div>
+
+        {/* Hero Section */}
+        <section className="px-margin py-8 md:py-16 relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-surface-container-high via-background to-background">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 md:gap-gutter items-start max-w-[1600px] mx-auto relative z-10">
+            <div className="xl:col-span-7 space-y-10">
+
+              <div className="inline-flex items-center px-4 py-2 bg-secondary-container border-[3px] border-black shadow-[4px_4px_0px_0px_theme(colors.primary-fixed)]">
+                <div className="w-2 h-2 bg-primary-fixed rounded-full animate-pulse mr-3"></div>
+                <span className="font-mono-label text-xs md:text-sm text-on-secondary-container font-black uppercase tracking-[0.2em]">
+                  AXRAY v1.0.0 — Live Observability
+                </span>
+              </div>
+
+              <h1 className="font-headline-xl text-[56px] leading-[1.1] md:text-[88px] lg:text-[104px] text-white tracking-tighter uppercase">
+                AI agents <br />
+                write code. <br />
+                <span className="text-primary-fixed bg-black inline-block px-4 mt-2 border-[3px] border-primary-fixed shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)] -rotate-1 hover:rotate-0 transition-transform duration-300">
+                  Who watches them fail?
+                </span>
+              </h1>
+
+              <p className="font-body-md text-lg md:text-2xl text-on-surface-variant max-w-2xl font-medium leading-relaxed">
+                The absolute truth, traced. Record every decision, tool call, and file diff. Bridge the gap between autonomous execution and human oversight using the power of <span className="text-white font-bold">SigNoz</span> and <span className="text-white font-bold">OpenTelemetry</span>.
+              </p>
+
+              <div className="flex flex-col sm:flex-row flex-wrap gap-6 md:gap-8 pt-4">
+                {heroCta}
+
+                <div className="relative inline-block group w-full sm:w-auto">
+                  <div className="absolute inset-0 translate-x-2 translate-y-2 bg-surface-container-high transition-transform group-hover:translate-x-3 group-hover:translate-y-3 group-active:translate-x-0 group-active:translate-y-0"></div>
+                  <button className="relative w-full sm:w-auto bg-surface text-white px-8 h-16 md:h-20 border-[3px] border-outline-variant font-cta-label text-base md:text-xl font-black uppercase tracking-widest transition-all hover:bg-surface-container hover:border-white hover:text-primary-fixed group-hover:-translate-x-1 group-hover:-translate-y-1 group-active:translate-x-0 group-active:translate-y-0 flex items-center justify-center gap-3">
+                    <span className="material-symbols-outlined text-[24px]">play_circle</span>
+                    Watch Demo
+                  </button>
+                </div>
+              </div>
+
+              {/* Partners Block */}
+              <div className="pt-12 border-t-[3px] border-outline-variant/30 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <span className="font-mono-label text-[10px] text-on-surface-variant uppercase font-black tracking-widest">
+                  Built proudly for
+                </span>
+                <div className="flex items-center gap-4">
+                  <div className="relative group/logo">
+                    <div className="absolute inset-0 bg-primary-fixed translate-x-1 translate-y-1 transition-transform group-hover/logo:translate-x-2 group-hover/logo:translate-y-2"></div>
+                    <div className="relative border-[3px] border-black bg-white p-2 w-32 h-12 flex items-center justify-center transition-transform group-hover/logo:-translate-x-1 group-hover/logo:-translate-y-1">
+                      <Image src="/logo/wemakedev.jpg" alt="WeMakeDevs" width={100} height={40} className="object-contain" />
+                    </div>
+                  </div>
+                  <span className="text-outline-variant">✕</span>
+                  <div className="relative group/logo">
+                    <div className="absolute inset-0 bg-primary-fixed translate-x-1 translate-y-1 transition-transform group-hover/logo:translate-x-2 group-hover/logo:translate-y-2"></div>
+                    <div className="relative border-[3px] border-black bg-white p-2 w-32 h-12 flex items-center justify-center transition-transform group-hover/logo:-translate-x-1 group-hover/logo:-translate-y-1">
+                      <Image src="/logo/signoz.jpg" alt="SigNoz" width={100} height={40} className="object-contain" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
-            {/* Floating Card */}
-            <div className="absolute -bottom-6 -left-6 border-[3px] border-on-background bg-surface-bright p-4 max-w-xs shadow-block hidden lg:block z-20">
-              <p className="font-mono-label text-xs text-on-surface uppercase mb-2">Active Agent: CodeGen-X4</p>
-              <div className="flex items-center gap-2 text-primary-fixed">
-                <span className="material-symbols-outlined text-sm">terminal</span>
-                <span className="font-mono-label text-xs">Writing: src/api/router.ts</span>
+
+            <div className="xl:col-span-5 relative mt-6 xl:-mt-8">
+              <div className="border-[3px] border-black bg-surface-container shadow-[12px_12px_0px_0px_theme(colors.primary-fixed)] relative aspect-[4/3] md:aspect-video xl:aspect-[4/5] overflow-hidden flex flex-col group/sim">
+                <div className="absolute inset-0 bg-primary-fixed/5 z-0"></div>
+                <HeroSimulator />
+
+                {/* Tech Stack Floating Tags */}
+                <div className="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-2 opacity-0 group-hover/sim:opacity-100 transition-opacity duration-300">
+                  <span className="bg-black text-white border-[2px] border-primary-fixed px-3 py-1 font-mono-label text-[10px] font-black uppercase tracking-widest shadow-[3px_3px_0px_0px_theme(colors.primary-fixed)]">
+                    SigNoz MCP Server
+                  </span>
+                  <span className="bg-black text-white border-[2px] border-primary-fixed px-3 py-1 font-mono-label text-[10px] font-black uppercase tracking-widest shadow-[3px_3px_0px_0px_theme(colors.primary-fixed)]">
+                    OpenTelemetry JS
+                  </span>
+                </div>
+              </div>
+
+              {/* Floating Status Card */}
+              <div className="absolute -bottom-8 -left-8 border-[3px] border-black bg-surface p-5 min-w-[280px] shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)] hidden lg:block z-30 hover:-translate-y-2 transition-transform duration-300">
+                <p className="font-mono-label text-[10px] text-on-surface-variant font-black tracking-widest uppercase mb-3">Live Intercept</p>
+                <div className="flex items-center justify-between border-b-[3px] border-outline-variant pb-3 mb-3">
+                  <span className="font-bold text-white uppercase text-sm">Agent: CodeGen-X4</span>
+                  <div className="w-3 h-3 bg-primary-fixed border-[2px] border-black rounded-none animate-pulse"></div>
+                </div>
+                <div className="flex items-start gap-3 text-primary-fixed">
+                  <span className="material-symbols-outlined text-lg mt-0.5">terminal</span>
+                  <div className="flex flex-col">
+                    <span className="font-mono-label text-xs font-bold truncate max-w-[200px]">Running self-check.ts</span>
+                    <span className="font-mono-label text-[10px] text-on-surface-variant mt-1">Querying SigNoz traces...</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Problem Section */}
-        <section className="border-y-[3px] border-on-background bg-surface-container py-24">
-          <div className="px-margin max-w-4xl mx-auto text-center space-y-8">
-            <h2 className="font-headline-lg text-headline-lg uppercase text-on-background">The Black Box Problem</h2>
-            <div className="w-24 h-1 bg-primary-fixed mx-auto"></div>
-            <p className="font-body-md text-xl text-on-surface leading-relaxed">
-              While AI agents are powerful enough to build entire features, their failures remain{" "}
-              <span className="bg-primary-fixed text-on-primary px-1">opaque, frustrating, and expensive</span>. Without deep observability, a failed PR from an agent is just a wall of logs. We give you the &quot;flight recorder&quot; to see exactly where the logic drifted.
+        {/* The Black Box Problem Section */}
+        <section className="border-y-[3px] border-black bg-surface-container py-24 relative overflow-hidden">
+          {/* Brutalist Grid Background Pattern */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "radial-gradient(var(--color-outline-variant) 2px, transparent 2px)", backgroundSize: "32px 32px" }}></div>
+
+          <div className="px-margin max-w-5xl mx-auto text-center space-y-12 relative z-10">
+            <div className="inline-block border-[3px] border-error text-error bg-error/10 px-6 py-2 font-mono-label text-sm font-black uppercase tracking-[0.2em] shadow-[4px_4px_0px_0px_theme(colors.error)]">
+              The Reality of Autonomous Coding
+            </div>
+
+            <h2 className="font-headline-xl text-[40px] md:text-[64px] leading-none uppercase text-white tracking-tighter">
+              The <span className="bg-error text-black px-4 ml-2 shadow-[6px_6px_0px_0px_#000]">Black Box</span> Problem
+            </h2>
+
+            <div className="w-32 h-[3px] bg-primary-fixed mx-auto"></div>
+
+            <p className="font-body-md text-xl md:text-3xl text-on-surface leading-snug font-medium max-w-4xl mx-auto">
+              While AI agents are powerful enough to build entire features, their failures remain <span className="text-primary-fixed underline decoration-[3px] underline-offset-4">opaque, frustrating, and expensive.</span>
+            </p>
+            <p className="font-body-md text-lg md:text-xl text-on-surface-variant max-w-3xl mx-auto">
+              Without deep observability, a failed PR from an agent is just a wall of unstructured logs. We give you the "flight recorder" to see exactly where the logic drifted, powered natively by <strong className="text-white">SigNoz</strong>.
             </p>
           </div>
         </section>
 
         {/* Workflow Section */}
-        <AgentBentoGrid />
-
-        {/* Product Demo */}
-        <section className="bg-surface-container-lowest border-y-[3px] border-on-background">
-          <div className="px-margin py-24 max-w-7xl mx-auto">
-            <div className="mb-12 space-y-4">
-              <h2 className="font-headline-xl text-headline-xl uppercase">Full Replay Workspace</h2>
-              <p className="font-body-md text-on-surface-variant max-w-2xl">
-                High-fidelity replay of every shell command, file read, and thought process. Scrub through time to see how the agent evolved the codebase.
-              </p>
-            </div>
-            <div className="border-[3px] border-on-background bg-background p-2 shadow-block overflow-hidden group">
-              <div className="bg-surface-container-high border-b-2 border-on-background p-4 flex items-center justify-between">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 bg-error"></div>
-                  <div className="w-3 h-3 bg-primary-fixed"></div>
-                  <div className="w-3 h-3 bg-secondary"></div>
-                </div>
-                <div className="font-mono-label text-xs uppercase opacity-60">replay_session_772.abb</div>
-              </div>
-              <div
-                className="aspect-video w-full bg-cover bg-center grayscale group-hover:grayscale-0 transition-all duration-700"
-                style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCBgA7rSbLBqrsEzRQ4QQmOq8_vYe9vHgXoa4Br_ugULZwYrwMGw-yo5IEYGIJ3lNJjfH-f-8WGtWhfQ8gdlAVC2HeHsfWUXj9XeDvvt-YhvPU21FqxskI3a9tBUlfhU84dxvzx38m4KHESZqS3bsur_76jJxCHZ46wa72WISmutUcknKePpM-6Zpkmuq4mom6U6VzMSJFn8fjewAyRsxBlt5pY_w0k747mIXjxXNRd58IM6AJyhMeyU5FvuWurxCYc0sqG8UJX3AQH')" }}
-              ></div>
-            </div>
-          </div>
-        </section>
+        <div className="border-b-[3px] border-black">
+          <AgentBentoGrid />
+        </div>
 
         {/* Feature Grid */}
-        <section className="px-margin py-24 max-w-7xl mx-auto">
-          <h2 className="font-headline-lg text-headline-lg uppercase mb-12">Engineered for Reliability</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-            {/* Card 1 */}
-            <div className="border-2 border-on-background p-8 bg-surface-container hover:bg-surface-container-high transition-colors group cursor-pointer">
-              <div className="flex items-start justify-between mb-6">
-                <span className="material-symbols-outlined text-4xl text-primary-fixed group-hover:scale-110 transition-transform">replay</span>
-                <span className="font-mono-label text-xs border-2 border-on-background px-2 py-1 bg-background">OBS-01</span>
-              </div>
-              <h3 className="font-headline-lg-mobile text-headline-lg-mobile uppercase mb-4">Agent Replay</h3>
-              <p className="font-body-md text-on-surface-variant">See every action your coding agent took in a frame-by-frame scrubbing interface. No more guessing what the agent did while you were away.</p>
+        <section className="px-margin py-32 max-w-[1600px] mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-16 gap-6">
+            <div className="max-w-2xl">
+              <span className="font-mono-label text-primary-fixed text-xs font-black uppercase tracking-[0.2em] mb-4 block">System Capabilities</span>
+              <h2 className="font-headline-xl text-5xl md:text-6xl text-white uppercase tracking-tighter leading-none">Engineered for Reliability</h2>
             </div>
-            {/* Card 2 */}
-            <div className="border-2 border-on-background p-8 bg-surface-container hover:bg-surface-container-high transition-colors group cursor-pointer">
-              <div className="flex items-start justify-between mb-6">
-                <span className="material-symbols-outlined text-4xl text-primary-fixed group-hover:scale-110 transition-transform">insights</span>
-                <span className="font-mono-label text-xs border-2 border-on-background px-2 py-1 bg-background">OBS-02</span>
+            <button className="border-[3px] border-primary-fixed bg-transparent text-primary-fixed hover:bg-primary-fixed hover:text-black hover:shadow-[6px_6px_0px_0px_#000] px-6 py-3 font-cta-label uppercase font-black tracking-widest transition-all">
+              View Full Specs
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { id: "OBS-01", title: "Agent Replay", icon: "replay", desc: "See every action your coding agent took in a frame-by-frame scrubbing interface. No guessing." },
+              { id: "OBS-02", title: "Trace Intelligence", icon: "insights", desc: "Deep observability for LLM workflows using OpenTelemetry standards. Map LLM calls to file changes." },
+              { id: "OBS-03", title: "Failure Analysis", icon: "search", desc: "Automatic root cause identification via LLM analysis of trace data. Pinpoint timeout or context limits." },
+              { id: "OBS-04", title: "Self-Correction", icon: "published_with_changes", desc: "Agents query their own telemetry via SigNoz MCP mid-run to detect loops and change strategy dynamically." },
+              { id: "OBS-05", title: "Cost Monitoring", icon: "payments", desc: "Track token usage per agent turn. See the real-time ROI and dollar cost of every autonomous session." },
+              { id: "OBS-06", title: "GitHub Integration", icon: "hub", desc: "Native PR workflows. Review agent traces directly from the GitHub interface without leaving your flow." },
+            ].map((feature) => (
+              <div key={feature.id} className="relative group cursor-pointer border-[3px] border-outline-variant bg-surface-container-low p-8 hover:border-primary-fixed transition-colors duration-300 overflow-hidden h-full flex flex-col">
+                <div className="absolute inset-0 bg-primary-fixed translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] z-0"></div>
+
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-8">
+                    <span className="material-symbols-outlined text-[40px] text-primary-fixed group-hover:text-black transition-colors duration-300">{feature.icon}</span>
+                    <span className="font-mono-label text-[10px] font-black border-[2px] border-outline-variant group-hover:border-black px-3 py-1 bg-background text-on-surface-variant group-hover:bg-black group-hover:text-primary-fixed transition-colors duration-300">
+                      {feature.id}
+                    </span>
+                  </div>
+                  <h3 className="font-headline-lg-mobile text-2xl uppercase mb-4 text-white group-hover:text-black transition-colors duration-300 font-black">
+                    {feature.title}
+                  </h3>
+                  <p className="font-body-md text-on-surface-variant group-hover:text-black/80 transition-colors duration-300 font-medium leading-relaxed mt-auto">
+                    {feature.desc}
+                  </p>
+                </div>
               </div>
-              <h3 className="font-headline-lg-mobile text-headline-lg-mobile uppercase mb-4">Trace Intelligence</h3>
-              <p className="font-body-md text-on-surface-variant">Deep observability for LLM workflows using OpenTelemetry standards. Map LLM calls to their resulting file system changes automatically.</p>
-            </div>
-            {/* Card 3 */}
-            <div className="border-2 border-on-background p-8 bg-surface-container hover:bg-surface-container-high transition-colors group cursor-pointer">
-              <div className="flex items-start justify-between mb-6">
-                <span className="material-symbols-outlined text-4xl text-primary-fixed group-hover:scale-110 transition-transform">search</span>
-                <span className="font-mono-label text-xs border-2 border-on-background px-2 py-1 bg-background">OBS-03</span>
-              </div>
-              <h3 className="font-headline-lg-mobile text-headline-lg-mobile uppercase mb-4">Failure Analysis</h3>
-              <p className="font-body-md text-on-surface-variant">Automatic root cause identification. We pinpoint whether a failure was due to context limits, tool timeout, or logic loops.</p>
-            </div>
-            {/* Card 4 */}
-            <div className="border-2 border-on-background p-8 bg-surface-container hover:bg-surface-container-high transition-colors group cursor-pointer">
-              <div className="flex items-start justify-between mb-6">
-                <span className="material-symbols-outlined text-4xl text-primary-fixed group-hover:scale-110 transition-transform">difference</span>
-                <span className="font-mono-label text-xs border-2 border-on-background px-2 py-1 bg-background">OBS-04</span>
-              </div>
-              <h3 className="font-headline-lg-mobile text-headline-lg-mobile uppercase mb-4">Code Diff History</h3>
-              <p className="font-body-md text-on-surface-variant">Crisp, side-by-side verification. Inspect code generation history as a series of incremental diffs rather than massive PR dumps.</p>
-            </div>
-            {/* Card 5 */}
-            <div className="border-2 border-on-background p-8 bg-surface-container hover:bg-surface-container-high transition-colors group cursor-pointer">
-              <div className="flex items-start justify-between mb-6">
-                <span className="material-symbols-outlined text-4xl text-primary-fixed group-hover:scale-110 transition-transform">payments</span>
-                <span className="font-mono-label text-xs border-2 border-on-background px-2 py-1 bg-background">OBS-05</span>
-              </div>
-              <h3 className="font-headline-lg-mobile text-headline-lg-mobile uppercase mb-4">Cost Monitoring</h3>
-              <p className="font-body-md text-on-surface-variant">Track token usage per agent turn. See the real-time ROI and dollar cost of every autonomous coding session.</p>
-            </div>
-            {/* Card 6 */}
-            <div className="border-2 border-on-background p-8 bg-surface-container hover:bg-surface-container-high transition-colors group cursor-pointer">
-              <div className="flex items-start justify-between mb-6">
-                <span className="material-symbols-outlined text-4xl text-primary-fixed group-hover:scale-110 transition-transform">hub</span>
-                <span className="font-mono-label text-xs border-2 border-on-background px-2 py-1 bg-background">OBS-06</span>
-              </div>
-              <h3 className="font-headline-lg-mobile text-headline-lg-mobile uppercase mb-4">GitHub Integration</h3>
-              <p className="font-body-md text-on-surface-variant">Native PR workflows. Review agent traces directly from the GitHub interface without ever leaving your development flow.</p>
-            </div>
+            ))}
           </div>
         </section>
 
-        {/* GitHub Workflow */}
-        <section className="bg-primary-fixed text-on-primary border-t-[3px] border-on-background py-24 overflow-hidden relative">
-          <div className="absolute right-0 top-0 opacity-10 select-none pointer-events-none">
-            <span className="font-headline-xl text-[150px] leading-none uppercase block animate-float-bg">
-              SIGNOZ<br />WE_MAKE_DEVS
+        {/* GitHub Workflow / Call to Action */}
+        <section className="bg-primary-fixed text-black border-t-[3px] border-black py-32 overflow-hidden relative">
+          <div className="absolute right-[-5%] top-[-2%] opacity-10 select-none pointer-events-none">
+            <span className="font-headline-xl text-[200px] leading-[0.8] uppercase block font-black tracking-tighter">
+              SIGNOZ<br />WEMAKE<br />DEVS
             </span>
           </div>
+
           <div className="px-margin relative z-10 max-w-7xl mx-auto">
-            <h2 className="font-headline-xl text-headline-xl uppercase mb-16 max-w-2xl">The Automated Review Cycle</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter">
-              <div className="space-y-4">
-                <h4 className="font-headline-lg-mobile text-headline-lg-mobile border-b-2 border-on-primary pb-2">01. Connect</h4>
-                <p className="font-body-md font-bold">Connect your repository and define agent scopes.</p>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-headline-lg-mobile text-headline-lg-mobile border-b-2 border-on-primary pb-2">02. Execute</h4>
-                <p className="font-body-md font-bold">Agent identifies issues and begins coding session.</p>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-headline-lg-mobile text-headline-lg-mobile border-b-2 border-on-primary pb-2">03. Trace</h4>
-                <p className="font-body-md font-bold">AXRAY captures every turn and tool call in detail.</p>
-              </div>
-              <div className="space-y-4">
-                <h4 className="font-headline-lg-mobile text-headline-lg-mobile border-b-2 border-on-primary pb-2">04. Review</h4>
-                <p className="font-body-md font-bold">Review code diffs alongside full logical traces.</p>
-              </div>
+            <div className="max-w-3xl mb-20">
+              <h2 className="font-headline-xl text-[56px] md:text-[80px] leading-[0.9] uppercase font-black tracking-tighter mb-8">
+                The Automated <br />Review Cycle
+              </h2>
+              <p className="font-body-md text-2xl font-bold max-w-2xl text-black/70">
+                Four steps from prompt to perfect pull request. Built on the backbone of SigNoz Foundry.
+              </p>
             </div>
-            <div className="mt-16">
-              <button className="bg-background text-primary-fixed border-[3px] border-on-background px-10 py-6 font-cta-label text-xl uppercase shadow-block shadow-block-hover transition-all">
-                Get Started for Free
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { step: "01", title: "Connect", desc: "Connect repository and define scopes." },
+                { step: "02", title: "Execute", desc: "Agent identifies issues & begins session." },
+                { step: "03", title: "Trace", desc: "AXRAY captures every tool call in detail." },
+                { step: "04", title: "Review", desc: "Review code diffs alongside full traces." }
+              ].map((item) => (
+                <div key={item.step} className="group border-[3px] border-black bg-white p-6 hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_#000] transition-all duration-300 cursor-pointer">
+                  <div className="font-mono-label text-[10px] font-black uppercase tracking-widest text-white bg-black inline-block px-2 py-1 mb-6 border-[2px] border-black">
+                    STEP {item.step}
+                  </div>
+                  <h4 className="font-headline-lg-mobile text-2xl font-black uppercase mb-4">{item.title}</h4>
+                  <p className="font-body-md font-bold text-black/70 leading-snug">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-20 flex justify-center">
+              <button className="group relative bg-black text-primary-fixed border-[3px] border-black px-12 py-8 font-cta-label text-2xl uppercase tracking-[0.2em] font-black overflow-hidden transition-transform active:scale-95 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.5)]">
+                <span className="absolute inset-0 w-full h-full bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)]"></span>
+                <span className="relative z-10 flex items-center gap-4 group-hover:text-black transition-colors duration-500">
+                  INITIALIZE SYSTEM
+                  <span className="material-symbols-outlined text-[32px] group-hover:translate-x-2 transition-transform duration-500">
+                    east
+                  </span>
+                </span>
               </button>
             </div>
           </div>
@@ -281,40 +337,35 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full mt-auto bg-surface-container dark:bg-surface-container border-t-[3px] border-on-background">
-        <div className="flex flex-col md:flex-row justify-between items-center w-full px-margin py-8 gap-gutter max-w-full mx-auto">
-          <div className="flex flex-col gap-4 items-center md:items-start">
-            <Link href="/" className="flex items-center gap-3">
+      <footer className="w-full mt-auto bg-surface-container-lowest border-t-[3px] border-outline-variant">
+        <div className="flex flex-col lg:flex-row justify-between items-center w-full px-margin py-12 gap-8 max-w-[1600px] mx-auto">
+          <div className="flex flex-col gap-6 items-center lg:items-start text-center lg:text-left">
+            <Link href="/" className="flex items-center gap-4 group">
               <Image
                 src="/logo/axray-logo.png"
                 alt="AXRAY Logo"
-                width={24}
-                height={24}
-                className="object-contain w-auto h-auto"
+                width={32}
+                height={32}
+                className="object-contain w-auto h-auto group-hover:rotate-12 transition-transform"
               />
-              <span className="font-headline-lg-mobile text-headline-lg-mobile font-black text-on-surface uppercase">
+              <span className="font-headline-lg-mobile text-2xl font-black text-white uppercase tracking-tighter">
                 AXRAY
               </span>
             </Link>
-            <p className="font-mono-label text-mono-label text-on-surface-variant">
-              © 2026 AXRAY. Built for the machine era.
+            <p className="font-mono-label text-xs text-on-surface-variant font-bold uppercase tracking-widest max-w-xs">
+              © 2026 AXRAY. Built for the machine era by WeMakeDevs Track 01.
             </p>
           </div>
-          <div className="flex gap-8 flex-wrap justify-center">
-            <Link className="text-on-surface-variant font-mono-label text-mono-label hover:underline hover:text-primary-fixed transition-all uppercase" href="#">
-              Terms
-            </Link>
-            <Link className="text-on-surface-variant font-mono-label text-mono-label hover:underline hover:text-primary-fixed transition-all uppercase" href="#">
-              Privacy
-            </Link>
-            <Link className="text-on-surface-variant font-mono-label text-mono-label hover:underline hover:text-primary-fixed transition-all uppercase" href="#">
-              Security
-            </Link>
-            <Link className="text-on-surface-variant font-mono-label text-mono-label hover:underline hover:text-primary-fixed transition-all uppercase" href="#">
-              Changelog
-            </Link>
-            <Link className="text-on-surface-variant font-mono-label text-mono-label hover:underline hover:text-primary-fixed transition-all uppercase flex items-center gap-2" href="#">
-              <div className="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></div> Status
+
+          <div className="flex gap-x-8 gap-y-4 flex-wrap justify-center">
+            {['Terms', 'Privacy', 'Security', 'Changelog'].map((link) => (
+              <Link key={link} className="text-on-surface font-mono-label text-xs font-black hover:text-primary-fixed transition-colors uppercase tracking-[0.2em]" href="#">
+                {link}
+              </Link>
+            ))}
+            <Link className="text-on-surface font-mono-label text-xs font-black hover:text-primary-fixed transition-colors uppercase tracking-[0.2em] flex items-center gap-3 bg-surface-container px-3 py-1 border-[2px] border-outline-variant" href="#">
+              <div className="w-2 h-2 bg-primary-fixed shadow-[0_0_8px_var(--color-primary-fixed)] animate-pulse"></div>
+              All Systems Operational
             </Link>
           </div>
         </div>

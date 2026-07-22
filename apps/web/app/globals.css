@@ -130,15 +130,27 @@
   .active-turn-shadow {
     box-shadow: 4px 4px 0px 0px var(--color-primary-fixed);
   }
-  .custom-scrollbar::-webkit-scrollbar {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Sleek Global Webkit Scrollbar */
+  ::-webkit-scrollbar {
     width: 4px;
+    height: 4px;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: var(--color-background);
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-on-surface-variant);
+  }
+  ::-webkit-scrollbar-thumb:hover {
     background: var(--color-primary-fixed);
-    border: 2px solid var(--color-background);
   }
   .fill-icon {
     font-variation-settings: 'FILL' 1;

@@ -90,6 +90,15 @@ const config: Config = {
         "headline-lg": ["32px", { lineHeight: "38px", letterSpacing: "-0.02em", fontWeight: "800" }],
         "cta-label": ["14px", { lineHeight: "16px", fontWeight: "800" }],
         "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }]
+      },
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+      },
+      animation: {
+        marquee: "marquee 15s linear infinite",
       }
     },
   },
