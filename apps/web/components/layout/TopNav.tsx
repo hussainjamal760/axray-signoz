@@ -45,7 +45,7 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
 
   return (
     <header className="sticky top-0 z-50 h-16 flex w-full pointer-events-none">
-      
+
       {/* Left Side Bar - Flexible width */}
       <div className="flex-1 max-w-[20px] md:max-w-[60px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto">
         <div className="absolute inset-x-0 bottom-0 h-[3px] bg-primary-fixed" />
@@ -53,7 +53,7 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
 
       {/* Responsive Notch Container */}
       <div className="flex h-16 relative z-10 shrink-0 flex-1 pointer-events-auto">
-        
+
         {/* Left Curve */}
         <div className="w-[30px] h-full relative shrink-0">
           <div className="absolute inset-0 bg-background" style={{ clipPath: "path('M0 0 H30 V64 C15 64 15 40 0 40 Z')" }} />
@@ -64,7 +64,7 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
 
         {/* Center Content Area */}
         <div className="flex-1 h-full relative min-w-0 bg-background border-b-[3px] border-primary-fixed flex items-end justify-between pb-2.5 px-2 md:px-6">
-          
+
           {/* Left: Breadcrumbs */}
           <div className="flex items-center gap-3 shrink-0">
             {isInsideSession ? (
@@ -77,7 +77,9 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
               </Link>
             )}
             <span className="text-xl md:text-2xl font-black text-white truncate uppercase tracking-tighter">
-              {renderBreadcrumb()}
+              <Link href="/sessions">
+                {renderBreadcrumb()}
+              </Link>
             </span>
           </div>
 
@@ -95,7 +97,7 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
                 <span>⌘</span>K
               </kbd>
             </button>
-            
+
             <SessionSearchModal
               sessions={sessions}
               open={isSearchOpen}
