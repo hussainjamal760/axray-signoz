@@ -471,7 +471,7 @@ export default function Home() {
 
           <div className="flex gap-x-8 gap-y-4 flex-wrap justify-center">
             {['Terms', 'Privacy', 'Security', 'Changelog'].map((link) => (
-              <Link key={link} className="text-on-surface font-mono-label text-xs font-black hover:text-primary-fixed transition-colors uppercase tracking-[0.2em]" href="#">
+              <Link key={link} className="text-on-surface font-mono-label text-xs font-black hover:text-primary-fixed transition-colors uppercase tracking-[0.2em]" href={`/${link.toLowerCase()}`}>
                 {link}
               </Link>
             ))}
