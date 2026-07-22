@@ -243,46 +243,159 @@ export default function Home() {
           <AgentBentoGrid />
         </div>
 
-        {/* Feature Grid */}
-        <section className="px-margin py-32 max-w-[1600px] mx-auto">
-          <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-16 gap-6">
-            <div className="max-w-2xl">
-              <span className="font-mono-label text-primary-fixed text-xs font-black uppercase tracking-[0.2em] mb-4 block">System Capabilities</span>
-              <h2 className="font-headline-xl text-5xl md:text-6xl text-white uppercase tracking-tighter leading-none">Engineered for Reliability</h2>
+        {/* Feature Grid - Awwwards Level */}
+        <section className="py-32 relative overflow-hidden bg-background">
+          {/* Background noise/grid */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "linear-gradient(var(--color-primary-fixed) 1px, transparent 1px), linear-gradient(90deg, var(--color-primary-fixed) 1px, transparent 1px)", backgroundSize: "64px 64px" }}></div>
+          
+          <div className="px-margin max-w-[1600px] mx-auto relative z-10">
+            {/* Header */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-end justify-between mb-20 gap-12">
+              <div className="max-w-4xl relative">
+                <div className="absolute -left-8 top-0 w-2 h-full bg-primary-fixed hidden md:block"></div>
+                <span className="inline-flex items-center gap-3 font-mono-label text-primary-fixed text-xs font-black uppercase tracking-[0.3em] mb-6 border-[2px] border-primary-fixed px-3 py-1 bg-primary-fixed/10">
+                  <div className="w-1.5 h-1.5 bg-primary-fixed animate-ping"></div>
+                  System Architecture
+                </span>
+                <h2 className="font-headline-xl text-5xl md:text-[80px] text-white uppercase tracking-tighter leading-[0.9] font-black">
+                  Engineered for <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-fixed to-secondary-fixed filter drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] stroke-black" style={{ WebkitTextStroke: "2px black" }}>Reliability</span>
+                </h2>
+              </div>
+              <div className="shrink-0 flex flex-col items-end gap-4">
+                <p className="font-mono-label text-on-surface-variant max-w-sm text-right text-xs uppercase tracking-widest">
+                  Stop debugging black boxes. Trace every execution path with surgical precision.
+                </p>
+                <button className="group relative bg-black text-primary-fixed border-[3px] border-primary-fixed px-8 py-4 font-cta-label uppercase font-black tracking-widest overflow-hidden transition-transform active:scale-95 shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)]">
+                  <span className="absolute inset-0 w-full h-full bg-primary-fixed translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)]"></span>
+                  <span className="relative z-10 group-hover:text-black flex items-center gap-2">
+                    View Full Specs <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </span>
+                </button>
+              </div>
             </div>
-            <button className="border-[3px] border-primary-fixed bg-transparent text-primary-fixed hover:bg-primary-fixed hover:text-black hover:shadow-[6px_6px_0px_0px_#000] px-6 py-3 font-cta-label uppercase font-black tracking-widest transition-all">
-              View Full Specs
-            </button>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { id: "OBS-01", title: "Agent Replay", icon: "replay", desc: "See every action your coding agent took in a frame-by-frame scrubbing interface. No guessing." },
-              { id: "OBS-02", title: "Trace Intelligence", icon: "insights", desc: "Deep observability for LLM workflows using OpenTelemetry standards. Map LLM calls to file changes." },
-              { id: "OBS-03", title: "Failure Analysis", icon: "search", desc: "Automatic root cause identification via LLM analysis of trace data. Pinpoint timeout or context limits." },
-              { id: "OBS-04", title: "Self-Correction", icon: "published_with_changes", desc: "Agents query their own telemetry via SigNoz MCP mid-run to detect loops and change strategy dynamically." },
-              { id: "OBS-05", title: "Cost Monitoring", icon: "payments", desc: "Track token usage per agent turn. See the real-time ROI and dollar cost of every autonomous session." },
-              { id: "OBS-06", title: "GitHub Integration", icon: "hub", desc: "Native PR workflows. Review agent traces directly from the GitHub interface without leaving your flow." },
-            ].map((feature) => (
-              <div key={feature.id} className="relative group cursor-pointer border-[3px] border-outline-variant bg-surface-container-low p-8 hover:border-primary-fixed transition-colors duration-300 overflow-hidden h-full flex flex-col">
-                <div className="absolute inset-0 bg-primary-fixed translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] z-0"></div>
-
+            {/* Asymmetric Grid Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[280px]">
+              
+              {/* Card 1: Agent Replay (Large) */}
+              <div className="lg:col-span-2 lg:row-span-2 relative group cursor-pointer border-[3px] border-black bg-surface-container p-8 transition-all duration-500 overflow-hidden flex flex-col shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)] hover:shadow-[16px_16px_0px_0px_theme(colors.primary-fixed)] hover:-translate-y-2 hover:-translate-x-2">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_theme(colors.primary-fixed)_0%,_transparent_50%)] opacity-0 group-hover:opacity-20 transition-opacity duration-700"></div>
+                <div className="absolute top-4 right-4 font-headline-xl text-[180px] text-black/20 leading-none select-none group-hover:text-primary-fixed/20 transition-colors duration-500 -z-0">01</div>
+                
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex items-start justify-between mb-8">
-                    <span className="material-symbols-outlined text-[40px] text-primary-fixed group-hover:text-black transition-colors duration-300">{feature.icon}</span>
-                    <span className="font-mono-label text-[10px] font-black border-[2px] border-outline-variant group-hover:border-black px-3 py-1 bg-background text-on-surface-variant group-hover:bg-black group-hover:text-primary-fixed transition-colors duration-300">
-                      {feature.id}
-                    </span>
+                  <div className="flex items-start justify-between mb-auto">
+                    <div className="border-[3px] border-black bg-primary-fixed w-16 h-16 flex items-center justify-center shadow-[4px_4px_0px_0px_#000] group-hover:rotate-12 transition-transform duration-300">
+                      <span className="material-symbols-outlined text-black text-3xl">replay</span>
+                    </div>
+                    <span className="font-mono-label text-[10px] font-black border-[2px] border-black px-3 py-1 bg-black text-primary-fixed uppercase tracking-widest shadow-[2px_2px_0px_0px_#fff]">OBS-01</span>
                   </div>
-                  <h3 className="font-headline-lg-mobile text-2xl uppercase mb-4 text-white group-hover:text-black transition-colors duration-300 font-black">
-                    {feature.title}
+                  <h3 className="font-headline-xl text-4xl md:text-5xl uppercase mt-12 mb-6 text-white group-hover:text-primary-fixed transition-colors duration-300 font-black tracking-tighter">
+                    Agent Replay
                   </h3>
-                  <p className="font-body-md text-on-surface-variant group-hover:text-black/80 transition-colors duration-300 font-medium leading-relaxed mt-auto">
-                    {feature.desc}
+                  <p className="font-body-md text-on-surface-variant text-lg font-medium leading-relaxed max-w-md group-hover:text-white transition-colors duration-300">
+                    See every action your coding agent took in a frame-by-frame scrubbing interface. No guessing. Total reconstructability of the LLM thought process.
                   </p>
                 </div>
               </div>
-            ))}
+
+              {/* Card 2: Trace Intelligence */}
+              <div className="lg:col-span-1 lg:row-span-1 relative group cursor-pointer border-[3px] border-black bg-black p-6 transition-all duration-300 overflow-hidden flex flex-col hover:bg-primary-fixed hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#000]">
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center gap-4 mb-auto">
+                    <span className="material-symbols-outlined text-primary-fixed text-3xl group-hover:text-black">insights</span>
+                    <span className="font-mono-label text-[9px] font-black border-[2px] border-outline-variant group-hover:border-black px-2 py-1 text-on-surface-variant group-hover:text-black">OBS-02</span>
+                  </div>
+                  <h3 className="font-headline-lg-mobile text-2xl uppercase mt-8 mb-2 text-white group-hover:text-black transition-colors duration-300 font-black tracking-tighter">Trace Intel</h3>
+                  <p className="font-mono-label text-xs text-on-surface-variant group-hover:text-black/80 font-medium leading-relaxed">Map LLM calls to file changes instantly via OTel.</p>
+                </div>
+              </div>
+
+              {/* Card 3: Failure Analysis */}
+              <div className="lg:col-span-1 lg:row-span-1 relative group cursor-pointer border-[3px] border-black bg-error p-6 transition-all duration-300 overflow-hidden flex flex-col hover:bg-black hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_theme(colors.error)]">
+                <div className="absolute -right-4 -bottom-4 opacity-20 group-hover:opacity-100 group-hover:rotate-180 transition-all duration-700">
+                  <span className="material-symbols-outlined text-[120px] text-black group-hover:text-error">search</span>
+                </div>
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center gap-4 mb-auto">
+                    <span className="material-symbols-outlined text-black text-3xl group-hover:text-error">search</span>
+                    <span className="font-mono-label text-[9px] font-black border-[2px] border-black px-2 py-1 bg-black text-error">OBS-03</span>
+                  </div>
+                  <h3 className="font-headline-lg-mobile text-2xl uppercase mt-8 mb-2 text-black group-hover:text-error transition-colors duration-300 font-black tracking-tighter">Auto Triage</h3>
+                  <p className="font-mono-label text-xs text-black/80 group-hover:text-white font-medium leading-relaxed">Automatic root cause identification via LLM trace analysis.</p>
+                </div>
+              </div>
+
+              {/* Card 4: Self-Correction (Wide) */}
+              <div className="lg:col-span-2 lg:row-span-1 relative group cursor-pointer border-[3px] border-black bg-surface-container-high p-8 transition-all duration-300 overflow-hidden flex flex-col justify-end hover:bg-secondary-fixed hover:-translate-y-1 shadow-[6px_6px_0px_0px_#000]">
+                {/* Scrolling Marquee Background on hover */}
+                <div className="absolute inset-0 bg-secondary-fixed opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0 flex items-center overflow-hidden">
+                   <div className="animate-marquee whitespace-nowrap flex text-[120px] font-headline-xl font-black text-black/10 uppercase tracking-tighter select-none">
+                     <span>SELF-CORRECTING LOOP • SELF-CORRECTING LOOP • </span>
+                   </div>
+                </div>
+                
+                <div className="relative z-10 flex flex-col h-full md:flex-row md:items-end justify-between gap-6">
+                  <div>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-10 h-10 border-[2px] border-black bg-white flex items-center justify-center rounded-full group-hover:animate-spin">
+                        <span className="material-symbols-outlined text-black">published_with_changes</span>
+                      </div>
+                      <span className="font-mono-label text-[10px] font-black border-[2px] border-black bg-black text-secondary-fixed px-3 py-1 group-hover:bg-white group-hover:text-black">OBS-04</span>
+                    </div>
+                    <h3 className="font-headline-xl text-3xl md:text-4xl uppercase text-white group-hover:text-black font-black tracking-tighter mb-2">Self-Correction</h3>
+                    <p className="font-body-md text-on-surface-variant group-hover:text-black/80 font-medium leading-relaxed max-w-sm">Agents query their telemetry via SigNoz MCP mid-run to detect loops dynamically.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5: Cost Monitoring */}
+              <div className="lg:col-span-2 lg:row-span-1 relative group cursor-pointer border-[3px] border-black bg-[repeating-linear-gradient(45deg,theme(colors.surface-container),theme(colors.surface-container)_10px,theme(colors.background)_10px,theme(colors.background)_20px)] p-8 transition-all duration-300 overflow-hidden hover:shadow-[8px_8px_0px_0px_#fff]">
+                <div className="absolute inset-0 bg-black/80 group-hover:bg-transparent transition-colors duration-500 z-0"></div>
+                <div className="relative z-10 flex items-center justify-between h-full">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="material-symbols-outlined text-primary-fixed text-3xl group-hover:scale-125 transition-transform">payments</span>
+                      <span className="font-mono-label text-[10px] font-black text-primary-fixed bg-primary-fixed/20 px-2 py-0.5">OBS-05</span>
+                    </div>
+                    <h3 className="font-headline-xl text-3xl uppercase text-white font-black tracking-tighter mb-2 group-hover:text-black group-hover:bg-white inline-block">Cost Analytics</h3>
+                    <p className="font-mono-label text-xs text-on-surface-variant max-w-[250px] group-hover:text-white bg-black/50 p-2 border border-outline-variant group-hover:border-primary-fixed backdrop-blur-sm">Track token usage per agent turn. See the real-time ROI.</p>
+                  </div>
+                  {/* Fake Chart */}
+                  <div className="hidden md:flex items-end gap-2 h-32">
+                    {[40, 70, 30, 90, 60, 100].map((h, i) => (
+                      <div key={i} className="w-6 bg-primary-fixed/20 border border-primary-fixed/50 group-hover:bg-primary-fixed transition-all duration-300 ease-out" style={{ height: `${h}%`, transitionDelay: `${i * 50}ms` }}></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 6: GitHub Integration (Full Width Banner) */}
+              <div className="lg:col-span-4 lg:row-span-1 relative group cursor-pointer border-[3px] border-primary-fixed bg-surface p-8 md:p-12 transition-all duration-500 overflow-hidden hover:bg-primary-fixed hover:-translate-y-2 shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)]">
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 h-full">
+                  <div className="flex items-center gap-6 md:gap-8">
+                    <div className="w-16 h-16 md:w-24 md:h-24 bg-black border-[3px] border-primary-fixed rounded-full flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
+                       {/* GitHub logo placeholder or icon */}
+                       <svg className="w-10 h-10 md:w-14 md:h-14 text-white" viewBox="0 0 24 24" fill="currentColor">
+                         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                       </svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-4 mb-2">
+                        <span className="font-mono-label text-[10px] font-black border-[2px] border-primary-fixed bg-primary-fixed/10 text-primary-fixed px-3 py-1 group-hover:bg-black group-hover:border-black transition-colors">OBS-06</span>
+                      </div>
+                      <h3 className="font-headline-xl text-3xl md:text-5xl uppercase text-white group-hover:text-black font-black tracking-tighter">Native PR Workflows</h3>
+                    </div>
+                  </div>
+                  <p className="font-body-md text-on-surface-variant group-hover:text-black/80 font-medium leading-relaxed max-w-lg md:text-right text-lg">
+                    Review agent traces directly from the GitHub interface without leaving your flow. Approve, reject, or debug autonomously generated PRs seamlessly.
+                  </p>
+                </div>
+                {/* Accent lines */}
+                <div className="absolute top-0 right-0 w-32 h-32 border-t-[8px] border-r-[8px] border-primary-fixed group-hover:border-black transition-colors"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[8px] border-l-[8px] border-primary-fixed group-hover:border-black transition-colors"></div>
+              </div>
+
+            </div>
           </div>
         </section>
 
