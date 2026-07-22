@@ -36,14 +36,15 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="p-gutter flex flex-col max-w-4xl mx-auto w-full">
-      {/* Header */}
-      <div className="mb-10 border-b-[3px] border-outline pb-6">
-        <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Account Settings</h1>
-        <p className="text-on-surface-variant font-mono-label uppercase tracking-widest mt-2 flex items-center gap-2">
-          Manage your profile and session
-        </p>
-      </div>
+    <div className="flex-1 overflow-y-auto w-full h-full p-gutter custom-scrollbar" data-lenis-prevent="true">
+      <div className="flex flex-col max-w-4xl mx-auto w-full">
+        {/* Header */}
+        <div className="mb-10 border-b-[3px] border-outline pb-6">
+          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">Account Settings</h1>
+          <p className="text-on-surface-variant font-mono-label uppercase tracking-widest mt-2 flex items-center gap-2">
+            Manage your profile and session
+          </p>
+        </div>
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -60,7 +61,7 @@ export default function AccountPage() {
           <div className="p-8 relative z-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
             <div className="w-32 h-32 md:w-40 md:h-40 shrink-0 border-[3px] border-white bg-primary-fixed flex items-center justify-center brutalist-shadow">
               <img
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                className="w-full h-full object-cover transition-all duration-500"
                 alt={user?.username || "Profile"}
                 src={user?.avatarUrl || `https://github.com/identicons/${user?.username || 'user'}.png`}
               />
@@ -114,6 +115,7 @@ export default function AccountPage() {
           </div>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 }
