@@ -19,6 +19,7 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
   const sessionMatch = pathname?.match(/^\/sessions\/([^/]+)/);
   const isInsideSession = !!sessionMatch || pathname?.startsWith('/sessions/new');
   const isSessionHub = pathname === "/sessions" || pathname === "/sessions/";
+  const isAccountPage = pathname === "/account" || pathname === "/account/";
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -84,28 +85,30 @@ export function TopNav({ onToggleSidebar, showSidebarButton = true }: TopNavProp
           </div>
 
           {/* Center: Search */}
-          <div className="hidden lg:flex flex-1 max-w-md mx-6">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="group flex flex-1 items-center bg-surface-container-high border-[3px] border-outline-variant hover:border-primary-fixed px-3 py-1.5 transition-all h-10 cursor-text shadow-none hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-            >
-              <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary-fixed mr-2 text-[20px] transition-colors group-hover:rotate-12">search</span>
-              <span className="font-mono-label w-full text-left text-on-surface-variant/60 group-hover:text-primary-fixed/90 text-[10px] uppercase font-black tracking-widest truncate transition-colors">
-                {isSessionHub ? "Search sessions..." : "Change session or search everything in session"}
-              </span>
-              <kbd className="hidden sm:flex shrink-0 items-center gap-1 border-2 border-outline-variant group-hover:border-primary-fixed bg-surface-container group-hover:bg-primary-fixed/10 px-2 py-0.5 text-[10px] font-black text-on-surface-variant group-hover:text-primary-fixed transition-colors">
-                <span>⌘</span>K
-              </kbd>
-            </button>
+          {!isAccountPage && (
+            <div className="hidden lg:flex flex-1 max-w-md mx-6">
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="group flex flex-1 items-center bg-surface-container-high border-[3px] border-outline-variant hover:border-primary-fixed px-3 py-1.5 transition-all h-10 cursor-text shadow-none hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary-fixed mr-2 text-[20px] transition-colors group-hover:rotate-12">search</span>
+                <span className="font-mono-label w-full text-left text-on-surface-variant/60 group-hover:text-primary-fixed/90 text-[10px] uppercase font-black tracking-widest truncate transition-colors">
+                  {isSessionHub ? "Search sessions..." : "Change session or search everything in session"}
+                </span>
+                <kbd className="hidden sm:flex shrink-0 items-center gap-1 border-2 border-outline-variant group-hover:border-primary-fixed bg-surface-container group-hover:bg-primary-fixed/10 px-2 py-0.5 text-[10px] font-black text-on-surface-variant group-hover:text-primary-fixed transition-colors">
+                  <span>⌘</span>K
+                </kbd>
+              </button>
 
-            <SessionSearchModal
-              sessions={sessions}
-              open={isSearchOpen}
-              onOpenChange={setIsSearchOpen}
-              placeholder={isSessionHub ? "Search sessions..." : "Change session or search everything in session..."}
-              showPages={!isSessionHub}
-            />
-          </div>
+              <SessionSearchModal
+                sessions={sessions}
+                open={isSearchOpen}
+                onOpenChange={setIsSearchOpen}
+                placeholder={isSessionHub ? "Search sessions..." : "Change session or search everything in session..."}
+                showPages={!isSessionHub}
+              />
+            </div>
+          )}
 
           {/* Right: Profile & Actions */}
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
