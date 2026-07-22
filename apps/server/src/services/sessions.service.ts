@@ -3,6 +3,7 @@ import { Session, ISession } from '../models/session.model';
 import { AgentRun } from '../models/agent-run.model';
 import { AppError } from '../errors/AppError';
 import * as provisionerService from './provisioner.service';
+import * as containerService from './container.service';
 
 export const createSession = async (
   userId: string,
@@ -17,6 +18,7 @@ export const createSession = async (
     ...data,
     status: 'active',
     workspaceInitialized: false,
+    containerStatus: 'creating',
   });
 
   const savedSession = await session.save();
@@ -24,6 +26,7 @@ export const createSession = async (
   try {
     // Delegate infrastructure setup to provisionerService
     const provisionResult = await provisionerService.provisionSessionInfrastructure({
+      sessionId: savedSession._id.toString(),
       repositoryFullName: savedSession.repositoryFullName,
       branch: savedSession.branch,
     });
@@ -34,6 +37,9 @@ export const createSession = async (
   } catch (error: unknown) {
     // Rollback session document if container provisioning fails
     await Session.deleteOne({ _id: savedSession._id });
+    if (error instanceof AppError) {
+      throw error;
+    }
     const message = error instanceof Error ? error.message : String(error);
     throw new AppError(500, `Failed to provision session infrastructure: ${message}`);
   }
@@ -66,6 +72,13 @@ export const updateSessionStatus = async (
 
 export const deleteSession = async (userId: string, sessionId: string): Promise<void> => {
   const session = await getSession(userId, sessionId);
+
+  // Stop & remove container if assigned
+  if (session.containerId) {
+    await containerService.stopContainer(session.containerId).catch(() => {});
+    await containerService.removeContainer(session.containerId).catch(() => {});
+  }
+
   // Remove all related runs first
   await AgentRun.deleteMany({ sessionId: session._id });
   // Remove session

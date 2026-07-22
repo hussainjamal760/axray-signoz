@@ -1,13 +1,19 @@
 import { app } from './app';
 import { config } from './config';
 import { connectDatabase } from './lib/mongo';
+import { ensureDefaultImageExists } from './lib/docker';
 
 const startServer = async () => {
   try {
     // 1. Connect to MongoDB
     await connectDatabase();
 
-    // 2. Start HTTP server
+    // 2. Pre-warm Docker runtime image asynchronously
+    ensureDefaultImageExists().catch((err) => {
+      console.warn('[Docker Startup Warning] Failed to pre-warm image:', err.message || err);
+    });
+
+    // 3. Start HTTP server
     app.listen(config.PORT, () => {
       console.log(`🚀 AXRAY backend running on port ${config.PORT} [${config.NODE_ENV}]`);
     });

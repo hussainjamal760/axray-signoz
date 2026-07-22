@@ -4,14 +4,10 @@ import { ContainerStatus } from '../models/session.model';
 /**
  * Provisioner Service
  * Responsible for orchestrating session infrastructure setup.
- * 
- * TODO (Future):
- * - Attach persistent Docker volumes.
- * - Warm language runtime caches (Node.js/Python/Go).
- * - Pre-download dependency artifacts.
  */
 
 export interface SessionProvisionParams {
+  sessionId: string;
   repositoryFullName: string;
   branch: string;
 }
@@ -24,15 +20,22 @@ export interface SessionProvisionResult {
 export const provisionSessionInfrastructure = async (
   sessionParams: SessionProvisionParams
 ): Promise<SessionProvisionResult> => {
-  console.log(`[Provisioner] Provisioning session infrastructure for ${sessionParams.repositoryFullName} (${sessionParams.branch})`);
+  console.log(
+    `[Provisioner] Provisioning session infrastructure for session ${sessionParams.sessionId} (${sessionParams.repositoryFullName} / ${sessionParams.branch})`
+  );
 
-  // Create workspace container via containerService
+  // 1. Create real Docker container
   const container = await containerService.createContainer({
+    sessionId: sessionParams.sessionId,
+    name: `axray-session-${sessionParams.sessionId}`,
     repositoryFullName: sessionParams.repositoryFullName,
     branch: sessionParams.branch,
   });
 
-  // TODO: Warm caches & mount volumes
+  // 2. Start container
+  await containerService.startContainer(container.containerId);
+
+  console.log(`[Provisioner] Session infrastructure ready.`);
 
   return {
     containerId: container.containerId,
