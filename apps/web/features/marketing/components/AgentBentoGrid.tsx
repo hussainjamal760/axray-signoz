@@ -98,80 +98,80 @@ const PATHS: FlowPath[] = [
     d: "M 78 120 L 113 120",
     activeSteps: ["request"],
     flowDirection: "forward",
-    colorClass: "text-cyan-500 dark:text-cyan-400",
+    colorClass: "text-primary-fixed",
   },
   {
     id: "router-to-agent",
     d: "M 137 120 L 172 120",
     activeSteps: ["agent"],
     flowDirection: "forward",
-    colorClass: "text-violet-500 dark:text-violet-400",
+    colorClass: "text-error",
   },
   {
     id: "agent-to-memory",
     d: "M 200 92 L 200 50 L 252 50",
     activeSteps: ["memory"],
     flowDirection: "both",
-    colorClass: "text-fuchsia-500 dark:text-fuchsia-400",
+    colorClass: "text-secondary-fixed",
   },
   {
     id: "agent-to-tools",
     d: "M 200 148 L 200 190 L 252 190",
     activeSteps: ["tools"],
     flowDirection: "both",
-    colorClass: "text-emerald-500 dark:text-emerald-400",
+    colorClass: "text-primary-fixed",
   },
   {
     id: "response-flow-1",
     d: "M 172 120 L 137 120",
     activeSteps: ["response"],
     flowDirection: "forward",
-    colorClass: "text-cyan-500 dark:text-cyan-400",
+    colorClass: "text-primary-fixed",
   },
   {
     id: "response-flow-2",
     d: "M 113 120 L 78 120",
     activeSteps: ["response"],
     flowDirection: "forward",
-    colorClass: "text-cyan-500 dark:text-cyan-400",
+    colorClass: "text-primary-fixed",
   },
 ];
 
 const NODE_COLORS: Record<string, { bg: string; border: string; text: string; buttonBg: string; buttonBorder: string }> = {
   A: {
-    bg: "bg-cyan-500/10 dark:bg-cyan-500/5",
-    border: "border-cyan-500/60 dark:border-cyan-400/50",
-    text: "text-cyan-600 dark:text-cyan-400",
-    buttonBg: "bg-cyan-500",
-    buttonBorder: "border-cyan-600",
+    bg: "bg-primary-fixed/10",
+    border: "border-primary-fixed/60",
+    text: "text-primary-fixed",
+    buttonBg: "bg-primary-fixed text-black font-black",
+    buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
   },
   Router: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/5",
-    border: "border-amber-500/60 dark:border-amber-400/50",
-    text: "text-amber-600 dark:text-amber-400",
-    buttonBg: "bg-amber-500",
-    buttonBorder: "border-amber-600",
+    bg: "bg-secondary-fixed/10",
+    border: "border-secondary-fixed/60",
+    text: "text-secondary-fixed",
+    buttonBg: "bg-secondary-fixed text-black font-black",
+    buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
   },
   C: {
-    bg: "bg-violet-500/10 dark:bg-violet-500/5",
-    border: "border-violet-500/60 dark:border-violet-400/50",
-    text: "text-violet-600 dark:text-violet-400",
-    buttonBg: "bg-violet-500",
-    buttonBorder: "border-violet-600",
+    bg: "bg-error/10",
+    border: "border-error/60",
+    text: "text-error",
+    buttonBg: "bg-error text-black font-black",
+    buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
   },
   B: {
-    bg: "bg-fuchsia-500/10 dark:bg-fuchsia-500/5",
-    border: "border-fuchsia-500/60 dark:border-fuchsia-400/50",
-    text: "text-fuchsia-600 dark:text-fuchsia-400",
-    buttonBg: "bg-fuchsia-500",
-    buttonBorder: "border-fuchsia-600",
+    bg: "bg-primary-fixed-dim/10",
+    border: "border-primary-fixed-dim/60",
+    text: "text-primary-fixed-dim",
+    buttonBg: "bg-primary-fixed-dim text-black font-black",
+    buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
   },
   D: {
-    bg: "bg-emerald-500/10 dark:bg-emerald-500/5",
-    border: "border-emerald-500/60 dark:border-emerald-400/50",
-    text: "text-emerald-600 dark:text-emerald-400",
-    buttonBg: "bg-emerald-500",
-    buttonBorder: "border-emerald-600",
+    bg: "bg-secondary-fixed-dim/10",
+    border: "border-secondary-fixed-dim/60",
+    text: "text-secondary-fixed-dim",
+    buttonBg: "bg-secondary-fixed-dim text-black font-black",
+    buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
   },
 };
 
@@ -299,13 +299,13 @@ export function Card1() {
                 ) : (
                   /* Central Router Node Upgrade */
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shadow-sm transition-all duration-300 ${isActive
-                      ? "bg-amber-500/20 border-amber-500/70"
-                      : "bg-background/80 border-zinc-300 dark:border-zinc-800"
+                    className={`w-5 h-5 rounded-none border-[2px] flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 ${isActive
+                      ? "bg-secondary-fixed border-black"
+                      : "bg-surface-container border-outline-variant"
                       }`}
                   >
                     <motion.div
-                      className={`w-2.5 h-2.5 rounded-full border border-dashed ${isActive ? "border-amber-500" : "border-zinc-400 dark:border-zinc-600"
+                      className={`w-2.5 h-2.5 rounded-none border border-dashed ${isActive ? "border-black" : "border-outline-variant"
                         }`}
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
@@ -374,7 +374,7 @@ export function Card2() {
                   <span className="text-[8px] text-muted-foreground/80 font-mono uppercase tracking-widest leading-none">{s.label}</span>
                   <span className="text-base font-bold font-mono text-foreground leading-none mt-1.5 tracking-tight">{s.value}</span>
                   <div className="flex items-center gap-1.5 mt-2">
-                    <span className={`text-[8px] font-mono font-bold ${s.trend.startsWith("+") ? "text-emerald-500" : "text-rose-400"
+                    <span className={`text-[8px] font-mono font-bold ${s.trend.startsWith("+") ? "text-primary-fixed" : "text-error"
                       }`}>
                       {s.trend}
                     </span>
@@ -439,7 +439,7 @@ export function Card2() {
           >
             {/* Animated Solid Filled Bar at bottom */}
             <motion.div
-              className="absolute bottom-0 left-0 right-0 bg-primary border-t border-x border-primary/80 shadow-[inset_0_0.5px_0_0_rgba(255,255,255,0.6),inset_0_8px_12px_0_rgba(255,255,255,0.03),inset_0.5px_0_0_0_rgba(255,255,255,0.2),inset_0_2px_6px_0_rgba(255,255,255,0.3),inset_0_-0.5px_0_0_rgba(0,0,0,0.2),inset_-0.5px_0_0_0_rgba(0,0,0,0.1),inset_0_-2px_6px_0_rgba(0,0,0,0.1),0_1px_2px_0_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.06),0_4px_6px_0_rgba(0,0,0,0.04),inset_0_-4px_8px_0_rgba(0,0,0,0.05)] rounded-t-[10px]"
+              className="absolute bottom-0 left-0 right-0 bg-primary-fixed border-t border-x border-black shadow-[inset_0_2px_0_0_#fff]"
               initial={{ height: "0%" }}
               animate={{
                 height: [
@@ -476,19 +476,19 @@ export function Card2() {
    ───────────────────────────────────────────── */
 
 const STATUS_ICONS: Record<string, { icon: any; color: string; bg: string; gradient: string; border: string }> = {
-  done: { icon: Check, color: "text-lime-500", bg: "bg-lime-500/15", gradient: "bg-gradient-to-b from-lime-400 to-lime-600", border: "border-lime-600" },
-  running: { icon: CircleNotch, color: "text-blue-400", bg: "bg-blue-400/15", gradient: "bg-gradient-to-b from-blue-400 to-blue-600", border: "border-blue-600" },
-  waiting: { icon: Clock, color: "text-amber-400", bg: "bg-amber-400/15", gradient: "bg-gradient-to-b from-amber-400 to-amber-600", border: "border-amber-600" },
-  idle: { icon: Minus, color: "text-muted-foreground/60", bg: "bg-muted/40", gradient: "bg-gradient-to-b from-zinc-400 to-zinc-600", border: "border-zinc-600" },
+  done: { icon: Check, color: "text-primary-fixed", bg: "bg-primary-fixed/15", gradient: "bg-primary-fixed text-black", border: "border-black" },
+  running: { icon: CircleNotch, color: "text-secondary-fixed", bg: "bg-secondary-fixed/15", gradient: "bg-secondary-fixed text-black", border: "border-black" },
+  waiting: { icon: Clock, color: "text-error", bg: "bg-error/15", gradient: "bg-error text-black", border: "border-black" },
+  idle: { icon: Minus, color: "text-on-surface-variant", bg: "bg-surface", gradient: "bg-surface text-on-surface", border: "border-outline-variant" },
 };
 
 export function Card3() {
   const logs = [
-    { agent: "Planner", action: "Decomposed task into 4 sub-goals", status: "done", t: "0.2s" },
-    { agent: "Researcher", action: "Queried web for latest embeddings", status: "done", t: "1.4s" },
-    { agent: "Coder", action: "Generating vector DB schema…", status: "running", t: "3.1s" },
-    { agent: "Reviewer", action: "Awaiting output from Coder", status: "waiting", t: "—" },
-    { agent: "Writer", action: "Idle — queued", status: "idle", t: "—" },
+    { agent: "CodeGen", action: "File diff captured: auth.ts", status: "done", t: "0.2s" },
+    { agent: "SigNoz", action: "Analyzing trace span #8f4a2b", status: "done", t: "1.4s" },
+    { agent: "AXRAY", action: "Intercepting logic loop...", status: "running", t: "3.1s" },
+    { agent: "OTel", action: "Awaiting next agent RPC", status: "waiting", t: "—" },
+    { agent: "MCP", action: "Idle — queued", status: "idle", t: "—" },
   ];
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -605,19 +605,19 @@ const NS_ICONS: Record<string, React.ElementType> = {
 };
 
 const NS_COLORS: Record<string, { bar: string; dot: string; badge: string; buttonBg: string; buttonBorder: string }> = {
-  codebase: { bar: "from-violet-500 to-violet-400", dot: "bg-violet-500", badge: "bg-violet-500/15 text-violet-400", buttonBg: "bg-violet-500", buttonBorder: "border-violet-600" },
-  docs: { bar: "from-sky-500    to-sky-400", dot: "bg-sky-500", badge: "bg-sky-500/15 text-sky-400", buttonBg: "bg-sky-500", buttonBorder: "border-sky-600" },
-  slack: { bar: "from-emerald-500 to-emerald-400", dot: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-400", buttonBg: "bg-emerald-500", buttonBorder: "border-emerald-600" },
-  notion: { bar: "from-amber-500  to-amber-400", dot: "bg-amber-500", badge: "bg-amber-500/15 text-amber-400", buttonBg: "bg-amber-500", buttonBorder: "border-amber-600" },
+  codebase: { bar: "from-primary-fixed to-primary-fixed-dim", dot: "bg-primary-fixed", badge: "bg-primary-fixed text-black", buttonBg: "bg-primary-fixed text-black", buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
+  docs: { bar: "from-secondary-fixed to-secondary-fixed-dim", dot: "bg-secondary-fixed", badge: "bg-secondary-fixed text-black", buttonBg: "bg-secondary-fixed text-black", buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
+  slack: { bar: "from-error to-error", dot: "bg-error", badge: "bg-error text-black", buttonBg: "bg-error text-black", buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
+  notion: { bar: "from-surface-variant to-outline-variant", dot: "bg-surface-variant", badge: "bg-surface-variant text-white", buttonBg: "bg-surface-variant text-white", buttonBorder: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
 };
 
 const RETRIEVAL_QUERIES = [
-  { ns: "codebase", q: "vector embeddings auth module", t: "0.2s" },
-  { ns: "docs", q: "API rate limiting config", t: "1.1s" },
-  { ns: "codebase", q: "Redis cache invalidation patterns", t: "2.4s" },
-  { ns: "slack", q: "deployment discussion #eng", t: "4.0s" },
-  { ns: "notion", q: "Q3 roadmap — agent features", t: "5.8s" },
-  { ns: "docs", q: "OpenAI function calling schema", t: "7.2s" },
+  { ns: "codebase", q: "TRACE: span execution timeout", t: "0.2s" },
+  { ns: "docs", q: "MCP context bounds exceeded", t: "1.1s" },
+  { ns: "codebase", q: "OOM error in vector generation", t: "2.4s" },
+  { ns: "slack", q: "agent loop detected", t: "4.0s" },
+  { ns: "notion", q: "API rate limiting hit", t: "5.8s" },
+  { ns: "docs", q: "OpenTelemetry sink dropped", t: "7.2s" },
 ];
 
 export function Card4() {
@@ -715,11 +715,11 @@ export function Card4() {
         <div className="flex items-center gap-2 pt-3 mt-auto">
           <div className="relative flex items-center justify-center w-2 h-2">
             <motion.div
-              className="absolute inset-0 rounded-full bg-emerald-400/40"
+              className="absolute inset-0 rounded-full bg-primary-fixed/40"
               animate={{ scale: [1, 2.5, 1], opacity: [0.5, 0, 0.5] }}
               transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
             />
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary-fixed" />
           </div>
           <span className="text-[8px] font-mono text-muted-foreground font-medium tracking-wide">Live retrieval active</span>
         </div>
@@ -768,10 +768,10 @@ export function Card4() {
 ───────────────────────────────────────────── */
 export function Card5() {
   const tools = [
-    { name: "web_search", calls: 14, icon: Globe, latency: "280ms", color: "bg-gradient-to-b from-sky-400 to-sky-600", borderColor: "border-sky-600" },
-    { name: "code_exec", calls: 8, icon: TerminalWindow, latency: "1.2s", color: "bg-gradient-to-b from-emerald-400 to-emerald-600", borderColor: "border-emerald-600" },
-    { name: "file_read", calls: 22, icon: FileText, latency: "12ms", color: "bg-gradient-to-b from-amber-400 to-amber-600", borderColor: "border-amber-600" },
-    { name: "vector_query", calls: 31, icon: Brain, latency: "95ms", color: "bg-gradient-to-b from-violet-400 to-violet-600", borderColor: "border-violet-600" },
+    { name: "write_file", calls: 14, icon: Globe, latency: "280ms", color: "bg-primary-fixed text-black", borderColor: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
+    { name: "run_command", calls: 8, icon: TerminalWindow, latency: "1.2s", color: "bg-error text-black", borderColor: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
+    { name: "read_file", calls: 22, icon: FileText, latency: "12ms", color: "bg-secondary-fixed text-black", borderColor: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
+    { name: "mcp_query", calls: 31, icon: Brain, latency: "95ms", color: "bg-surface text-on-surface", borderColor: "border-[2px] border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" },
   ];
 
   return (
@@ -824,36 +824,36 @@ export function Card5() {
 ───────────────────────────────────────────── */
 const CARDS = [
   {
-    title: "Agent Pipeline",
-    description: "Visualise how tasks flow across your multi-agent graph in real time.",
+    title: "Trace Telemetry",
+    description: "Visualize OpenTelemetry spans and agent tool invocations in real-time.",
     visual: <Card1 />,
     colSpan: "lg:col-span-1",
     height: "h-[260px]",
   },
   {
-    title: "Token Monitor",
-    description: "Track LLM token usage and cost-per-run across every model call.",
+    title: "Token Burn Rate",
+    description: "Track LLM token usage and hard costs per run across every inference call.",
     visual: <Card2 />,
     colSpan: "lg:col-span-1",
     height: "h-[260px]",
   },
   {
-    title: "Activity Feed",
-    description: "Real-time logs of agent actions, tool calls, and memory retrievals.",
+    title: "Execution Log",
+    description: "Raw real-time logs of agent actions, tool calls, and SigNoz trace interceptions.",
     visual: <Card3 />,
     colSpan: "lg:col-span-1",
     height: "h-[260px]",
   },
   {
-    title: "Knowledge Base",
-    description: "Semantic search across documents, codebases, and conversations.",
+    title: "Trace Namespaces",
+    description: "Analyze telemetry across system components, memory, and environment boundaries.",
     visual: <Card4 />,
     colSpan: "lg:col-span-2",
     height: "h-[260px]",
   },
   {
-    title: "Tool Inspector",
-    description: "Monitor tool usage, latency, and success rates across all agents.",
+    title: "Tool Telemetry",
+    description: "Monitor tool execution, latency overhead, and failure rates across all spans.",
     visual: <Card5 />,
     colSpan: "lg:col-span-1",
     height: "h-[260px]",
