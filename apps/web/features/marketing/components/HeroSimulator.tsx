@@ -28,47 +28,18 @@ const SEQUENCE: { delay: number; text: string; type: LogEntry["type"]; code?: st
 ];
 
 export default function HeroSimulator() {
-  const [status, setStatus] = useState<"idle" | "running" | "analyzing" | "failed">("idle");
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [replayKey, setReplayKey] = useState(0);
 
-  const startSimulation = () => {
-    setStatus("running");
-    setLogs([]);
+  const sequenceWithDelays = SEQUENCE.map((step, i, arr) => {
+    // Multiply delay by 0.4 to significantly increase the speed
+    const cumulativeDelay = arr.slice(0, i + 1).reduce((sum, s) => sum + (s.delay * 0.4), 0);
+    return { ...step, cumulativeDelay: cumulativeDelay + 500 }; // 500ms initial wait instead of 1000ms
+  });
 
-    let currentDelay = 0;
-
-    SEQUENCE.forEach((step, index) => {
-      currentDelay += step.delay;
-      setTimeout(() => {
-        setLogs(prev => [...prev, { id: index.toString(), text: step.text, type: step.type, code: step.code }]);
-
-        if (index === SEQUENCE.length - 1) {
-          setStatus("analyzing");
-          setTimeout(() => setStatus("failed"), 2500); // Wait for analysis
-        }
-      }, currentDelay);
-    });
-  };
-
-  useEffect(() => {
-    // Autoplay after 1 second
-    const timer = setTimeout(() => {
-      if (status === "idle") {
-        startSimulation();
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [status]);
-
-  useEffect(() => {
-    if (scrollRef.current && (status === "running" || status === "analyzing")) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [logs, status]);
+  const totalDuration = sequenceWithDelays[sequenceWithDelays.length - 1].cumulativeDelay;
 
   return (
-    <div className="w-full h-full bg-background flex flex-col font-mono-label relative">
+    <div key={replayKey} className="w-full h-full bg-background flex flex-col font-mono-label relative">
       {/* Terminal Header */}
       <div className="bg-surface-container-high border-b-[3px] border-black p-3 flex items-center justify-between shrink-0">
         <div className="flex gap-2">
@@ -83,15 +54,19 @@ export default function HeroSimulator() {
       </div>
 
       {/* Terminal Body */}
-      <div
-        ref={scrollRef}
-        className="flex-1 p-5 overflow-y-auto space-y-4 scrollbar-hide"
-      >
-        {logs.map((log) => (
-          <div key={log.id} className="text-xs sm:text-sm animate-fade-in flex flex-col items-start gap-1">
+      <div className="flex-1 p-5 overflow-y-auto space-y-4 scrollbar-hide flex flex-col justify-end">
+        {sequenceWithDelays.map((log, index) => (
+          <div
+            key={index}
+            className="text-xs sm:text-sm flex flex-col items-start gap-1 opacity-0"
+            style={{
+              animation: `fade-in-up 0.3s ease-out forwards`,
+              animationDelay: `${log.cumulativeDelay}ms`
+            }}
+          >
             <div className="flex items-start gap-3 w-full">
               <span className="text-on-surface-variant opacity-50 shrink-0 select-none font-bold">
-                [{new Date().toISOString().split('T')[1].slice(0, 8)}]
+                [00:00:{(index * 2).toString().padStart(2, '0')}]
               </span>
               <span className={`flex-1 font-medium leading-relaxed
                 ${log.type === 'error' ? 'text-error bg-error/10 px-2 py-1 font-black border-l-[3px] border-error shadow-[2px_2px_0px_0px_theme(colors.error)] uppercase' : ''}
@@ -106,57 +81,54 @@ export default function HeroSimulator() {
             </div>
           </div>
         ))}
-
-        {(status === "running" || status === "analyzing") && (
-          <div className="text-primary-fixed animate-pulse text-sm font-black mt-2">
-            {status === "analyzing" ? "[AXRAY] Analyzing traces..." : "_"}
-          </div>
-        )}
       </div>
 
-      {/* Root Cause Overlay (Shows on failure) */}
-      {status === "failed" && (
-        <div className="absolute inset-0 z-20 bg-background/95 border-[3px] border-black flex flex-col animate-fade-in m-4 shadow-[8px_8px_0px_0px_#000]">
-          <div className="bg-error text-black border-b-[3px] border-black px-4 py-3 font-cta-label uppercase flex justify-between items-center shrink-0">
-            <div className="flex items-center gap-3 font-black tracking-widest">
-              <span className="material-symbols-outlined text-lg">warning</span>
-              Failure Analysis Report
-            </div>
-            <button
-              onClick={() => setStatus("idle")}
-              className="hover:text-white transition-colors flex items-center gap-2 font-black border-[2px] border-black px-2 py-1 bg-white hover:bg-black text-black text-[10px]"
-            >
-              <span className="material-symbols-outlined text-sm">replay</span> REPLAY
-            </button>
+      {/* Root Cause Overlay */}
+      <div
+        className="absolute inset-0 z-20 bg-background/60 backdrop-blur-md border-[3px] border-black flex flex-col m-4 shadow-[8px_8px_0px_0px_#000] opacity-0 pointer-events-none"
+        style={{
+          animation: `fade-in-scale 0.5s ease-out forwards`,
+          animationDelay: `${totalDuration + 1000}ms`
+        }}
+      >
+        <div className="bg-error text-black border-b-[3px] border-black px-4 py-3 font-cta-label uppercase flex justify-between items-center shrink-0 pointer-events-auto">
+          <div className="flex items-center gap-3 font-black tracking-widest">
+            <span className="material-symbols-outlined text-lg">warning</span>
+            Failure Analysis Report
           </div>
-          <div className="flex-1 p-6 overflow-y-auto flex flex-col justify-center">
-
-            <div className="bg-surface-container border-[3px] border-black shadow-[4px_4px_0px_0px_#000] p-5 mb-6">
-              <div className="flex items-center gap-2 mb-3 border-b-[2px] border-outline-variant pb-2">
-                <span className="material-symbols-outlined text-primary-fixed">troubleshoot</span>
-                <span className="font-mono-label text-xs font-black uppercase text-white tracking-widest">SigNoz MCP Diagnosis</span>
-              </div>
-              <p className="text-on-surface-variant text-sm font-medium leading-relaxed">
-                Agent became trapped in a repetitive action loop editing <span className="text-primary-fixed bg-black px-1 font-bold">tests/mocks.ts</span>.
-                The underlying failure is a missed export in <span className="text-white font-bold">src/lib/auth.ts</span> that caused the mock imports to fail.
-              </p>
+          <button
+            onClick={() => setReplayKey(k => k + 1)}
+            className="hover:text-white transition-colors flex items-center gap-2 font-black border-[2px] border-black px-2 py-1 bg-white hover:bg-black text-black text-[10px]"
+          >
+            <span className="material-symbols-outlined text-sm">replay</span> REPLAY
+          </button>
+        </div>
+        <div className="flex-1 p-6 overflow-y-auto flex flex-col justify-center pointer-events-auto">
+          <div className="bg-surface-container border-[3px] border-black shadow-[4px_4px_0px_0px_#000] p-5 mb-6">
+            <div className="flex items-center gap-2 mb-3 border-b-[2px] border-outline-variant pb-2">
+              <span className="material-symbols-outlined text-primary-fixed">troubleshoot</span>
+              <span className="font-mono-label text-xs font-black uppercase text-white tracking-widest">SigNoz MCP Diagnosis</span>
             </div>
+            <p className="text-on-surface-variant text-sm font-medium leading-relaxed">
+              Agent became trapped in a repetitive action loop editing <span className="text-primary-fixed bg-black px-1 font-bold">tests/mocks.ts</span>.
+              The underlying failure is a missed export in <span className="text-white font-bold">src/lib/auth.ts</span> that caused the mock imports to fail.
+            </p>
+          </div>
 
-            <div className="bg-black border-[3px] border-outline-variant p-4 text-xs font-mono-label relative">
-              <div className="absolute -top-3 left-4 bg-primary-fixed text-black font-black uppercase px-2 text-[10px] border-[2px] border-black">
-                Diff Snapshot (span_id: 8f4a2b)
-              </div>
-              <div className="text-error bg-error/10 px-2 py-1 mt-2">{"- export const refreshToken = async () => {...}"}</div>
-              <div className="text-secondary-fixed bg-secondary-fixed/10 px-2 py-1 mt-1">{"+ const refreshToken = async () => {...} // Export missing"}</div>
+          <div className="bg-black border-[3px] border-outline-variant p-4 text-xs font-mono-label relative">
+            <div className="absolute -top-3 left-4 bg-primary-fixed text-black font-black uppercase px-2 text-[10px] border-[2px] border-black">
+              Diff Snapshot (span_id: 8f4a2b)
             </div>
+            <div className="text-error bg-error/10 px-2 py-1 mt-2">{"- export const refreshToken = async () => {...}"}</div>
+            <div className="text-secondary-fixed bg-secondary-fixed/10 px-2 py-1 mt-1">{"+ const refreshToken = async () => {...} // Export missing"}</div>
+          </div>
 
-            <div className="mt-6 flex items-center gap-3 text-xs text-primary-fixed font-black uppercase tracking-widest bg-primary-fixed/10 p-3 border-[2px] border-primary-fixed">
-              <span className="material-symbols-outlined text-lg animate-pulse">published_with_changes</span>
-              Action: Revert diff and append hint to agent prompt.
-            </div>
+          <div className="mt-6 flex items-center gap-3 text-xs text-primary-fixed font-black uppercase tracking-widest bg-primary-fixed/10 p-3 border-[2px] border-primary-fixed">
+            <span className="material-symbols-outlined text-lg animate-pulse">published_with_changes</span>
+            Action: Revert diff and append hint to agent prompt.
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

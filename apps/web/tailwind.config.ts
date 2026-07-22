@@ -96,9 +96,19 @@ const config: Config = {
           "0%": { transform: "translateX(0%)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in-scale": {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         marquee: "marquee 15s linear infinite",
+        "fade-in-up": "fade-in-up 0.7s ease-out forwards",
+        "fade-in-scale": "fade-in-scale 0.7s ease-out forwards",
       }
     },
   },
