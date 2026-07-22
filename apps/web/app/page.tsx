@@ -73,8 +73,8 @@ export default function Home() {
 
             {/* Links */}
             <div className="hidden lg:flex gap-6 items-center shrink-0">
-              <Link className="text-primary-fixed font-cta-label underline decoration-3 underline-offset-8 transition-transform active:translate-x-[2px] active:translate-y-[2px]" href="#">Product</Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">Features</Link>
+              <Link className="text-primary-fixed font-cta-label underline decoration-3 underline-offset-8 transition-transform active:translate-x-[2px] active:translate-y-[2px]" href="/">Home</Link>
+              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="/features">Features</Link>
               <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">How it Works</Link>
               <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">GitHub Integration</Link>
               <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">Docs</Link>
