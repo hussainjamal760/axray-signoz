@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import HeroSimulator from "@/features/marketing/components/HeroSimulator";
 import AgentBentoGrid from "@/features/marketing/components/AgentBentoGrid";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
@@ -122,24 +123,61 @@ export default function Home() {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 md:gap-gutter items-start max-w-[1600px] mx-auto relative z-10">
             <div className="xl:col-span-7 space-y-10">
 
-              <div className="inline-flex items-center px-4 py-2 bg-secondary-container border-[3px] border-black shadow-[4px_4px_0px_0px_theme(colors.primary-fixed)]">
-                <div className="w-2 h-2 bg-primary-fixed rounded-full animate-pulse mr-3"></div>
-                <span className="font-mono-label text-xs md:text-sm text-on-secondary-container font-black uppercase tracking-[0.2em]">
-                  AXRAY v1.0.0 — Live Observability
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="group inline-flex items-center px-5 py-2.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-full hover:border-primary-fixed/50 hover:bg-black/60 transition-all duration-500 cursor-default"
+              >
+                <div className="relative flex h-3 w-3 mr-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-fixed opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary-fixed shadow-[0_0_10px_theme(colors.primary-fixed)]"></span>
+                </div>
+                <span className="font-mono-label text-xs md:text-sm text-white/90 font-bold uppercase tracking-[0.2em] group-hover:text-white transition-colors">
+                  AXRAY v1.0.0 <span className="text-white/30 mx-2">|</span> Live Observability
                 </span>
-              </div>
+              </motion.div>
 
-              <h1 className="font-headline-xl text-[56px] leading-[1.1] md:text-[88px] lg:text-[104px] text-white tracking-tighter uppercase">
-                AI agents <br />
-                write code. <br />
-                <span className="text-primary-fixed bg-black inline-block px-4 mt-2 border-[3px] border-primary-fixed shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)] -rotate-1 hover:rotate-0 transition-transform duration-300">
-                  Who watches them fail?
-                </span>
+              <h1 className="font-headline-xl text-[48px] leading-[1.05] md:text-[64px] lg:text-[76px] text-white tracking-tighter uppercase relative z-10">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+                  className="inline-block"
+                >
+                  AI agents
+                </motion.div>
+                <br />
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+                  className="inline-block text-white"
+                >
+                  write code.
+                </motion.div>
+                <br />
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.7, delay: 0.4, ease: "easeOut" }}
+                  className="relative inline-block mt-4 group/highlight"
+                >
+                  <div className="absolute inset-0 bg-primary-fixed blur-xl opacity-20 group-hover/highlight:opacity-40 transition-opacity duration-500"></div>
+                  <span className="relative inline-block text-black bg-primary-fixed px-6 py-2 border-[3px] border-primary-fixed shadow-[6px_6px_0px_0px_#000] group-hover/highlight:translate-x-1 group-hover/highlight:-translate-y-1 group-hover/highlight:shadow-[10px_10px_0px_0px_#000] transition-all duration-300">
+                    Who watches them fail?
+                  </span>
+                </motion.div>
               </h1>
 
-              <p className="font-body-md text-lg md:text-2xl text-on-surface-variant max-w-2xl font-medium leading-relaxed">
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
+                className="font-body-md text-lg md:text-xl text-on-surface-variant max-w-2xl font-medium leading-relaxed mt-4"
+              >
                 The absolute truth, traced. Record every decision, tool call, and file diff. Bridge the gap between autonomous execution and human oversight using the power of <span className="text-white font-bold">SigNoz</span> and <span className="text-white font-bold">OpenTelemetry</span>.
-              </p>
+              </motion.p>
 
               <div className="flex flex-col sm:flex-row flex-wrap gap-6 md:gap-8 pt-4">
                 {heroCta}
@@ -197,7 +235,7 @@ export default function Home() {
               <div className="absolute -bottom-8 -left-8 border-[3px] border-black bg-surface p-5 min-w-[280px] shadow-[8px_8px_0px_0px_theme(colors.primary-fixed)] hidden lg:block z-30 hover:-translate-y-2 transition-transform duration-300">
                 <p className="font-mono-label text-[10px] text-on-surface-variant font-black tracking-widest uppercase mb-3">Live Intercept</p>
                 <div className="flex items-center justify-between border-b-[3px] border-outline-variant pb-3 mb-3">
-                  <span className="font-bold text-white uppercase text-sm">Agent: CodeGen-X4</span>
+                  <span className="font-bold text-white uppercase text-sm">Agent: Axray-Agent</span>
                   <div className="w-3 h-3 bg-primary-fixed border-[2px] border-black rounded-none animate-pulse"></div>
                 </div>
                 <div className="flex items-start gap-3 text-primary-fixed">

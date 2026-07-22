@@ -484,7 +484,7 @@ const STATUS_ICONS: Record<string, { icon: any; color: string; bg: string; gradi
 
 export function Card3() {
   const logs = [
-    { agent: "CodeGen", action: "File diff captured: auth.ts", status: "done", t: "0.2s" },
+    { agent: "AXRAY-Agent", action: "File diff captured: auth.ts", status: "done", t: "0.2s" },
     { agent: "SigNoz", action: "Analyzing trace span #8f4a2b", status: "done", t: "1.4s" },
     { agent: "AXRAY", action: "Intercepting logic loop...", status: "running", t: "3.1s" },
     { agent: "OTel", action: "Awaiting next agent RPC", status: "waiting", t: "—" },
