@@ -1,6 +1,5 @@
 import { SessionSummary } from '../types/sessions.types';
 import { AgentRunSummary } from '@/features/agent-runs/types';
-import { CodeDiffCard } from './CodeDiffCard';
 
 export interface TerminalPanelProps {
   session?: SessionSummary;
@@ -12,7 +11,7 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
   const isRunning = selectedRun?.status === 'running' || selectedRun?.status === 'pending';
 
   return (
-    <div className="col-span-12 md:col-span-7 bg-background border-[3px] border-outline flex flex-col h-[520px] brutalist-shadow">
+    <div className="col-span-12 md:col-span-7 bg-background border-[3px] border-outline flex flex-col h-[450px] brutalist-shadow">
       <div className="p-4 border-b-2 border-outline flex items-center justify-between bg-surface shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex gap-2">
@@ -82,19 +81,6 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
                   {selectedRun.response}
                 </pre>
               </div>
-            )}
-
-            {/* Render Git Diff Card if diff/filesChanged exist */}
-            {(selectedRun.diff || (selectedRun.filesChanged && selectedRun.filesChanged.length > 0)) && (
-              <CodeDiffCard
-                diff={selectedRun.diff}
-                filesChanged={selectedRun.filesChanged}
-                insertions={selectedRun.insertions}
-                deletions={selectedRun.deletions}
-                diffTruncated={selectedRun.diffTruncated}
-                diffSize={selectedRun.diffSize}
-                changeSummary={selectedRun.changeSummary}
-              />
             )}
 
             {selectedRun.errorMessage && (

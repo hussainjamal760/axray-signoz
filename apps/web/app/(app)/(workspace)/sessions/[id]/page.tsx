@@ -12,6 +12,7 @@ import {
   TimelinePanel,
   LiveTraceTree,
   TerminalPanel,
+  CodeDiffCard,
 } from "@/features/sessions/components";
 
 export default function SessionIdPage() {
@@ -44,6 +45,7 @@ export default function SessionIdPage() {
 
   // Default to manually selected run, or latest run in runs array
   const activeOrSelectedRun = manuallySelectedRun || runs[0] || null;
+  const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
 
   if (sessionLoading) {
     return (
@@ -93,7 +95,7 @@ export default function SessionIdPage() {
       <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
         <div className="grid grid-cols-12 gap-8">
 
-          {/* Top Left: Initialize Context */}
+          {/* Row 1: Initialize Context & Timeline */}
           <div className="col-span-12 lg:col-span-7">
             <InitializeContextPanel
               onSubmit={handlePromptSubmit}
@@ -102,25 +104,36 @@ export default function SessionIdPage() {
             />
           </div>
 
-          {/* Top Right: Timeline */}
           <div className="col-span-12 lg:col-span-5 h-full">
             <TimelinePanel />
           </div>
 
-          {/* Bottom Grid: Trace Tree and Terminal */}
+          {/* Row 2: Live Trace Tree and Terminal Window */}
           <section className="col-span-12 grid grid-cols-12 gap-8">
-            {/* Live Trace Tree */}
             <div className="col-span-12 md:col-span-5 h-full">
               <LiveTraceTree />
             </div>
 
-            {/* Terminal Window */}
             <div className="col-span-12 md:col-span-7 h-full">
               <TerminalPanel session={session} selectedRun={activeOrSelectedRun} />
             </div>
           </section>
 
-          {/* Execution History Section */}
+          {/* Row 3: Dedicated Full-Width Git Diff Artifact Section */}
+          <section className="col-span-12 mt-8">
+            <CodeDiffCard
+              diff={activeOrSelectedRun?.diff}
+              filesChanged={activeOrSelectedRun?.filesChanged}
+              insertions={activeOrSelectedRun?.insertions}
+              deletions={activeOrSelectedRun?.deletions}
+              diffTruncated={activeOrSelectedRun?.diffTruncated}
+              diffSize={activeOrSelectedRun?.diffSize}
+              changeSummary={activeOrSelectedRun?.changeSummary}
+              isLoading={isSelectedRunExecuting}
+            />
+          </section>
+
+          {/* Row 4: Full-Width Execution History Section */}
           <section className="col-span-12 mt-8">
             <div className="bg-surface border-[3px] border-outline p-6 brutalist-shadow">
               <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
