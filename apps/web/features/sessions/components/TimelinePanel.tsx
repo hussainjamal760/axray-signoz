@@ -148,9 +148,6 @@ export function TimelinePanel({ selectedRunId, runStatus }: TimelinePanelProps) 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 relative bg-background"
       >
-        {/* Connecting Vertical Line */}
-        <div className="absolute left-[47px] top-6 bottom-6 w-[2px] bg-outline-variant"></div>
-
         {isLoading && events.length === 0 ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8 animate-pulse">
             Querying SigNoz telemetry traces...
@@ -159,9 +156,11 @@ export function TimelinePanel({ selectedRunId, runStatus }: TimelinePanelProps) 
           <div className="font-mono-label text-xs text-outline-variant text-center py-8">
             # Execution telemetry is temporarily unavailable.
           </div>
-        ) : events.length === 0 ? (
-          <div className="font-mono-label text-xs text-outline-variant text-center py-8">
-            # Select an agent run to inspect execution telemetry.
+        ) : !selectedRunId || events.length === 0 ? (
+          <div className="font-mono-label text-xs text-outline-variant text-center py-8 space-y-2">
+            <span className="material-symbols-outlined text-primary-fixed !text-3xl block">rocket_launch</span>
+            <p className="font-black text-on-surface uppercase text-sm">Start your first run and see the magic here!</p>
+            <p className="text-[11px] text-outline font-bold">Telemetry traces will stream live as the agent executes.</p>
           </div>
         ) : (
           events.map((item) => {
