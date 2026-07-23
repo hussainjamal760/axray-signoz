@@ -13,6 +13,7 @@ export interface CodeDiffCardProps {
   diffSize?: number;
   changeSummary?: string;
   isLoading?: boolean;
+  isError?: boolean;
 }
 
 export function CodeDiffCard({
@@ -24,6 +25,7 @@ export function CodeDiffCard({
   diffSize,
   changeSummary,
   isLoading = false,
+  isError = false,
 }: CodeDiffCardProps) {
   const [activeFileIndex, setActiveFileIndex] = useState<number | null>(null);
 
@@ -38,10 +40,25 @@ export function CodeDiffCard({
       <div className="bg-surface border-[3px] border-outline p-8 brutalist-shadow text-center font-mono-label">
         <div className="flex items-center justify-center gap-3 text-primary-fixed font-black text-sm uppercase animate-pulse">
           <span className="material-symbols-outlined animate-spin text-lg">sync</span>
-          Waiting for code changes...
+          Generating Git Diff...
         </div>
         <p className="text-outline-variant text-xs mt-2">
-          Git diff will be captured and generated automatically after agent completion.
+          Inspecting workspace repository changes for current run...
+        </p>
+      </div>
+    );
+  }
+
+  // Error State
+  if (isError) {
+    return (
+      <div className="bg-surface border-[3px] border-outline p-8 brutalist-shadow text-center font-mono-label">
+        <div className="flex items-center justify-center gap-3 text-error text-sm font-black uppercase mb-1">
+          <span className="material-symbols-outlined text-lg">error</span>
+          Unable to generate Git diff.
+        </div>
+        <p className="text-outline-variant text-xs">
+          An error occurred while inspecting repository changes for this run.
         </p>
       </div>
     );
@@ -53,7 +70,7 @@ export function CodeDiffCard({
       <div className="bg-surface border-[3px] border-outline p-8 brutalist-shadow text-center font-mono-label">
         <div className="flex items-center justify-center gap-3 text-outline text-sm font-black uppercase mb-1">
           <span className="material-symbols-outlined text-lg">check_circle</span>
-          No code changes were produced during this run.
+          No code changes were made during this run.
         </div>
         <p className="text-outline-variant text-xs">
           The agent completed without modifying any files in the workspace repository.

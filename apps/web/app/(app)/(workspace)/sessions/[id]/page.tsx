@@ -48,33 +48,6 @@ export default function SessionIdPage() {
     if (latestEvent.eventType === 'run.completed' || latestEvent.eventType === 'run.failed') {
       const isFailed = latestEvent.eventType === 'run.failed';
       const meta = latestEvent.metadata || {};
-
-      setRunsState((prev) => {
-        const targetId = latestEvent.runId;
-        if (!targetId) return prev;
-
-        const idx = prev.findIndex((r) => r.id === targetId);
-        if (idx !== -1) {
-          const updated = [...prev];
-          updated[idx] = {
-            ...updated[idx],
-            status: isFailed ? 'failed' : 'completed',
-            response: (meta.response as string) || updated[idx].response,
-            tokensUsed: (meta.tokensUsed as number) || updated[idx].tokensUsed,
-            durationMs: latestEvent.durationMs || updated[idx].durationMs,
-            changeSummary: (meta.changeSummary as string) || updated[idx].changeSummary,
-            filesChanged: (meta.filesChanged as unknown as string[]) || updated[idx].filesChanged,
-            insertions: (meta.insertions as number) || updated[idx].insertions,
-            deletions: (meta.deletions as number) || updated[idx].deletions,
-            errorMessage: isFailed ? (meta.errorMessage as string) : undefined,
-            completedAt: latestEvent.timestamp,
-          };
-          return updated;
-        }
-        return prev;
-      });
-    } else if (latestEvent.eventType === 'git.diff.completed') {
-      const meta = latestEvent.metadata || {};
       const targetId = latestEvent.runId;
 
       if (targetId) {
@@ -84,15 +57,80 @@ export default function SessionIdPage() {
             const updated = [...prev];
             updated[idx] = {
               ...updated[idx],
-              diff: (meta.rawDiff as string) || updated[idx].diff,
+              status: isFailed ? 'failed' : 'completed',
+              response: (meta.response as string) || updated[idx].response,
+              tokensUsed: (meta.tokensUsed as number) || updated[idx].tokensUsed,
+              durationMs: latestEvent.durationMs || updated[idx].durationMs,
+              changeSummary: (meta.changeSummary as string) || updated[idx].changeSummary,
               filesChanged: (meta.filesChanged as unknown as string[]) || updated[idx].filesChanged,
               insertions: (meta.insertions as number) || updated[idx].insertions,
               deletions: (meta.deletions as number) || updated[idx].deletions,
-              diffTruncated: (meta.diffTruncated as boolean) || updated[idx].diffTruncated,
-              diffSize: (meta.diffSize as number) || updated[idx].diffSize,
-              changeSummary: (meta.changeSummary as string) || updated[idx].changeSummary,
+              errorMessage: isFailed ? (meta.errorMessage as string) : undefined,
+              completedAt: latestEvent.timestamp,
             };
             return updated;
+          }
+          return prev;
+        });
+
+        // Synchronize manuallySelectedRun if it matches targetId
+        setManuallySelectedRun((prev) => {
+          if (prev && prev.id === targetId) {
+            return {
+              ...prev,
+              status: isFailed ? 'failed' : 'completed',
+              response: (meta.response as string) || prev.response,
+              tokensUsed: (meta.tokensUsed as number) || prev.tokensUsed,
+              durationMs: latestEvent.durationMs || prev.durationMs,
+              changeSummary: (meta.changeSummary as string) || prev.changeSummary,
+              filesChanged: (meta.filesChanged as unknown as string[]) || prev.filesChanged,
+              insertions: (meta.insertions as number) || prev.insertions,
+              deletions: (meta.deletions as number) || prev.deletions,
+              errorMessage: isFailed ? (meta.errorMessage as string) : undefined,
+              completedAt: latestEvent.timestamp,
+            };
+          }
+          return prev;
+        });
+      }
+    } else if (latestEvent.eventType === 'git.diff.completed') {
+      const meta = latestEvent.metadata || {};
+      const targetId = latestEvent.runId;
+      const isFailed = latestEvent.status === 'failed';
+
+      if (targetId) {
+        setRunsState((prev) => {
+          const idx = prev.findIndex((r) => r.id === targetId);
+          if (idx !== -1) {
+            const updated = [...prev];
+            updated[idx] = {
+              ...updated[idx],
+              diff: (meta.rawDiff as string) || updated[idx].diff || '',
+              filesChanged: (meta.filesChanged as unknown as string[]) || updated[idx].filesChanged || [],
+              insertions: (meta.insertions as number) ?? updated[idx].insertions ?? 0,
+              deletions: (meta.deletions as number) ?? updated[idx].deletions ?? 0,
+              diffTruncated: (meta.diffTruncated as boolean) || updated[idx].diffTruncated || false,
+              diffSize: (meta.diffSize as number) || updated[idx].diffSize || 0,
+              changeSummary: (meta.changeSummary as string) || updated[idx].changeSummary || '',
+            };
+            return updated;
+          }
+          return prev;
+        });
+
+        // Also synchronize manuallySelectedRun if it matches targetId
+        setManuallySelectedRun((prev) => {
+          if (prev && prev.id === targetId) {
+            return {
+              ...prev,
+              diff: (meta.rawDiff as string) || prev.diff || '',
+              filesChanged: (meta.filesChanged as unknown as string[]) || prev.filesChanged || [],
+              insertions: (meta.insertions as number) ?? prev.insertions ?? 0,
+              deletions: (meta.deletions as number) ?? prev.deletions ?? 0,
+              diffTruncated: (meta.diffTruncated as boolean) || prev.diffTruncated || false,
+              diffSize: (meta.diffSize as number) || prev.diffSize || 0,
+              changeSummary: (meta.changeSummary as string) || prev.changeSummary || '',
+            };
           }
           return prev;
         });
@@ -103,6 +141,10 @@ export default function SessionIdPage() {
   // Default to manually selected run, or latest run in runsState
   const activeOrSelectedRun = manuallySelectedRun || runsState[0] || fetchedRuns[0] || null;
   const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
+  
+  // Loading state for Git diff terminates as soon as run completes/fails OR diff arrives
+  const isDiffLoading = isSelectedRunExecuting && activeOrSelectedRun?.diff === undefined;
+  const isDiffError = (activeOrSelectedRun?.status === 'failed' && !activeOrSelectedRun?.diff) || false;
 
   // Map Socket.IO liveEvents into TimelineEvent[] format
   const liveTimelineEvents: TimelineEvent[] = useMemo(() => {
@@ -187,7 +229,7 @@ export default function SessionIdPage() {
       { prompt: promptText },
       {
         onSuccess: (newRun) => {
-          setManuallySelectedRun(newRun);
+          setManuallySelectedRun(null); // Clear manual selection so activeOrSelectedRun tracks latest runsState[0]
           setRunsState((prev) => [newRun, ...prev]);
         },
       }
@@ -245,7 +287,8 @@ export default function SessionIdPage() {
               diffTruncated={activeOrSelectedRun?.diffTruncated}
               diffSize={activeOrSelectedRun?.diffSize}
               changeSummary={activeOrSelectedRun?.changeSummary}
-              isLoading={isSelectedRunExecuting && !activeOrSelectedRun?.diff}
+              isLoading={isDiffLoading}
+              isError={isDiffError}
             />
           </section>
 
