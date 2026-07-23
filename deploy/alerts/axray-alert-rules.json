@@ -1,0 +1,1094 @@
+[
+  {
+    "id": "019f8cdf-54d1-7895-b810-b461d387f2de",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Groq API Errors",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND server.address = 'api.groq.com' AND http.response.status_code >= 400"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "warning",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": [
+              "Notification Alert"
+            ]
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/overview?compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520server.address%2520%253D%2520%27api.groq.com%27%2520AND%2520http.response.status_code%2520%253E%253D%2520400%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%257B%2522id%2522%253A%25221e850069-0d63-4f7b-9fd0-9fb3f9b34f57%2522%252C%2522op%2522%253A%2522%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522service.name%2522%252C%2522key%2522%253A%2522service.name%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A%2522axray-agent%2522%257D%252C%257B%2522id%2522%253A%2522c1c0d45d-f778-474c-9cb9-f28325f53b20%2522%252C%2522op%2522%253A%2522%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522server.address%2522%252C%2522key%2522%253A%2522server.address%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A%2522api.groq.com%2522%257D%252C%257B%2522id%2522%253A%2522ba95620d-f7cf-4a40-bb8f-799ee2a73dce%2522%252C%2522op%2522%253A%2522%253E%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522http.response.status_code%2522%252C%2522key%2522%253A%2522http.response.status_code%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A400%257D%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%252C%2522name%2522%253A%2522A%2522%252C%2522signal%2522%253A%2522traces%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%252268be3df7-5219-494f-a709-9093a77dbc81%2522%252C%2522unit%2522%253A%2522%2522%257D&panelTypes=graph&ruleId=019f8cdf-54d1-7895-b810-b461d387f2de&relativeTime=6h",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": false
+    },
+    "createAt": "2026-07-23T02:47:54.32156Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T03:07:14.689403Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f8d16-1077-71c6-b69e-56c6cebe7096",
+    "state": "inactive",
+    "alert": "AXRAY Agent — LLM Cost Threshold",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "stepInterval": 60,
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "sum(llm.cost_usd)"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'llm.call'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "warning",
+            "target": 0.01,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": [
+              "Notification Alert"
+            ]
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=TRACES_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520name%2520%253D%2520%27llm.call%27%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522sum%28llm.cost_usd%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253A60%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255CttoStartOfInterval%28timestamp%252C%2520INTERVAL%25201%2520MINUTE%29%2520AS%2520interval%252C%2520%255Cn%255Ctresource_string_service%2524%2524name%2520AS%2520%2560service.name%2560%252C%2520%255Cn%255CttoFloat64%28avg%28duration_nano%29%29%2520AS%2520value%2520%255CnFROM%2520signoz_traces.distributed_signoz_index_v3%2520%2520%255CnWHERE%2520resource_string_service%2524%2524name%2520%21%253D%27%27%2520%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520%28%2560service.name%2560%252C%2520interval%29%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Fwriting-clickhouse-traces-query%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%257D%255D%252C%2522id%2522%253A%252236ccceff-7e6b-4e79-bce3-ecca8c30ac46%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": false
+    },
+    "createAt": "2026-07-23T03:47:41.30311Z",
+    "createBy": "axray-1@signozserviceaccount.com",
+    "updateAt": "2026-07-23T03:47:41.30311Z",
+    "updateBy": "axray-1@signozserviceaccount.com"
+  },
+  {
+    "id": "019f8d16-10dc-7e61-8dfc-aa621ae61de0",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Session Failure",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "stepInterval": 60,
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'agent.session'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": [
+              "Notification Alert"
+            ]
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/overview?compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520name%2520%253D%2520%27agent.session%27%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%257B%2522id%2522%253A%25228bc6a255-188b-4299-b419-28c29f45a070%2522%252C%2522op%2522%253A%2522%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522service.name%2522%252C%2522key%2522%253A%2522service.name%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A%2522axray-agent%2522%257D%252C%257B%2522id%2522%253A%252238f99699-bd01-4c45-ace3-10cab59b8fde%2522%252C%2522op%2522%253A%2522%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522name%2522%252C%2522key%2522%253A%2522name%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A%2522agent.session%2522%257D%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%252C%2522name%2522%253A%2522A%2522%252C%2522signal%2522%253A%2522traces%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%2522b0b3fe9a-d749-4ab3-9110-330bf3c1d7c6%2522%252C%2522unit%2522%253A%2522%2522%257D&panelTypes=graph&ruleId=019f8cd3-14df-7a20-a7ef-ede3dae6eda0&relativeTime=6h",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": true,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": false
+    },
+    "createAt": "2026-07-23T03:47:41.404939Z",
+    "createBy": "axray-1@signozserviceaccount.com",
+    "updateAt": "2026-07-23T03:47:41.404939Z",
+    "updateBy": "axray-1@signozserviceaccount.com"
+  },
+  {
+    "id": "019f8d16-113b-75cb-9ca1-6767c388590e",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Slow Turn Detected",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "stepInterval": 60,
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "p95(duration_nano)"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'agent.turn'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "warning",
+            "target": 20000000000,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": [
+              "Notification Alert"
+            ]
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=TRACES_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520name%2520%253D%2520%27agent.turn%27%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522p95%28duration_nano%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253A60%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255CttoStartOfInterval%28timestamp%252C%2520INTERVAL%25201%2520MINUTE%29%2520AS%2520interval%252C%2520%255Cn%255Ctresource_string_service%2524%2524name%2520AS%2520%2560service.name%2560%252C%2520%255Cn%255CttoFloat64%28avg%28duration_nano%29%29%2520AS%2520value%2520%255CnFROM%2520signoz_traces.distributed_signoz_index_v3%2520%2520%255CnWHERE%2520resource_string_service%2524%2524name%2520%21%253D%27%27%2520%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520%28%2560service.name%2560%252C%2520interval%29%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Fwriting-clickhouse-traces-query%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%257D%255D%252C%2522id%2522%253A%25226c080904-a16f-4d98-9135-012d3674003a%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": false
+    },
+    "createAt": "2026-07-23T03:47:41.499377Z",
+    "createBy": "axray-1@signozserviceaccount.com",
+    "updateAt": "2026-07-23T03:47:41.499377Z",
+    "updateBy": "axray-1@signozserviceaccount.com"
+  },
+  {
+    "id": "019f8d16-119b-76ce-b642-f9d5b075fab5",
+    "state": "inactive",
+    "alert": "AXRAY Agent — MCP Self-Check Fallback",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "info",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": [
+              "Notification Alert"
+            ]
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=TRACES_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520name%2520%253D%2520%27agent.self_check%27%2520AND%2520self_check.mcp_tool_used%2520%253D%2520%27local_turn_log_fallback%27%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255CttoStartOfInterval%28timestamp%252C%2520INTERVAL%25201%2520MINUTE%29%2520AS%2520interval%252C%2520%255Cn%255Ctresource_string_service%2524%2524name%2520AS%2520%2560service.name%2560%252C%2520%255Cn%255CttoFloat64%28avg%28duration_nano%29%29%2520AS%2520value%2520%255CnFROM%2520signoz_traces.distributed_signoz_index_v3%2520%2520%255CnWHERE%2520resource_string_service%2524%2524name%2520%21%253D%27%27%2520%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520%28%2560service.name%2560%252C%2520interval%29%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Fwriting-clickhouse-traces-query%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%257D%255D%252C%2522id%2522%253A%2522b2e4340c-012b-48bb-aba6-7c6f38fb0816%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": false
+    },
+    "createAt": "2026-07-23T03:47:41.595443Z",
+    "createBy": "axray-1@signozserviceaccount.com",
+    "updateAt": "2026-07-23T03:47:41.595443Z",
+    "updateBy": "axray-1@signozserviceaccount.com"
+  },
+  {
+    "id": "019f8d16-11fc-7e8f-ab3c-40ac68e4e102",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Groq API Errors",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND server.address = 'api.groq.com' AND http.response.status_code >= 400"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "warning",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": [
+              "Notification Alert"
+            ]
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/overview?compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520server.address%2520%253D%2520%27api.groq.com%27%2520AND%2520http.response.status_code%2520%253E%253D%2520400%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%257B%2522id%2522%253A%25221e850069-0d63-4f7b-9fd0-9fb3f9b34f57%2522%252C%2522op%2522%253A%2522%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522service.name%2522%252C%2522key%2522%253A%2522service.name%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A%2522axray-agent%2522%257D%252C%257B%2522id%2522%253A%2522c1c0d45d-f778-474c-9cb9-f28325f53b20%2522%252C%2522op%2522%253A%2522%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522server.address%2522%252C%2522key%2522%253A%2522server.address%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A%2522api.groq.com%2522%257D%252C%257B%2522id%2522%253A%2522ba95620d-f7cf-4a40-bb8f-799ee2a73dce%2522%252C%2522op%2522%253A%2522%253E%253D%2522%252C%2522key%2522%253A%257B%2522id%2522%253A%2522http.response.status_code%2522%252C%2522key%2522%253A%2522http.response.status_code%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522value%2522%253A400%257D%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%252C%2522name%2522%253A%2522A%2522%252C%2522signal%2522%253A%2522traces%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%252268be3df7-5219-494f-a709-9093a77dbc81%2522%252C%2522unit%2522%253A%2522%2522%257D&panelTypes=graph&ruleId=019f8cdf-54d1-7895-b810-b461d387f2de&relativeTime=6h",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": false
+    },
+    "createAt": "2026-07-23T03:47:41.692952Z",
+    "createBy": "axray-1@signozserviceaccount.com",
+    "updateAt": "2026-07-23T03:47:41.692952Z",
+    "updateBy": "axray-1@signozserviceaccount.com"
+  },
+  {
+    "id": "019f911c-bfe3-7559-a1b8-adb825aef40b",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Error Counter Spike",
+    "alertType": "METRIC_BASED_ALERT",
+    "ruleType": "promql_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "promql",
+            "spec": {
+              "name": "A",
+              "query": "   agent_errors_total",
+              "disabled": false,
+              "step": 0,
+              "stats": false,
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "promql"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=METRIC_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522promql%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522metrics%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522%2522%252C%2522aggregateAttribute%2522%253A%257B%2522key%2522%253A%2522agent%2522%252C%2522type%2522%253A%2522%2522%252C%2522dataType%2522%253A%2522float64%2522%252C%2522id%2522%253A%2522agent--float64--%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522timeAggregation%2522%253A%2522avg%2522%252C%2522metricName%2522%253A%2522agent%2522%252C%2522temporality%2522%253A%2522%2522%252C%2522spaceAggregation%2522%253A%2522avg%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2520%2520%2520agent_errors_total%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%25221f4c458a-f67c-4cd4-a4ea-294eeda2bf63%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:33:28.291347Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:33:28.291347Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9120-2f64-7a5f-a4c4-35348743fb4c",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Token Burn Spike",
+    "alertType": "METRIC_BASED_ALERT",
+    "ruleType": "promql_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "promql",
+            "spec": {
+              "name": "A",
+              "query": "agent_tokens_input_total",
+              "disabled": false,
+              "step": 0,
+              "stats": false,
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "promql"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=METRIC_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522promql%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522metrics%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522metricName%2522%253A%2522%2522%252C%2522temporality%2522%253A%2522%2522%252C%2522timeAggregation%2522%253A%2522avg%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522reduceTo%2522%253A%2522avg%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522agent_tokens_input_total%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%252237b1ae05-3711-45ec-b6e5-958214859f37%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:37:13.444676Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:37:13.444676Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9121-79a6-74e0-807b-f0ba6a7a9c4e",
+    "state": "inactive",
+    "alert": "AXRAY Host — High CPU Usage",
+    "alertType": "METRIC_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "metrics",
+              "source": "",
+              "aggregations": [
+                {
+                  "metricName": "system.cpu.utilization",
+                  "temporality": "",
+                  "timeAggregation": "avg",
+                  "spaceAggregation": "avg"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": ""
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0.8,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=METRIC_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522metrics%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522%2522%252C%2522aggregateAttribute%2522%253A%257B%2522key%2522%253A%2522system.cpu.utilization%2522%252C%2522type%2522%253A%2522Gauge%2522%252C%2522dataType%2522%253A%2522float64%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522timeAggregation%2522%253A%2522avg%2522%252C%2522metricName%2522%253A%2522system.cpu.utilization%2522%252C%2522temporality%2522%253A%2522%2522%252C%2522spaceAggregation%2522%253A%2522avg%2522%252C%2522reduceTo%2522%253A%2522avg%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%2522da954947-0b4a-4f03-beea-b4025bf9af29%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:38:37.990315Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:38:37.990315Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9122-0ccf-7996-ae7f-40337b59c4f2",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Error Logs Detected",
+    "alertType": "LOGS_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "logs",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND severity_text = 'ERROR'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=LOGS_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522logs%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522service.name%2520%253D%2520%27axray-agent%27%2520AND%2520severity_text%2520%253D%2520%27ERROR%27%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522select%2520%255CntoStartOfInterval%28fromUnixTimestamp64Nano%28timestamp%29%252C%2520INTERVAL%252030%2520MINUTE%29%2520AS%2520interval%252C%2520%255CntoFloat64%28count%28%29%29%2520as%2520value%2520%255CnFROM%2520signoz_logs.distributed_logs_v2%2520%2520%255CnWHERE%2520timestamp%2520BETWEEN%2520%257B%257B.start_timestamp_nano%257D%257D%2520AND%2520%257B%257B.end_timestamp_nano%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520interval%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Flogs_clickhouse_queries%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_timestamp_nano%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp_nano%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520columns%2520%28or%2520alias%29%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%257D%255D%252C%2522id%2522%253A%2522955d87f7-7ed7-4936-bba6-1bce39f9813d%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:39:15.663564Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:39:15.663564Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9122-af8b-726a-8767-8e5185f5d877",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Uncaught Exception",
+    "alertType": "EXCEPTIONS_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "clickhouse_sql",
+            "spec": {
+              "name": "A",
+              "query": "SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.distributed_signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval",
+              "disabled": false,
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "clickhouse_sql"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=EXCEPTIONS_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522clickhouse_sql%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%255B%255D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255Ctcount%28%29%2520as%2520value%252C%255Cn%255CttoStartOfInterval%28timestamp%252C%2520toIntervalMinute%281%29%29%2520AS%2520interval%252C%255Cn%255CtserviceName%255CnFROM%2520signoz_traces.distributed_signoz_error_index_v2%255CnWHERE%2520exceptionType%2520%21%253D%27OSError%27%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%255CnGROUP%2520BY%2520serviceName%252C%2520interval%253B%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522id%2522%253A%2522f9c55dc9-3f4c-46a7-afa0-fb5b0c4f05f2%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:39:57.323155Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:39:57.323155Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9124-7326-7450-9f5f-933c37a2b8a2",
+    "state": "inactive",
+    "alert": "AXRAY Agent — No Activity Detected",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'agent.session'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "info",
+            "target": 1,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "below",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=TRACES_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%255B%255D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255CttoStartOfInterval%28timestamp%252C%2520INTERVAL%25201%2520MINUTE%29%2520AS%2520interval%252C%2520%255Cn%255Ctresource_string_service%2524%2524name%2520AS%2520%2560service.name%2560%252C%2520%255Cn%255CttoFloat64%28avg%28duration_nano%29%29%2520AS%2520value%2520%255CnFROM%2520signoz_traces.distributed_signoz_index_v3%2520%2520%255CnWHERE%2520resource_string_service%2524%2524name%2520%21%253D%27%27%2520%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520%28%2560service.name%2560%252C%2520interval%29%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Fwriting-clickhouse-traces-query%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522id%2522%253A%2522c92730f9-880a-46fd-9188-c4e14846d7e2%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "1h0m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:41:52.934279Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:41:52.934279Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9124-f6dc-75af-b6c0-4a23bec523da",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Approaching Turn Limit",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'agent.turn' AND turn.number >= 25"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=TRACES_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%255B%255D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255CttoStartOfInterval%28timestamp%252C%2520INTERVAL%25201%2520MINUTE%29%2520AS%2520interval%252C%2520%255Cn%255Ctresource_string_service%2524%2524name%2520AS%2520%2560service.name%2560%252C%2520%255Cn%255CttoFloat64%28avg%28duration_nano%29%29%2520AS%2520value%2520%255CnFROM%2520signoz_traces.distributed_signoz_index_v3%2520%2520%255CnWHERE%2520resource_string_service%2524%2524name%2520%21%253D%27%27%2520%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520%28%2560service.name%2560%252C%2520interval%29%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Fwriting-clickhouse-traces-query%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522id%2522%253A%2522fdc05892-dad6-46bd-93c9-332a71fd2d04%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:42:26.652369Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:42:26.652369Z",
+    "updateBy": "hjamal9865@gmail.com"
+  },
+  {
+    "id": "019f9125-6c34-778c-8734-525086f9e62b",
+    "state": "inactive",
+    "alert": "AXRAY Agent — Tool Execution Failed",
+    "alertType": "TRACES_BASED_ALERT",
+    "ruleType": "threshold_rule",
+    "condition": {
+      "compositeQuery": {
+        "queries": [
+          {
+            "type": "builder_query",
+            "spec": {
+              "name": "A",
+              "signal": "traces",
+              "source": "",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
+              "disabled": false,
+              "filter": {
+                "expression": "service.name = 'axray-agent' AND name = 'tool.call' AND tool.result_status != 'success'"
+              },
+              "having": {
+                "expression": ""
+              },
+              "legend": ""
+            }
+          }
+        ],
+        "panelType": "graph",
+        "queryType": "builder"
+      },
+      "selectedQueryName": "A",
+      "thresholds": {
+        "kind": "basic",
+        "spec": [
+          {
+            "name": "critical",
+            "target": 0,
+            "targetUnit": "",
+            "recoveryTarget": null,
+            "matchType": "at_least_once",
+            "op": "above",
+            "channels": []
+          }
+        ]
+      }
+    },
+    "annotations": {
+      "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+      "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+    },
+    "disabled": false,
+    "source": "http://localhost:8080/alerts/new?relativeTime=30m&ruleType=threshold_rule&alertType=TRACES_BASED_ALERT&compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522traces%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522count%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522----%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522type%2522%253A%2522%2522%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522filter%2522%253A%257B%2522expression%2522%253A%2522%2522%257D%252C%2522aggregations%2522%253A%255B%257B%2522expression%2522%253A%2522count%28%29%2520%2522%257D%255D%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253Anull%252C%2522having%2522%253A%255B%255D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%252C%2522source%2522%253A%2522%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%252C%2522queryTraceOperator%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522SELECT%2520%255Cn%255CttoStartOfInterval%28timestamp%252C%2520INTERVAL%25201%2520MINUTE%29%2520AS%2520interval%252C%2520%255Cn%255Ctresource_string_service%2524%2524name%2520AS%2520%2560service.name%2560%252C%2520%255Cn%255CttoFloat64%28avg%28duration_nano%29%29%2520AS%2520value%2520%255CnFROM%2520signoz_traces.distributed_signoz_index_v3%2520%2520%255CnWHERE%2520resource_string_service%2524%2524name%2520%21%253D%27%27%2520%255CnAND%2520timestamp%2520BETWEEN%2520%257B%257B.start_datetime%257D%257D%2520AND%2520%257B%257B.end_datetime%257D%257D%2520%255CnAND%2520ts_bucket_start%2520BETWEEN%2520%257B%257B.start_timestamp%257D%257D%2520-%25201800%2520AND%2520%257B%257B.end_timestamp%257D%257D%2520%255CnGROUP%2520BY%2520%28%2560service.name%2560%252C%2520interval%29%253B%255Cn%255Cn--%2520Please%2520check%2520docs%2520here%2520https%253A%252F%252Fsignoz.io%252Fdocs%252Fuserguide%252Fwriting-clickhouse-traces-query%252F%255Cn%255Cn--%2520available%2520variables%253A%255Cn--%2520%255Ct%257B%257B.start_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.end_datetime%257D%257D%255Cn--%2520%255Ct%257B%257B.start_timestamp%257D%257D%255Cn--%2520%255Ct%257B%257B.end_timestamp%257D%257D%255Cn%255Cn--%2520required%2520column%2520alias%253A%255Cn--%2520%255Ctvalue%255Cn--%2520%255Ctinterval%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522id%2522%253A%25223af0cbf2-f5a0-4d72-8d72-9eb4e24676bc%2522%252C%2522unit%2522%253A%2522%2522%257D",
+    "version": "v5",
+    "evaluation": {
+      "kind": "rolling",
+      "spec": {
+        "evalWindow": "5m0s",
+        "frequency": "1m"
+      }
+    },
+    "schemaVersion": "v2alpha1",
+    "notificationSettings": {
+      "groupBy": [],
+      "renotify": {
+        "enabled": false,
+        "interval": "30m",
+        "alertStates": []
+      },
+      "usePolicy": true
+    },
+    "createAt": "2026-07-23T22:42:56.692491Z",
+    "createBy": "hjamal9865@gmail.com",
+    "updateAt": "2026-07-23T22:42:56.692491Z",
+    "updateBy": "hjamal9865@gmail.com"
+  }
+]

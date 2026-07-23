@@ -264,35 +264,53 @@ The exported dashboard JSON is in `deploy/dashboards/`. To import:
 2. Upload `deploy/dashboards/axray-groq-dashboard.json`
 3. Run the agent to generate live data
 
+
 ## Alerts
 
-All alerts are Trace-based rules in SigNoz, scoped to `service.name = 'axray-agent'`. Exported rule definitions live in `deploy/alerts/`.
+We use all four SigNoz alert signal types — Traces, Metrics, Logs, and Exceptions — to cover reliability, cost, performance, and integration health end to end. Exported rule definitions (all 14) live in deploy/alerts/axray-alert-rules.json, and can be recreated on a fresh instance with deploy/alerts/import-alerts.sh (see Reproducing this deployment).
 
-| # | Alert | Filter | Condition | Severity | Purpose |
-|---|---|---|---|---|---|
-| 1 | Session Failure | `name = 'agent.session' AND status_code = 2` | count > 0 / 5m | critical | Catch failed agent runs |
-| 2 | Self-Correction Triggered | `name = 'agent.self_check' AND self_check.triggered_correction = true` | count > 0 / 5m | warning | Confirms the self-correction feature is firing |
-| 3 | LLM Cost Threshold | `sum(llm.cost_usd)` where `name = 'llm.call'` | > $0.01 / 15m | warning | Cost control |
-| 4 | Groq API Errors | `server.address = 'api.groq.com' AND http.response.status_code >= 400` | count > 0 / 5m | warning | Upstream API reliability (e.g. rate limits) |
-| 5 | Slow Turn Detected | `p95(duration)` where `name = 'agent.turn'` | > 20s / 5m | warning | Performance regressions |
-| 6 | MCP Self-Check Fallback | `name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'` | count > 0 / 5m | info | MCP integration health |
+Trace-based (9)
+#	Alert	Filter	Condition	Severity	Purpose
+1	Session Failure	name = 'agent.session' AND status_code = 2	count > 0 / 5m	critical	Catch failed agent runs
+2	Self-Correction Triggered	name = 'agent.self_check' AND self_check.triggered_correction = true	count > 0 / 5m	warning	Confirms the self-correction feature is firing
+3	LLM Cost Threshold	sum(llm.cost_usd) where name = 'llm.call'	> $0.05 / 15m	warning	Cost control
+4	Groq API Errors	server.address = 'api.groq.com' AND http.response.status_code >= 400	count > 0 / 5m	warning	Upstream API reliability (e.g. rate limits)
+5	Slow Turn Detected	p95(duration_nano) where name = 'agent.turn'	> 20s / 5m	warning	Performance regressions
+6	MCP Self-Check Fallback	name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'	count > 0 / 5m	info	MCP integration health
+7	No Activity Detected	name = 'agent.session'	below 1 / 1h	info	Dead-man's switch — fires when the agent goes silent
+8	Approaching Turn Limit	name = 'agent.turn' AND turn.number >= 25	count > 0 / 5m	warning	Flags tasks nearing the --max-turns cap (default 30)
+9	Tool Execution Failed	name = 'tool.call' AND tool.result_status != 'success'	count > 0 / 5m	warning	Catches failing tool calls (edit/test/etc.)
+Metric-based (3)
+#	Alert	Metric	Condition	Severity	Purpose
+10	Error Counter Spike	agent.errors.total	count > 0 / 5m	critical	Fires on the custom error counter — see note below on querying it
+11	Token Burn Spike	agent.tokens.input.total (rate)	above baseline / 5m	warning	Catches abnormal token consumption
+12	High CPU Usage	system.cpu.utilization (host metric)	> 80% / 5m	warning	Host resource pressure
+Log-based (1)
+#	Alert	Filter	Condition	Severity	Purpose
+13	Error Logs Detected	service.name = 'axray-agent' AND severity_text = 'ERROR'	count > 0 / 5m	warning	Any structured ERROR-level log line
+Exceptions-based (1)
+#	Alert	Filter	Condition	Severity	Purpose
+14	Uncaught Exception	service.name = 'axray-agent'	count > 0 / 5m	critical	Unhandled Node.js exceptions, auto-captured by OTel
 
-## The self-check loop (MCP in action)
+Note on custom metric names: instrumentation.ts defines counters with dotted names (agent.errors.total, agent.tokens.input.total, ...). SigNoz's Query Builder metric picker didn't surface these by name — they only appear once at least one data point has been exported (i.e. after the code path that calls .add() has actually run at least once). The reliable way to reference them in an alert is via the PromQL tab, where OTel's Prometheus-compatible naming converts dots to underscores (e.g. agent_errors_total).
 
-After every turn, `self-check.ts` does the following:
+The self-check loop (MCP in action)
 
-1. Connects to the SigNoz MCP server over Streamable HTTP (`@modelcontextprotocol/sdk`)
-2. Calls the `signoz_execute_builder_query` tool with a Query Builder v5 payload, counting `tool.call` spans for the current `session.id` in the last 5 minutes
-3. Cross-references this with an in-memory turn log to detect if the same tool has been called with identical arguments 3+ times
-4. If a loop is detected, it injects a correction message into the LLM's context:
-   > "⚠️ SYSTEM ALERT (Self-Correction Triggered): You have retried the exact action X with arguments Y N times. STOP repeating this action..."
-5. All of this — the query, the result, the decision — is itself traced as an `agent.self_check` span
+After every turn, self-check.ts does the following:
 
-If the MCP call fails for any reason (network, auth, schema mismatch), it falls back gracefully to local turn-log analysis (`self_check.mcp_tool_used = 'local_turn_log_fallback'`) rather than crashing the run — which is exactly what Alert 6 monitors.
+Connects to the SigNoz MCP server over Streamable HTTP (@modelcontextprotocol/sdk)
+Calls the signoz_execute_builder_query tool with a Query Builder v5 payload, counting tool.call spans for the current session.id in the last 5 minutes
+Cross-references this with an in-memory turn log to detect if the same tool has been called with identical arguments 3+ times
+If a loop is detected, it injects a correction message into the LLM's context:
 
-## Reproducing this deployment (for judges)
+"⚠️ SYSTEM ALERT (Self-Correction Triggered): You have retried the exact action X with arguments Y N times. STOP repeating this action..."
 
-```bash
+All of this — the query, the result, the decision — is itself traced as an agent.self_check span
+
+If the MCP call fails for any reason (network, auth, schema mismatch), it falls back gracefully to local turn-log analysis (self_check.mcp_tool_used = 'local_turn_log_fallback') rather than crashing the run — which is exactly what Alert 6 monitors.
+
+Reproducing this deployment (for judges)
+bash
 # 1. Install foundryctl
 curl -fsSL https://signoz.io/foundry.sh | bash
 
@@ -305,21 +323,23 @@ foundryctl cast -f casting.yaml
 # 4. Import the dashboard
 #    Dashboards → New Dashboard → Import JSON → deploy/dashboards/axray-groq-dashboard.json
 
-# 5. Set up the agent
-cd ../apps/agent
+# 5. Import all 14 alert rules
+cd deploy/alerts
+SIGNOZ_API_KEY=<your-service-account-key> ./import-alerts.sh
+
+# 6. Set up the agent
+cd ../../apps/agent
 npm install
 # fill in .env with your Groq key + the SigNoz service account key
 
-# 6. Run it
+# 7. Run it
 npm run test:fixture:run
-```
 
-Traces, logs, metrics, and (if triggered) self-correction events will appear in SigNoz within seconds.
+Traces, logs, metrics, and (if triggered) self-correction events will appear in SigNoz within seconds. Some alerts (self-correction, error counter, exceptions) will only fire under specific conditions and won't show data on a first, error-free run — that's expected, see the Alerts section.
 
-## Troubleshooting
-
-- **`service.name` shows as `unknown_service:node`** — in `instrumentation.ts`, `Resource.merge()` gives priority to the *argument*, not the base. Make sure `defaultResource().merge(resourceFromAttributes({...}))` is the order (custom attributes last).
-- **MCP `host not allowed` error** — the MCP server runs in Docker; `SIGNOZ_INSTANCE_URL` must use the Docker-internal hostname of the SigNoz backend container (e.g. `signoz-signoz-0`), not `localhost`.
-- **MCP `missing start or end timestamp`** — the query payload must use the full v5 Query Builder shape (`start`, `end`, `requestType`, `compositeQuery`), not the older `filters`/`aggregateOperator` shorthand.
-- **MCP `403 authz_forbidden`** — the service account has no role assigned. Assign one in **Settings → Service Accounts**.
-- **Docker permission denied** — after `sudo usermod -aG docker $USER`, you need a fresh shell session (`newgrp docker` or re-login) for group membership to apply.
+Troubleshooting
+service.name shows as unknown_service:node — in instrumentation.ts, Resource.merge() gives priority to the argument, not the base. Make sure defaultResource().merge(resourceFromAttributes({...})) is the order (custom attributes last).
+MCP host not allowed error — the MCP server runs in Docker; SIGNOZ_INSTANCE_URL must use the Docker-internal hostname of the SigNoz backend container (e.g. signoz-signoz-0), not localhost.
+MCP missing start or end timestamp — the query payload must use the full v5 Query Builder shape (start, end, requestType, compositeQuery), not the older filters/aggregateOperator shorthand.
+MCP 403 authz_forbidden — the service account has no role assigned. Assign one in Settings → Service Accounts.
+Docker permission denied — after sudo usermod -aG docker $USER, you need a fresh shell session (newgrp docker or re-login) for group membership to apply.
