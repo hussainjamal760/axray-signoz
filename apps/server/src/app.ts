@@ -38,6 +38,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/runs', agentRunsRouter);
+app.use('/api/agent-runs', agentRunsRouter);
 app.use('/api/signoz', signozRouter);
 
 // Global Error Handler (must be registered last)

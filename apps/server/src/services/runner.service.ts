@@ -5,6 +5,7 @@ import * as workspaceService from './workspace.service';
 import * as agentService from './agent.service';
 import * as gitService from './git.service';
 import { tracer } from '../lib/telemetry';
+import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 
 /**
@@ -32,17 +33,24 @@ export const executeRun = async (runId: string): Promise<void> => {
 
   const span = tracer.startSpan('agent.run', {
     attributes: {
-      'run.id': runId,
-      'session.id': session._id.toString(),
-      'repository.name': session.repositoryFullName,
-      'git.branch': session.branch,
+      [AXRAY_ATTRIBUTES.RUN_ID]: runId,
+      [AXRAY_ATTRIBUTES.SESSION_ID]: session._id.toString(),
+      [AXRAY_ATTRIBUTES.REPOSITORY]: session.repositoryFullName,
+      [AXRAY_ATTRIBUTES.BRANCH]: session.branch,
+      [AXRAY_ATTRIBUTES.PHASE]: 'agent',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'agent.run',
     },
   });
+
+  const traceId = span.spanContext().traceId;
+  run.traceId = traceId;
+  await run.save();
 
   try {
     // 1. Ensure Container exists and is running
     const { containerId, containerStatus } = await containerService.ensureContainerRunning({
       containerId: session.containerId,
+      sessionId: session._id.toString(),
       repositoryFullName: session.repositoryFullName,
       branch: session.branch,
     });
@@ -55,11 +63,13 @@ export const executeRun = async (runId: string): Promise<void> => {
 
     // 2. Ensure Workspace Initialized (clone, checkout, AI workspace spec, dependency install)
     if (!session.workspaceInitialized) {
-      console.log(`[Runner] Preparing workspace for session ${session._id}...`);
+      console.log(`[Runner] Preparing workspace for session ${session._id} during run ${run._id}...`);
       const { spec } = await workspaceService.prepareWorkspace({
         repositoryFullName: session.repositoryFullName,
         branch: session.branch,
         containerId: session.containerId!,
+        runId,
+        sessionId: session._id.toString(),
       });
       
       // Update MongoDB Session document after workspace preparation succeeds
@@ -82,11 +92,16 @@ export const executeRun = async (runId: string): Promise<void> => {
     const result = await agentService.executePrompt({
       containerId: session.containerId!,
       prompt: run.prompt,
+      runId,
+      sessionId: session._id.toString(),
     });
 
     // 5. Capture Git Diff with Size Truncation Check
     try {
-      const gitDiff = await gitService.getDiff(session.containerId!);
+      const gitDiff = await gitService.getDiff(session.containerId!, {
+        runId,
+        sessionId: session._id.toString(),
+      });
       run.diff = gitDiff.rawDiff;
       run.filesChanged = gitDiff.filesChanged;
       run.insertions = gitDiff.insertions;
@@ -108,6 +123,20 @@ export const executeRun = async (runId: string): Promise<void> => {
     }
     await run.save();
 
+    // Emit explicit run.completed OpenTelemetry span
+    const completionSpan = tracer.startSpan('run.completed', {
+      attributes: {
+        [AXRAY_ATTRIBUTES.RUN_ID]: runId,
+        [AXRAY_ATTRIBUTES.SESSION_ID]: session._id.toString(),
+        [AXRAY_ATTRIBUTES.PHASE]: 'completion',
+        [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'run.completed',
+        [AXRAY_ATTRIBUTES.RUN_STATUS]: 'completed',
+        'run.duration_ms': run.durationMs || 0,
+      },
+    });
+    completionSpan.setStatus({ code: SpanStatusCode.OK });
+    completionSpan.end();
+
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
 
@@ -123,6 +152,20 @@ export const executeRun = async (runId: string): Promise<void> => {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     await run.save();
+
+    // Emit explicit run.failed OpenTelemetry span
+    const failureSpan = tracer.startSpan('run.failed', {
+      attributes: {
+        [AXRAY_ATTRIBUTES.RUN_ID]: runId,
+        [AXRAY_ATTRIBUTES.SESSION_ID]: session._id.toString(),
+        [AXRAY_ATTRIBUTES.PHASE]: 'completion',
+        [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'run.failed',
+        [AXRAY_ATTRIBUTES.RUN_STATUS]: 'failed',
+        'error.message': errMessage,
+      },
+    });
+    failureSpan.setStatus({ code: SpanStatusCode.ERROR, message: errMessage });
+    failureSpan.end();
 
     span.setStatus({ code: SpanStatusCode.ERROR, message: errMessage });
     span.end();

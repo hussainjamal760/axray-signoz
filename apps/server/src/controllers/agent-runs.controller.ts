@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as agentRunsService from '../services/agent-runs.service';
+import * as signozTimelineService from '../services/signoz-timeline.service';
 import { AppError } from '../errors/AppError';
 
 export const createRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -61,6 +62,16 @@ export const updateRun = async (req: Request, res: Response, next: NextFunction)
 
     const run = await agentRunsService.updateRunStatus(userId, id, status);
     res.json(run);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRunTimeline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { runId } = req.params;
+    const timeline = await signozTimelineService.getTimelineForRun(runId);
+    res.json(timeline);
   } catch (error) {
     next(error);
   }

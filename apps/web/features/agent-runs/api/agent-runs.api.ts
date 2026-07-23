@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { AgentRunSummary } from '../types/agent-runs.types';
+import { AgentRunSummary, TimelineResponse } from '../types/agent-runs.types';
 
 interface BackendRun {
   _id: string;
@@ -81,4 +81,8 @@ export const updateRun = async (id: string, data: { status: AgentRunSummary['sta
     body: data,
   });
   return mapRun(res);
+};
+
+export const getRunTimeline = async (runId: string): Promise<TimelineResponse> => {
+  return apiClient<TimelineResponse>(`/api/agent-runs/${runId}/timeline`);
 };

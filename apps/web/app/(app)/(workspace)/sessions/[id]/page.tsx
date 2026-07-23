@@ -105,7 +105,11 @@ export default function SessionIdPage() {
           </div>
 
           <div className="col-span-12 lg:col-span-5 flex flex-col">
-            <TimelinePanel sessionId={id} isRunning={isSelectedRunExecuting} />
+            <TimelinePanel
+              selectedRunId={activeOrSelectedRun?.id}
+              runStatus={activeOrSelectedRun?.status}
+              sessionId={id}
+            />
           </div>
 
           {/* Row 2: Live Trace Tree and Terminal Window */}

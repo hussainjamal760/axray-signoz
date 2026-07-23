@@ -4,6 +4,7 @@ import { resolveRuntimeImage } from './runtime-image-resolver.service';
 import { AppError } from '../errors/AppError';
 import { IWorkspaceSpec } from '../models/session.model';
 import { tracer } from '../lib/telemetry';
+import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 
 /**
@@ -24,96 +25,176 @@ export interface PrepareWorkspaceParams {
   repositoryFullName: string;
   branch: string;
   containerId: string;
+  runId?: string;
+  sessionId?: string;
 }
 
 export const cloneRepository = async (
   repositoryFullName: string,
-  containerId: string
+  containerId: string,
+  telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
+  const span = tracer.startSpan('workspace.clone', {
+    attributes: {
+      [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: telemetryContext?.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.clone',
+      [AXRAY_ATTRIBUTES.REPOSITORY]: repositoryFullName,
+      [AXRAY_ATTRIBUTES.CONTAINER_ID]: containerId,
+    },
+  });
+
   console.log(`[Workspace] Checking repository status for ${repositoryFullName} in container ${containerId}...`);
 
-  const checkRepo = await containerService.executeCommand(
-    containerId,
-    `git -C ${WORKSPACE_DIR} rev-parse --is-inside-work-tree`
-  );
-
-  if (checkRepo.exitCode === 0) {
-    console.log(`[Workspace] Repository ${repositoryFullName} already exists at ${WORKSPACE_DIR}. Fetching remote updates...`);
-    const fetchResult = await containerService.executeCommand(
+  try {
+    const checkRepo = await containerService.executeCommand(
       containerId,
-      `git -C ${WORKSPACE_DIR} fetch origin`
+      `git -C ${WORKSPACE_DIR} rev-parse --is-inside-work-tree`
     );
-    if (fetchResult.exitCode !== 0) {
-      console.warn(`[Workspace Warning] Git fetch warning: ${fetchResult.output}`);
+
+    if (checkRepo.exitCode === 0) {
+      console.log(`[Workspace] Repository ${repositoryFullName} already exists at ${WORKSPACE_DIR}. Fetching remote updates...`);
+      const fetchResult = await containerService.executeCommand(
+        containerId,
+        `git -C ${WORKSPACE_DIR} fetch origin`
+      );
+      if (fetchResult.exitCode !== 0) {
+        console.warn(`[Workspace Warning] Git fetch warning: ${fetchResult.output}`);
+      }
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return;
     }
-    return;
-  }
 
-  console.log(`[Workspace] Cloning https://github.com/${repositoryFullName}.git into ${WORKSPACE_DIR}...`);
-  const cloneResult = await containerService.executeCommand(
-    containerId,
-    `git clone https://github.com/${repositoryFullName}.git ${WORKSPACE_DIR}`,
-    { timeoutMs: 120000 } // 2 min timeout for clone
-  );
-
-  if (cloneResult.exitCode !== 0) {
-    throw new AppError(
-      500,
-      `Git clone failed for ${repositoryFullName}: ${cloneResult.output}`
+    console.log(`[Workspace] Cloning https://github.com/${repositoryFullName}.git into ${WORKSPACE_DIR}...`);
+    const cloneResult = await containerService.executeCommand(
+      containerId,
+      `git clone https://github.com/${repositoryFullName}.git ${WORKSPACE_DIR}`,
+      { timeoutMs: 120000 } // 2 min timeout for clone
     );
-  }
 
-  console.log(`[Workspace] Repository ${repositoryFullName} cloned successfully.`);
+    if (cloneResult.exitCode !== 0) {
+      throw new AppError(
+        500,
+        `Git clone failed for ${repositoryFullName}: ${cloneResult.output}`
+      );
+    }
+
+    console.log(`[Workspace] Repository ${repositoryFullName} cloned successfully.`);
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
+  } catch (err: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message || String(err) });
+    span.end();
+    throw err;
+  }
 };
 
 export const checkoutBranch = async (
   branch: string,
-  containerId: string
+  containerId: string,
+  telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
+  const span = tracer.startSpan('workspace.checkout', {
+    attributes: {
+      [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: telemetryContext?.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.checkout',
+      [AXRAY_ATTRIBUTES.BRANCH]: branch,
+      [AXRAY_ATTRIBUTES.CONTAINER_ID]: containerId,
+    },
+  });
+
   console.log(`[Workspace] Checking out branch "${branch}" in container ${containerId}...`);
 
-  await containerService.executeCommand(containerId, `git -C ${WORKSPACE_DIR} fetch origin`);
+  try {
+    await containerService.executeCommand(containerId, `git -C ${WORKSPACE_DIR} fetch origin`);
 
-  const checkoutResult = await containerService.executeCommand(
-    containerId,
-    `git -C ${WORKSPACE_DIR} checkout ${branch} || git -C ${WORKSPACE_DIR} checkout -b ${branch} origin/${branch}`
-  );
-
-  if (checkoutResult.exitCode !== 0) {
-    throw new AppError(
-      500,
-      `Git checkout failed for branch "${branch}": ${checkoutResult.output}`
+    const checkoutResult = await containerService.executeCommand(
+      containerId,
+      `git -C ${WORKSPACE_DIR} checkout ${branch} || git -C ${WORKSPACE_DIR} checkout -b ${branch} origin/${branch}`
     );
-  }
 
-  console.log(`[Workspace] Branch "${branch}" checked out successfully.`);
+    if (checkoutResult.exitCode !== 0) {
+      throw new AppError(
+        500,
+        `Git checkout failed for branch "${branch}": ${checkoutResult.output}`
+      );
+    }
+
+    console.log(`[Workspace] Branch "${branch}" checked out successfully.`);
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
+  } catch (err: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message || String(err) });
+    span.end();
+    throw err;
+  }
 };
 
 export const ensureRuntime = async (
   containerId: string,
-  spec: IWorkspaceSpec
+  spec: IWorkspaceSpec,
+  telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
   const resolution = resolveRuntimeImage(spec.runtime, spec.runtimeVersion);
+  const span = tracer.startSpan('workspace.ensure_runtime', {
+    attributes: {
+      [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: telemetryContext?.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.ensure_runtime',
+      [AXRAY_ATTRIBUTES.RUNTIME]: spec.runtime || 'node',
+      [AXRAY_ATTRIBUTES.RUNTIME_VERSION]: spec.runtimeVersion || '22',
+      [AXRAY_ATTRIBUTES.RUNTIME_IMAGE]: resolution.imageName,
+    },
+  });
+
   console.log(`[Workspace] Selected runtime image: ${resolution.imageName}`);
   console.log(`[Workspace] Using prebuilt Node runtime container for "${spec.runtime}". Skipped dynamic package installation.`);
+  
+  span.setStatus({ code: SpanStatusCode.OK });
+  span.end();
 };
 
 export const installDependencies = async (
   containerId: string,
-  installCommand: string
+  installCommand: string,
+  telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
+  const span = tracer.startSpan('workspace.install_deps', {
+    attributes: {
+      [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: telemetryContext?.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.install_deps',
+      [AXRAY_ATTRIBUTES.TOOL_COMMAND]: installCommand,
+    },
+  });
+
   console.log(`[Workspace] Executing dependency installation: "${installCommand}"...`);
 
-  const installResult = await containerService.executeCommand(
-    containerId,
-    `cd ${WORKSPACE_DIR} && ${installCommand}`,
-    { timeoutMs: 300000 } // 5 minute timeout for dependency installs
-  );
+  try {
+    const installResult = await containerService.executeCommand(
+      containerId,
+      `cd ${WORKSPACE_DIR} && ${installCommand}`,
+      { timeoutMs: 300000 } // 5 minute timeout for dependency installs
+    );
 
-  if (installResult.exitCode !== 0) {
-    console.warn(`[Workspace Warning] Dependency installation warning: ${installResult.output}`);
-  } else {
-    console.log(`[Workspace] Dependencies installed successfully.`);
+    if (installResult.exitCode !== 0) {
+      console.warn(`[Workspace Warning] Dependency installation warning: ${installResult.output}`);
+    } else {
+      console.log(`[Workspace] Dependencies installed successfully.`);
+    }
+
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
+  } catch (err: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message || String(err) });
+    span.end();
+    throw err;
   }
 };
 
@@ -122,11 +203,17 @@ export const prepareWorkspace = async (
 ): Promise<{ status: 'ready'; spec: IWorkspaceSpec }> => {
   const span = tracer.startSpan('workspace.prepare', {
     attributes: {
-      'repository.fullname': params.repositoryFullName,
-      'git.branch': params.branch,
-      'container.id': params.containerId,
+      [AXRAY_ATTRIBUTES.RUN_ID]: params.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: params.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.prepare',
+      [AXRAY_ATTRIBUTES.REPOSITORY]: params.repositoryFullName,
+      [AXRAY_ATTRIBUTES.BRANCH]: params.branch,
+      [AXRAY_ATTRIBUTES.CONTAINER_ID]: params.containerId,
     },
   });
+
+  const telContext = { runId: params.runId, sessionId: params.sessionId };
 
   try {
     console.log(
@@ -134,23 +221,36 @@ export const prepareWorkspace = async (
     );
 
     // Step 1: Clone repository
-    await cloneRepository(params.repositoryFullName, params.containerId);
+    await cloneRepository(params.repositoryFullName, params.containerId, telContext);
 
     // Step 2: Checkout branch
-    await checkoutBranch(params.branch, params.containerId);
+    await checkoutBranch(params.branch, params.containerId, telContext);
 
     // Step 3: AI-First Workspace Inspection
+    const analyzeSpan = tracer.startSpan('workspace.analyze', {
+      attributes: {
+        [AXRAY_ATTRIBUTES.RUN_ID]: params.runId || '',
+        [AXRAY_ATTRIBUTES.SESSION_ID]: params.sessionId || '',
+        [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
+        [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.analyze',
+      },
+    });
+
     const spec = await workspaceAnalysisService.inspectWorkspace(params.containerId);
-    span.setAttribute('workspace.runtime', spec.runtime);
-    span.setAttribute('workspace.package_manager', spec.packageManager);
-    span.setAttribute('workspace.install_command', spec.installCommand);
+    analyzeSpan.setAttribute(AXRAY_ATTRIBUTES.RUNTIME, spec.runtime || 'node');
+    analyzeSpan.setAttribute('workspace.package_manager', spec.packageManager || 'npm');
+    analyzeSpan.setAttribute('workspace.install_command', spec.installCommand || '');
+    analyzeSpan.setStatus({ code: SpanStatusCode.OK });
+    analyzeSpan.end();
+
+    span.setAttribute(AXRAY_ATTRIBUTES.RUNTIME, spec.runtime);
 
     // Step 4: Ensure Runtime (Prebuilt Image Check)
-    await ensureRuntime(params.containerId, spec);
+    await ensureRuntime(params.containerId, spec, telContext);
 
     // Step 5: Install Dependencies
     if (spec.installCommand) {
-      await installDependencies(params.containerId, spec.installCommand);
+      await installDependencies(params.containerId, spec.installCommand, telContext);
     }
 
     console.log(

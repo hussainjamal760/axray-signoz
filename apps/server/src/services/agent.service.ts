@@ -1,12 +1,13 @@
 import { Groq } from 'groq-sdk';
 import * as containerService from './container.service';
 import { tracer } from '../lib/telemetry';
+import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 
 /**
  * Agent Service
  * Dedicated AI execution engine using Groq LLM function calling.
- * Pure service: Accepts containerId and prompt. Routes tool calls via containerService.
+ * Pure service: Accepts containerId, runId, sessionId and prompt. Routes tool calls via containerService.
  */
 
 const WORKSPACE_DIR = '/workspace';
@@ -16,6 +17,8 @@ const MAX_TURNS = 15;
 export interface AgentExecutionOptions {
   containerId: string;
   prompt: string;
+  runId?: string;
+  sessionId?: string;
   maxTurns?: number;
 }
 
@@ -97,13 +100,17 @@ export const executePrompt = async (
 ): Promise<AgentExecutionResult> => {
   const span = tracer.startSpan('agent.execute', {
     attributes: {
-      'container.id': options.containerId,
-      'llm.model': DEFAULT_GROQ_MODEL,
+      [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'agent',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'agent.execute',
+      [AXRAY_ATTRIBUTES.CONTAINER_ID]: options.containerId,
+      [AXRAY_ATTRIBUTES.AGENT_MODEL]: DEFAULT_GROQ_MODEL,
       'prompt.length': options.prompt.length,
     },
   });
 
-  console.log(`[Agent] Starting Groq execution loop in container ${options.containerId}`);
+  console.log(`[Agent] Starting Groq execution loop for runId=${options.runId || 'N/A'} in container ${options.containerId}`);
 
   const groqApiKey = process.env.GROQ_API_KEY;
   if (!groqApiKey) {
@@ -131,16 +138,49 @@ export const executePrompt = async (
       turn++;
       console.log(`[Agent Turn ${turn}/${maxTurns}] Querying Groq (${DEFAULT_GROQ_MODEL})...`);
 
-      const completion = await groq.chat.completions.create({
-        model: DEFAULT_GROQ_MODEL,
-        messages,
-        tools: TOOL_DECLARATIONS,
-        temperature: 0.2,
+      const llmSpan = tracer.startSpan('llm.request', {
+        attributes: {
+          [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
+          [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
+          [AXRAY_ATTRIBUTES.PHASE]: 'llm',
+          [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'llm.request',
+          [AXRAY_ATTRIBUTES.AGENT_TURN]: turn,
+          [AXRAY_ATTRIBUTES.AGENT_MODEL]: DEFAULT_GROQ_MODEL,
+          [AXRAY_ATTRIBUTES.GEN_AI_SYSTEM]: 'groq',
+          [AXRAY_ATTRIBUTES.GEN_AI_MODEL]: DEFAULT_GROQ_MODEL,
+        },
       });
 
-      if (completion.usage) {
-        totalTokens += (completion.usage.prompt_tokens || 0) + (completion.usage.completion_tokens || 0);
+      let completion: any;
+      try {
+        completion = await groq.chat.completions.create({
+          model: DEFAULT_GROQ_MODEL,
+          messages,
+          tools: TOOL_DECLARATIONS,
+          temperature: 0.2,
+        });
+
+        if (completion.usage) {
+          const pTokens = completion.usage.prompt_tokens || 0;
+          const cTokens = completion.usage.completion_tokens || 0;
+          const tTokens = completion.usage.total_tokens || (pTokens + cTokens);
+          totalTokens += tTokens;
+
+          llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_INPUT_TOKENS, pTokens);
+          llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_OUTPUT_TOKENS, cTokens);
+          llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_TOTAL_TOKENS, tTokens);
+        }
+
+        llmSpan.setStatus({ code: SpanStatusCode.OK });
+      } catch (llmErr: any) {
+        llmSpan.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: llmErr?.message || String(llmErr),
+        });
+        llmSpan.end();
+        throw llmErr;
       }
+      llmSpan.end();
 
       const responseMessage = completion.choices[0]?.message;
       if (!responseMessage) {
@@ -166,25 +206,30 @@ export const executePrompt = async (
 
           const toolSpan = tracer.startSpan('tool.execute', {
             attributes: {
-              'tool.name': fnName,
-              'container.id': options.containerId,
+              [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
+              [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
+              [AXRAY_ATTRIBUTES.PHASE]: 'tool',
+              [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'tool.execute',
+              [AXRAY_ATTRIBUTES.TOOL_NAME]: fnName,
+              [AXRAY_ATTRIBUTES.CONTAINER_ID]: options.containerId,
             },
           });
 
           let toolOutput = '';
 
           if (fnName === 'read_file') {
-            toolSpan.setAttribute('tool.path', fnArgs.path || '');
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
             const readRes = await containerService.executeCommand(
               options.containerId,
               `head -n 500 ${WORKSPACE_DIR}/${fnArgs.path}`,
               { timeoutMs: 15000, maxBufferBytes: 100000 }
             );
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, readRes.exitCode);
             toolOutput = readRes.exitCode === 0
               ? readRes.output
               : `Error reading file ${fnArgs.path}: ${readRes.output}`;
           } else if (fnName === 'write_file') {
-            toolSpan.setAttribute('tool.path', fnArgs.path || '');
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
             const filePath = fnArgs.path || '';
             const content = fnArgs.content || '';
             const base64Content = Buffer.from(content, 'utf8').toString('base64');
@@ -200,24 +245,25 @@ export const executePrompt = async (
                 `echo '${base64Content}' | base64 -d > ${WORKSPACE_DIR}/${filePath}`,
                 { timeoutMs: 15000 }
               );
-              toolSpan.setAttribute('tool.exit_code', writeRes.exitCode);
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, writeRes.exitCode);
               toolOutput = writeRes.exitCode === 0
                 ? `Successfully wrote file ${filePath}`
                 : `Error writing file ${filePath}: ${writeRes.output}`;
             }
           } else if (fnName === 'run_command') {
-            toolSpan.setAttribute('tool.command', fnArgs.command || '');
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, fnArgs.command || '');
             const cmdRes = await containerService.executeCommand(
               options.containerId,
               `cd ${WORKSPACE_DIR} && ${fnArgs.command}`,
               { timeoutMs: 30000, maxBufferBytes: 100000 }
             );
-            toolSpan.setAttribute('tool.exit_code', cmdRes.exitCode);
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, cmdRes.exitCode);
             toolOutput = `Exit Code: ${cmdRes.exitCode}\nOutput:\n${cmdRes.output}`;
           } else {
             toolOutput = `Unknown tool "${fnName}"`;
           }
 
+          toolSpan.setStatus({ code: SpanStatusCode.OK });
           toolSpan.end();
 
           // Append tool execution result message

@@ -1,5 +1,8 @@
 import * as containerService from './container.service';
 import { parseNumstat, NumstatParsedResult } from '../utils/diff-parser';
+import { tracer } from '../lib/telemetry';
+import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
+import { SpanStatusCode } from '@opentelemetry/api';
 
 export { parseNumstat, NumstatParsedResult };
 
@@ -21,7 +24,20 @@ export interface GitDiffResult {
  * Responsible for inspecting Git repository diffs inside Docker workspace containers.
  * Implements safe size limits & truncation for large diffs.
  */
-export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
+export const getDiff = async (
+  containerId: string,
+  telemetryContext?: { runId?: string; sessionId?: string }
+): Promise<GitDiffResult> => {
+  const span = tracer.startSpan('git.diff', {
+    attributes: {
+      [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: telemetryContext?.sessionId || '',
+      [AXRAY_ATTRIBUTES.PHASE]: 'git',
+      [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'git.diff',
+      [AXRAY_ATTRIBUTES.CONTAINER_ID]: containerId,
+    },
+  });
+
   console.log(`[Git] Fetching git diff for container ${containerId}...`);
 
   try {
@@ -76,6 +92,13 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
       `[Git] Diff captured: ${changeSummary} (Size: ${diffSize} bytes, Truncated: ${truncated})`
     );
 
+    span.setAttribute(AXRAY_ATTRIBUTES.GIT_FILES_CHANGED, filesChanged.length);
+    span.setAttribute(AXRAY_ATTRIBUTES.GIT_INSERTIONS, insertions);
+    span.setAttribute(AXRAY_ATTRIBUTES.GIT_DELETIONS, deletions);
+    span.setAttribute(AXRAY_ATTRIBUTES.GIT_DIFF_TRUNCATED, truncated);
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
+
     return {
       rawDiff,
       filesChanged,
@@ -87,6 +110,8 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
     };
   } catch (error: any) {
     console.warn(`[Git Warning] Failed to get diff:`, error?.message || String(error));
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message || String(error) });
+    span.end();
     return {
       rawDiff: '',
       filesChanged: [],

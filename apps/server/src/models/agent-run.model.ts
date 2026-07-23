@@ -24,6 +24,7 @@ export interface IAgentRun extends Document {
   diffTruncated?: boolean;
   diffSize?: number;
   changeSummary?: string;
+  traceId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +56,7 @@ const AgentRunSchema: Schema = new Schema(
     diffTruncated: { type: Boolean, default: false },
     diffSize: { type: Number },
     changeSummary: { type: String },
+    traceId: { type: String },
   },
   {
     timestamps: true,

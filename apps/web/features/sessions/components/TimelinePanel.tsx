@@ -1,55 +1,62 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useTimeline } from "../hooks";
-import { TimelineItem } from "../types/sessions.types";
+import { useRunTimeline } from "@/features/agent-runs/hooks";
+import { TimelineEvent } from "@/features/agent-runs/types";
 
 export interface TimelinePanelProps {
+  selectedRunId?: string;
+  runStatus?: string;
   sessionId?: string;
-  isRunning?: boolean;
 }
 
-export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePanelProps) {
+export function TimelinePanel({ selectedRunId, runStatus }: TimelinePanelProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const { data: timelineItems = [], isLoading } = useTimeline(sessionId, {
-    refetchInterval: isRunning ? 2000 : false,
+  const isRunning = runStatus === "running" || runStatus === "pending";
+
+  const { data: timelineData, isLoading } = useRunTimeline(selectedRunId, {
+    refetchInterval: isRunning ? 2500 : false,
+    enabled: Boolean(selectedRunId),
   });
+
+  const events = timelineData?.events || [];
+  const summary = timelineData?.summary;
+  const telemetryStatus = timelineData?.telemetryStatus;
 
   // Automatically scroll to bottom as new timeline events arrive
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
-  }, [timelineItems]);
+  }, [events]);
 
-  const getEventIcon = (item: TimelineItem) => {
-    switch (item.type) {
-      case "session":
-        return "bolt";
-      case "container":
-        return "inventory_2";
-      case "git":
-        return "folder_zip";
+  const getEventIcon = (event: TimelineEvent) => {
+    switch (event.phase) {
+      case "setup":
+        return event.eventType === "session.create" ? "bolt" : "inventory_2";
       case "workspace":
-        return "psychology";
-      case "runtime":
-        return "view_in_ar";
+        return event.eventType === "workspace.clone" ? "folder_zip" : "psychology";
       case "agent":
         return "smart_toy";
+      case "llm":
+        return "memory";
       case "tool":
         return "build";
-      case "diff":
+      case "git":
         return "difference";
+      case "completion":
+        return event.status === "failed" ? "error" : "check_circle";
       default:
         return "schedule";
     }
   };
 
-  const getStatusClasses = (status: TimelineItem["status"]) => {
+  const getStatusClasses = (status: TimelineEvent["status"] | string) => {
     switch (status) {
       case "completed":
+      case "success":
         return {
           nodeBg: "bg-emerald-500",
           border: "border-emerald-500/50",
@@ -58,6 +65,7 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
           text: "text-emerald-400",
         };
       case "running":
+      case "pending":
         return {
           nodeBg: "bg-primary-fixed animate-pulse",
           border: "border-primary-fixed",
@@ -66,6 +74,7 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
           text: "text-primary-fixed",
         };
       case "failed":
+      case "error":
         return {
           nodeBg: "bg-error",
           border: "border-error/60",
@@ -102,21 +111,33 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
   return (
     <div className="bg-surface border-[3px] border-outline flex flex-col brutalist-shadow h-[380px] max-h-[380px] w-full overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b-2 border-outline flex justify-between items-center bg-black shrink-0">
+      <div className="p-4 border-b-2 border-outline flex justify-between items-center bg-black shrink-0">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary-fixed text-xl">timeline</span>
-          <h3 className="text-xl font-black uppercase text-on-surface">Execution Timeline</h3>
+          <div>
+            <h3 className="text-base font-black uppercase text-on-surface">Execution Timeline</h3>
+            {summary?.totalTokens !== undefined && summary.totalTokens > 0 && (
+              <p className="font-mono-label text-[10px] text-primary-fixed font-bold">
+                Tokens Used: {summary.totalTokens.toLocaleString()} {summary.inputTokens !== undefined ? `(${summary.inputTokens.toLocaleString()} in / ${(summary.outputTokens || 0).toLocaleString()} out)` : ''}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 font-mono-label text-xs font-bold">
           {isRunning ? (
             <span className="flex items-center gap-2 text-primary-fixed uppercase italic font-black animate-pulse">
-              <span className="w-3 h-3 bg-primary-fixed"></span>
-              Active Polling
+              <span className="w-2.5 h-2.5 bg-primary-fixed"></span>
+              Live Polling (2.5s)
+            </span>
+          ) : telemetryStatus === "authoritative_signoz" ? (
+            <span className="text-emerald-400 font-mono text-[10px] uppercase border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+              SigNoz Traces
             </span>
           ) : (
-            <span className="text-outline uppercase">
-              {timelineItems.length} Events
+            <span className="text-outline uppercase text-[11px]">
+              {events.length} Events
             </span>
           )}
         </div>
@@ -130,25 +151,23 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
         {/* Connecting Vertical Line */}
         <div className="absolute left-[47px] top-6 bottom-6 w-[2px] bg-outline-variant"></div>
 
-        {isLoading && timelineItems.length === 0 ? (
+        {isLoading && events.length === 0 ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8 animate-pulse">
-            Fetching OpenTelemetry spans from SigNoz...
+            Querying SigNoz telemetry traces...
           </div>
-        ) : timelineItems.length === 0 ? (
+        ) : telemetryStatus === "unavailable" && events.length === 0 ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8">
-            # No execution events recorded yet.
+            # Execution telemetry is temporarily unavailable.
+          </div>
+        ) : events.length === 0 ? (
+          <div className="font-mono-label text-xs text-outline-variant text-center py-8">
+            # Select an agent run to inspect execution telemetry.
           </div>
         ) : (
-          timelineItems.map((item) => {
+          events.map((item) => {
             const statusStyle = getStatusClasses(item.status);
             const isExpanded = expandedId === item.id;
-            const hasAttr = item.attributes && Object.keys(item.attributes).length > 0;
-            const primaryDetail =
-              item.attributes?.["filePath"] ||
-              item.attributes?.["command"] ||
-              item.attributes?.["repository.name"] ||
-              item.attributes?.["prompt"] ||
-              item.name;
+            const hasMeta = item.metadata && Object.keys(item.metadata).some(k => item.metadata![k] !== undefined);
 
             return (
               <div
@@ -168,12 +187,12 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
                       {getEventIcon(item)}
                     </span>
                     <span className={`font-black uppercase text-xs ${statusStyle.text}`}>
-                      {item.name}
+                      {item.title}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs font-bold text-outline">
-                    <span>{formatTime(item.startTime)}</span>
+                    <span>{formatTime(item.timestamp)}</span>
                     {item.durationMs !== undefined && (
                       <span className="text-primary-fixed font-black">{formatDuration(item.durationMs)}</span>
                     )}
@@ -184,7 +203,7 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
                 <div className={`bg-black border-2 ${statusStyle.border} p-3 flex flex-col gap-2 transition-colors hover:border-primary-fixed`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono-label text-xs text-on-surface font-bold truncate">
-                      {primaryDetail}
+                      {item.description || item.title}
                     </span>
                     <span className={`font-mono-label text-[10px] font-black uppercase px-2 py-0.5 ${statusStyle.badgeBg} ${statusStyle.badgeText}`}>
                       {item.status}
@@ -192,16 +211,19 @@ export function TimelinePanel({ sessionId = "", isRunning = false }: TimelinePan
                   </div>
 
                   {/* Expandable attributes */}
-                  {isExpanded && hasAttr && (
+                  {isExpanded && hasMeta && (
                     <div className="mt-2 pt-2 border-t border-outline-variant/40 font-mono-label text-[11px] space-y-1 text-on-surface-variant">
-                      {Object.entries(item.attributes!).map(([key, val]) => (
-                        <div key={key} className="flex justify-between gap-2">
-                          <span className="text-outline font-bold">{key}:</span>
-                          <span className="text-primary-fixed font-mono whitespace-pre-wrap break-all">
-                            {typeof val === "object" ? JSON.stringify(val) : String(val)}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(item.metadata!).map(([key, val]) => {
+                        if (val === undefined || val === null || val === '') return null;
+                        return (
+                          <div key={key} className="flex justify-between gap-2">
+                            <span className="text-outline font-bold">{key}:</span>
+                            <span className="text-primary-fixed font-mono whitespace-pre-wrap break-all">
+                              {typeof val === "object" ? JSON.stringify(val) : String(val)}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
