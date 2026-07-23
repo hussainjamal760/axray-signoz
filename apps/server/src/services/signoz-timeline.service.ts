@@ -1,5 +1,4 @@
 import { AgentRun } from '../models/agent-run.model';
-import { Session } from '../models/session.model';
 import { signozService } from './signoz.service';
 import { spanStoreProcessor, SpanRecord } from '../lib/telemetry';
 import { AppError } from '../errors/AppError';
@@ -66,18 +65,6 @@ function normalizeSpanToEvent(span: SpanRecord): TimelineEvent {
   let description: string | undefined;
 
   switch (span.name) {
-    case 'session.create':
-      title = 'Session Created';
-      description = attrs[AXRAY_ATTRIBUTES.REPOSITORY]
-        ? `${attrs[AXRAY_ATTRIBUTES.REPOSITORY]} (${attrs[AXRAY_ATTRIBUTES.BRANCH] || 'main'})`
-        : 'Session initialized';
-      break;
-    case 'container.start':
-      title = 'Container Started';
-      description = attrs[AXRAY_ATTRIBUTES.RUNTIME_IMAGE]
-        ? `${attrs[AXRAY_ATTRIBUTES.RUNTIME_IMAGE]} container active`
-        : 'Docker container ready';
-      break;
     case 'workspace.clone':
       title = 'Repository Cloned';
       description = `Cloned repository into /workspace`;
@@ -176,17 +163,10 @@ export const getTimelineForRun = async (runId: string): Promise<TimelineResponse
   }
 
   const sessionIdStr = run.sessionId.toString();
-
-  // Evaluate if current run is the first run created for its session
-  const earliestRun = await AgentRun.findOne({ sessionId: run.sessionId })
-    .sort({ createdAt: 1 })
-    .select('_id');
-  const isFirstRun = earliestRun?._id.toString() === runId;
-
   let rawSpans: SpanRecord[] = [];
   let telemetryStatus: 'authoritative_signoz' | 'active_span_store' | 'unavailable' = 'unavailable';
 
-  // 1. Authoritative Source: Query SigNoz for traces matching axray.run.id
+  // 1. Authoritative Source: Query SigNoz for traces strictly matching axray.run.id
   try {
     const apiKey = process.env.SIGNOZ_MCP_API_KEY || process.env.SIGNOZ_API_KEY;
     if (apiKey) {
@@ -203,8 +183,7 @@ export const getTimelineForRun = async (runId: string): Promise<TimelineResponse
                   const attrs = s.attributes || s.tagMap || {};
                   if (
                     attrs[AXRAY_ATTRIBUTES.RUN_ID] === runId ||
-                    attrs['run.id'] === runId ||
-                    (isFirstRun && (attrs[AXRAY_ATTRIBUTES.SESSION_ID] === sessionIdStr || attrs['session.id'] === sessionIdStr) && attrs[AXRAY_ATTRIBUTES.PHASE] === 'setup')
+                    attrs['run.id'] === runId
                   ) {
                     signozSpans.push({
                       id: s.spanId || s.id || Math.random().toString(36).substring(2),
@@ -232,17 +211,19 @@ export const getTimelineForRun = async (runId: string): Promise<TimelineResponse
     console.warn(`[Timeline] SigNoz query fallback to local spanStoreProcessor:`, err instanceof Error ? err.message : String(err));
   }
 
-  // 2. Active Ingestion Bridge: Query local spanStoreProcessor if SigNoz has no spans yet
+  // 2. Active Ingestion Bridge: Query local spanStoreProcessor strictly for runId
   if (rawSpans.length === 0) {
-    const localSpans = spanStoreProcessor.getSpansForRun(
-      runId,
-      isFirstRun ? sessionIdStr : undefined
-    );
+    const localSpans = spanStoreProcessor.getSpansForRun(runId);
     if (localSpans.length > 0) {
       rawSpans = localSpans;
       telemetryStatus = 'active_span_store';
     }
   }
+
+  // Filter out any leftover infrastructure session setup spans if present
+  rawSpans = rawSpans.filter(
+    s => s.name !== 'session.create' && s.name !== 'container.start'
+  );
 
   // 3. Unavailable State: Return graceful empty timeline without fabricating data
   if (rawSpans.length === 0) {

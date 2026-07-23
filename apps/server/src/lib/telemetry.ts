@@ -95,24 +95,10 @@ export class SpanStoreProcessor implements SpanProcessor {
     );
   }
 
-  getSpansForRun(runId: string, includeSetupForSessionId?: string): SpanRecord[] {
+  getSpansForRun(runId: string): SpanRecord[] {
     const isRunMatch = (s: SpanRecord) => {
       if (!s.attributes) return false;
-      if (s.attributes['axray.run.id'] === runId || s.attributes['run.id'] === runId) return true;
-      if (
-        includeSetupForSessionId &&
-        (s.attributes['axray.session.id'] === includeSetupForSessionId || s.attributes['session.id'] === includeSetupForSessionId)
-      ) {
-        if (
-          s.attributes['axray.phase'] === 'setup' ||
-          s.attributes['axray.is_initial_setup'] === true ||
-          s.name === 'session.create' ||
-          s.name === 'container.start'
-        ) {
-          return true;
-        }
-      }
-      return false;
+      return s.attributes['axray.run.id'] === runId || s.attributes['run.id'] === runId;
     };
 
     const active = Array.from(this.activeSpans.values()).filter(isRunMatch);
