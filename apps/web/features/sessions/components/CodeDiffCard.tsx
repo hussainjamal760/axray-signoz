@@ -24,6 +24,7 @@ export function CodeDiffCard({
   }
 
   const lines = diff ? diff.split("\n") : [];
+  let isInsideBinaryPatch = false;
 
   return (
     <div className="bg-surface-container border-[3px] border-outline brutalist-shadow overflow-hidden">
@@ -57,6 +58,37 @@ export function CodeDiffCard({
       <div className="font-mono-label text-xs leading-relaxed max-h-[350px] overflow-y-auto custom-scrollbar bg-background p-2">
         {lines.length > 0 ? (
           lines.map((line, index) => {
+            // Handle binary file diff notices (e.g. "Binary files a/img.png and b/img.png differ")
+            if (line.startsWith("Binary files")) {
+              isInsideBinaryPatch = false;
+              return (
+                <div key={index} className="bg-surface p-2 text-outline-variant italic font-bold my-1 border border-outline/50 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">image</span>
+                  <span>{line} (Binary content omitted)</span>
+                </div>
+              );
+            }
+
+            // Handle GIT binary patch headers
+            if (line.startsWith("GIT binary patch")) {
+              isInsideBinaryPatch = true;
+              return (
+                <div key={index} className="bg-surface p-2 text-outline-variant italic font-bold my-1 border border-outline/50 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm">view_in_ar</span>
+                  <span>GIT binary patch data omitted</span>
+                </div>
+              );
+            }
+
+            if (isInsideBinaryPatch) {
+              // End binary patch when a new file section starts
+              if (line.startsWith("diff --git") || line.startsWith("@@")) {
+                isInsideBinaryPatch = false;
+              } else {
+                return null; // Skip binary patch raw payload lines
+              }
+            }
+
             if (line.startsWith("diff --git")) {
               const fileName = line.replace("diff --git a/", "a/").trim();
               return (
