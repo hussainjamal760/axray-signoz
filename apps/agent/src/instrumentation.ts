@@ -59,9 +59,11 @@ if (process.env.SIGNOZ_INGESTION_KEY) {
 }
 
 const sdk = new NodeSDK({
-  resource: resourceFromAttributes({
-    "service.name": "axray-agent",
-  }).merge(defaultResource()),
+  resource: defaultResource().merge(
+    resourceFromAttributes({
+      "service.name": "axray-agent",
+    })
+  ),
   spanProcessors: [
     new SimpleSpanProcessor(
       new OTLPTraceExporter({

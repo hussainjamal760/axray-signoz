@@ -38,21 +38,36 @@ async function queryMcp(sessionId: string): Promise<{ ok: boolean; raw?: any }> 
   try {
     await client.connect(transport);
 
+    const now = Date.now();
+    const fiveMinAgo = now - 5 * 60 * 1000;
+
     const result = await client.callTool({
       name: "signoz_execute_builder_query",
       arguments: {
         query: {
-          dataSource: "traces",
-          aggregateOperator: "count",
-          filters: [
-            { key: "session.id", op: "=", value: sessionId },
-            { key: "name", op: "=", value: "tool.call" },
-          ],
+          start: fiveMinAgo,
+          end: now,
+          requestType: "scalar",
+          compositeQuery: {
+            queries: [
+              {
+                type: "builder_query",
+                spec: {
+                  name: "A",
+                  signal: "traces",
+                  aggregations: [{ expression: "count()" }],
+                  filter: {
+                    expression: `session.id = '${sessionId}' AND name = 'tool.call'`,
+                  },
+                  disabled: false,
+                },
+              },
+            ],
+          },
         },
-        timeRange: "5m",
+        searchContext: `Count tool.call spans for session ${sessionId} in the last 5 minutes`,
       },
     });
-
     return { ok: true, raw: result };
   } catch {
     return { ok: false };
