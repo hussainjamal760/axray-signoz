@@ -21,6 +21,9 @@ export interface IAgentRun extends Document {
   filesChanged?: string[];
   insertions?: number;
   deletions?: number;
+  diffTruncated?: boolean;
+  diffSize?: number;
+  changeSummary?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +52,9 @@ const AgentRunSchema: Schema = new Schema(
     filesChanged: { type: [String] },
     insertions: { type: Number },
     deletions: { type: Number },
+    diffTruncated: { type: Boolean, default: false },
+    diffSize: { type: Number },
+    changeSummary: { type: String },
   },
   {
     timestamps: true,

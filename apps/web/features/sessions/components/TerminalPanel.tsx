@@ -91,6 +91,9 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
                 filesChanged={selectedRun.filesChanged}
                 insertions={selectedRun.insertions}
                 deletions={selectedRun.deletions}
+                diffTruncated={selectedRun.diffTruncated}
+                diffSize={selectedRun.diffSize}
+                changeSummary={selectedRun.changeSummary}
               />
             )}
 

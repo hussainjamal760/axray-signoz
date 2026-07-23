@@ -1,17 +1,22 @@
 import * as containerService from './container.service';
 
 const WORKSPACE_DIR = '/workspace';
+const MAX_DIFF_BYTES = 50000; // 50 KB safe inline diff limit for MVP
 
 export interface GitDiffResult {
   rawDiff: string;
   filesChanged: string[];
   insertions: number;
   deletions: number;
+  truncated: boolean;
+  diffSize: number;
+  changeSummary: string;
 }
 
 /**
  * Git Service
  * Responsible for inspecting Git repository diffs inside Docker workspace containers.
+ * Implements safe size limits & truncation for large diffs.
  */
 export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
   console.log(`[Git] Fetching git diff for container ${containerId}...`);
@@ -21,15 +26,16 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
     const diffRes = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && git diff`,
-      { maxBufferBytes: 200000 }
+      { maxBufferBytes: 500000 }
     );
-    const rawDiff = diffRes.exitCode === 0 ? diffRes.output : '';
+    const fullDiff = diffRes.exitCode === 0 ? diffRes.output : '';
+    const diffSize = Buffer.byteLength(fullDiff, 'utf8');
 
     // 2. Fetch numstat for filesChanged, insertions, deletions
     const numstatRes = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && git diff --numstat`,
-      { maxBufferBytes: 50000 }
+      { maxBufferBytes: 100000 }
     );
 
     const filesChanged: string[] = [];
@@ -52,7 +58,7 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
       }
     }
 
-    // 3. Also check for untracked files (git status --porcelain)
+    // 3. Check for untracked files (git status --porcelain)
     const statusRes = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && git status --porcelain`,
@@ -72,8 +78,16 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
       }
     }
 
+    const truncated = diffSize > MAX_DIFF_BYTES;
+    let rawDiff = fullDiff;
+    if (truncated) {
+      rawDiff = fullDiff.substring(0, MAX_DIFF_BYTES) + `\n\n[Diff truncated: Total diff size is ${diffSize} bytes. Showing 50KB preview...]`;
+    }
+
+    const changeSummary = `${filesChanged.length} ${filesChanged.length === 1 ? 'file' : 'files'} changed (+${totalInsertions}/-${totalDeletions})`;
+
     console.log(
-      `[Git] Diff captured: ${filesChanged.length} files changed (+${totalInsertions}/-${totalDeletions})`
+      `[Git] Diff captured: ${changeSummary} (Size: ${diffSize} bytes, Truncated: ${truncated})`
     );
 
     return {
@@ -81,6 +95,9 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
       filesChanged,
       insertions: totalInsertions,
       deletions: totalDeletions,
+      truncated,
+      diffSize,
+      changeSummary,
     };
   } catch (error: any) {
     console.warn(`[Git Warning] Failed to get diff:`, error?.message || String(error));
@@ -89,6 +106,9 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
       filesChanged: [],
       insertions: 0,
       deletions: 0,
+      truncated: false,
+      diffSize: 0,
+      changeSummary: '0 files changed',
     };
   }
 };

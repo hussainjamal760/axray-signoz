@@ -22,6 +22,9 @@ export interface AgentRunSummary {
   filesChanged?: string[];
   insertions?: number;
   deletions?: number;
+  diffTruncated?: boolean;
+  diffSize?: number;
+  changeSummary?: string;
   createdAt: string;
   updatedAt: string;
 }

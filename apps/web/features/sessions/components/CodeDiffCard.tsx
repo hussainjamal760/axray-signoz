@@ -7,6 +7,9 @@ export interface CodeDiffCardProps {
   filesChanged?: string[];
   insertions?: number;
   deletions?: number;
+  diffTruncated?: boolean;
+  diffSize?: number;
+  changeSummary?: string;
 }
 
 export function CodeDiffCard({
@@ -14,6 +17,9 @@ export function CodeDiffCard({
   filesChanged = [],
   insertions = 0,
   deletions = 0,
+  diffTruncated = false,
+  diffSize,
+  changeSummary,
 }: CodeDiffCardProps) {
   if (!diff && filesChanged.length === 0) {
     return (
@@ -33,7 +39,7 @@ export function CodeDiffCard({
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary-fixed text-sm">difference</span>
           <span className="uppercase text-xs font-black">
-            Git Diff ({filesChanged.length} {filesChanged.length === 1 ? "file" : "files"} changed)
+            Git Diff ({changeSummary || `${filesChanged.length} ${filesChanged.length === 1 ? "file" : "files"} changed`})
           </span>
         </div>
         <div className="flex items-center gap-4 text-xs font-mono-label font-bold">
@@ -41,6 +47,16 @@ export function CodeDiffCard({
           <span className="text-error">-{deletions}</span>
         </div>
       </div>
+
+      {/* Truncation Warning Banner */}
+      {diffTruncated && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 p-2.5 px-4 text-amber-300 font-mono-label text-xs flex items-center gap-2 font-bold">
+          <span className="material-symbols-outlined text-sm text-amber-400">warning</span>
+          <span>
+            Large diff detected ({diffSize ? `${(diffSize / 1024).toFixed(1)} KB` : 'Over size limit'}). Displaying truncated 50KB preview.
+          </span>
+        </div>
+      )}
 
       {/* Files List Summary */}
       {filesChanged.length > 0 && (

@@ -21,6 +21,9 @@ interface BackendRun {
   filesChanged?: string[];
   insertions?: number;
   deletions?: number;
+  diffTruncated?: boolean;
+  diffSize?: number;
+  changeSummary?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +49,9 @@ function mapRun(run: BackendRun): AgentRunSummary {
     filesChanged: run.filesChanged,
     insertions: run.insertions,
     deletions: run.deletions,
+    diffTruncated: run.diffTruncated,
+    diffSize: run.diffSize,
+    changeSummary: run.changeSummary,
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
   };
