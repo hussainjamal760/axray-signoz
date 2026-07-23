@@ -12,20 +12,7 @@ export default function Home() {
   const { data, isLoading } = useCurrentUser();
   const isAuthenticated = !!data?.authenticated;
 
-  const navCta = isLoading ? null : (
-    <Link
-      href={isAuthenticated ? "/sessions" : "/auth"}
-      className="group relative inline-flex h-8 md:h-9 items-center justify-center overflow-hidden border-[3px] border-primary-fixed bg-background px-4 md:px-6 font-cta-label text-[10px] md:text-xs uppercase text-primary-fixed transition-all hover:scale-105 active:scale-95"
-    >
-      <span className="absolute inset-0 -translate-y-full bg-primary-fixed transition-transform duration-300 ease-[cubic-bezier(0.87,0,0.13,1)] group-hover:translate-y-0"></span>
-      <span className="relative z-10 flex items-center gap-2 transition-colors duration-300 group-hover:text-black font-black tracking-widest whitespace-nowrap">
-        {isAuthenticated ? "Sessions" : "Login GitHub"}
-        <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300">
-          arrow_outward
-        </span>
-      </span>
-    </Link>
-  );
+
 
   const heroCta = isLoading ? null : (
     <div className="relative inline-block group w-full sm:w-auto">
