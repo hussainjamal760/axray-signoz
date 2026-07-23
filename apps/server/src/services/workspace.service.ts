@@ -1,5 +1,6 @@
 import * as containerService from './container.service';
 import * as workspaceAnalysisService from './workspace-analysis.service';
+import { resolveRuntimeImage } from './runtime-image-resolver.service';
 import { AppError } from '../errors/AppError';
 import { IWorkspaceSpec } from '../models/session.model';
 import { tracer } from '../lib/telemetry';
@@ -11,7 +12,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
  * - Cloning Git repositories
  * - Checking out target branches
  * - Delegating AI workspace analysis
- * - Validating runtime environments
+ * - Validating prebuilt runtime environments
  * - Executing dependency installation commands
  * 
  * Pure service: Does NOT depend on MongoDB models or touch database records directly.
@@ -92,54 +93,9 @@ export const ensureRuntime = async (
   containerId: string,
   spec: IWorkspaceSpec
 ): Promise<void> => {
-  const runtime = (spec.runtime || 'node').toLowerCase();
-  console.log(`[Workspace] Dynamically ensuring runtime "${runtime}" (${spec.runtimeVersion}) in container ${containerId}...`);
-
-  let apkPackages = '';
-  let checkCmd = '';
-
-  if (runtime.includes('node') || runtime.includes('javascript') || runtime.includes('typescript')) {
-    apkPackages = 'nodejs npm make g++';
-    checkCmd = 'node -v';
-  } else if (runtime.includes('python')) {
-    apkPackages = 'python3 py3-pip make g++';
-    checkCmd = 'python3 --version';
-  } else if (runtime.includes('go')) {
-    apkPackages = 'go make g++';
-    checkCmd = 'go version';
-  } else if (runtime.includes('rust')) {
-    apkPackages = 'cargo make g++';
-    checkCmd = 'cargo --version';
-  } else if (runtime.includes('php')) {
-    apkPackages = 'php composer';
-    checkCmd = 'php -v';
-  } else if (runtime.includes('ruby')) {
-    apkPackages = 'ruby';
-    checkCmd = 'ruby -v';
-  } else {
-    apkPackages = 'nodejs npm';
-    checkCmd = 'node -v';
-  }
-
-  // Check if runtime is already present
-  const existingCheck = await containerService.executeCommand(containerId, checkCmd);
-  if (existingCheck.exitCode === 0) {
-    console.log(`[Workspace] Runtime "${runtime}" is already installed: ${existingCheck.output}`);
-    return;
-  }
-
-  console.log(`[Workspace] Executing dynamic runtime installation: "apk add --no-cache ${apkPackages}"`);
-  const installRes = await containerService.executeCommand(
-    containerId,
-    `apk add --no-cache ${apkPackages}`,
-    { timeoutMs: 600000 }
-  );
-
-  if (installRes.exitCode !== 0) {
-    console.warn(`[Workspace Warning] Dynamic runtime installation returned non-zero exit code: ${installRes.output}`);
-  } else {
-    console.log(`[Workspace] Dynamic runtime "${runtime}" installed successfully.`);
-  }
+  const resolution = resolveRuntimeImage(spec.runtime, spec.runtimeVersion);
+  console.log(`[Workspace] Selected runtime image: ${resolution.imageName}`);
+  console.log(`[Workspace] Using prebuilt Node runtime container for "${spec.runtime}". Skipped dynamic package installation.`);
 };
 
 export const installDependencies = async (
@@ -189,7 +145,7 @@ export const prepareWorkspace = async (
     span.setAttribute('workspace.package_manager', spec.packageManager);
     span.setAttribute('workspace.install_command', spec.installCommand);
 
-    // Step 4: Ensure Runtime
+    // Step 4: Ensure Runtime (Prebuilt Image Check)
     await ensureRuntime(params.containerId, spec);
 
     // Step 5: Install Dependencies
