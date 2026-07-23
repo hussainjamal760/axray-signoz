@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { SessionSummary, ContainerStatus } from '../types/sessions.types';
+import { SessionSummary, ContainerStatus, TimelineItem } from '../types/sessions.types';
 
 interface BackendSession {
   _id: string;
@@ -68,4 +68,9 @@ export const deleteSession = (id: string): Promise<void> => {
   return apiClient<void>(`/api/sessions/${id}`, {
     method: 'DELETE',
   });
+};
+
+export const getSessionTimeline = async (sessionId: string): Promise<TimelineItem[]> => {
+  if (!sessionId) return [];
+  return apiClient<TimelineItem[]>(`/api/sessions/${sessionId}/timeline`);
 };

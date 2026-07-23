@@ -93,10 +93,10 @@ export default function SessionIdPage() {
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
-        <div className="grid grid-cols-12 gap-8">
+        <div className="grid grid-cols-12 gap-8 items-stretch">
 
           {/* Row 1: Initialize Context & Timeline */}
-          <div className="col-span-12 lg:col-span-7">
+          <div className="col-span-12 lg:col-span-7 flex flex-col">
             <InitializeContextPanel
               onSubmit={handlePromptSubmit}
               isPending={isCreatingRun}
@@ -104,12 +104,12 @@ export default function SessionIdPage() {
             />
           </div>
 
-          <div className="col-span-12 lg:col-span-5 h-full">
-            <TimelinePanel />
+          <div className="col-span-12 lg:col-span-5 flex flex-col">
+            <TimelinePanel sessionId={id} isRunning={isSelectedRunExecuting} />
           </div>
 
           {/* Row 2: Live Trace Tree and Terminal Window */}
-          <section className="col-span-12 grid grid-cols-12 gap-8">
+          <section className="col-span-12 grid grid-cols-12 gap-8 items-stretch">
             <div className="col-span-12 md:col-span-5 h-full">
               <LiveTraceTree />
             </div>

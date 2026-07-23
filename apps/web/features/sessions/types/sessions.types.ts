@@ -33,3 +33,27 @@ export interface SessionSummary {
     tokens: number;
   };
 }
+
+export type TimelineEventType =
+  | 'session'
+  | 'container'
+  | 'git'
+  | 'workspace'
+  | 'runtime'
+  | 'agent'
+  | 'tool'
+  | 'diff';
+
+export type TimelineEventStatus = 'completed' | 'running' | 'failed' | 'skipped';
+
+export interface TimelineItem {
+  id: string;
+  parentId?: string;
+  name: string;
+  type: TimelineEventType;
+  status: TimelineEventStatus;
+  startTime: string;
+  endTime?: string;
+  durationMs?: number;
+  attributes?: Record<string, any>;
+}
