@@ -5,6 +5,8 @@ import Link from "next/link";
 import HeroSimulator from "@/features/marketing/components/HeroSimulator";
 import AgentBentoGrid from "@/features/marketing/components/AgentBentoGrid";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 
 export default function Home() {
   const { data, isLoading } = useCurrentUser();
@@ -46,58 +48,7 @@ export default function Home() {
   return (
     <>
       {/* NotchNavBar */}
-      <header className="sticky top-0 z-50 h-16 flex w-full pointer-events-none">
-
-        {/* Left Side Bar - Flexible width */}
-        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto border-b-[3px] border-primary-fixed"></div>
-
-        {/* Responsive Notch Container */}
-        <div className="flex h-16 relative z-10 shrink-0 flex-1 pointer-events-auto">
-
-          {/* Left Curve */}
-          <div className="w-[30px] h-full relative shrink-0">
-            <div className="absolute inset-0 bg-background" style={{ clipPath: "path('M0 0 H30 V64 C15 64 15 40 0 40 Z')" }} />
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 30 64">
-              <path d="M0 38.5 C15 38.5 15 62.5 30 62.5" fill="none" className="stroke-primary-fixed" strokeWidth="3" />
-            </svg>
-          </div>
-
-          {/* Center Content Area */}
-          <div className="flex-1 h-full relative min-w-0 bg-background border-b-[3px] border-primary-fixed flex items-end justify-between pb-2.5 px-4 md:px-8">
-
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 shrink-0 group">
-              <Image src="/logo/axray-logo.png" alt="AXRAY Logo" width={28} height={28} className="object-contain w-auto h-auto group-hover:rotate-12 transition-transform" />
-              <span className="font-headline-lg text-lg font-black tracking-tighter text-white uppercase hidden sm:inline-block">AXRAY</span>
-            </Link>
-
-            {/* Links */}
-            <div className="hidden lg:flex gap-6 items-center shrink-0">
-              <Link className="text-primary-fixed font-cta-label underline decoration-3 underline-offset-8 transition-transform active:translate-x-[2px] active:translate-y-[2px]" href="/">Home</Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="/features">Features</Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="/how-it-works">How it Works</Link>
-              <Link className="text-on-surface font-cta-label hover:text-primary-fixed transition-colors" href="#">Docs</Link>
-            </div>
-
-            {/* CTA */}
-            <div className="shrink-0 flex items-center mb-1">
-              {navCta}
-            </div>
-
-          </div>
-
-          {/* Right Curve */}
-          <div className="w-[30px] h-full relative shrink-0">
-            <div className="absolute inset-0 bg-background" style={{ clipPath: "path('M0 0 H30 V40 C15 40 15 64 0 64 Z')" }} />
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 30 64">
-              <path d="M0 62.5 C15 62.5 15 38.5 30 38.5" fill="none" className="stroke-primary-fixed" strokeWidth="3" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Right Side Bar - Empty space */}
-        <div className="flex-1 max-w-[20px] md:max-w-[120px] h-10 bg-background z-20 relative min-w-0 pointer-events-auto border-b-[3px] border-primary-fixed"></div>
-      </header>
+      <Navbar activePath="/" isSticky={true} />
 
       <main>
         {/* Brutalist Marquee Ticker */}
@@ -475,39 +426,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full mt-auto bg-surface-container-lowest border-t-[3px] border-outline-variant">
-        <div className="flex flex-col lg:flex-row justify-between items-center w-full px-margin py-12 gap-8 max-w-[1600px] mx-auto">
-          <div className="flex flex-col gap-6 items-center lg:items-start text-center lg:text-left">
-            <Link href="/" className="flex items-center gap-4 group">
-              <Image
-                src="/logo/axray-logo.png"
-                alt="AXRAY Logo"
-                width={32}
-                height={32}
-                className="object-contain w-auto h-auto group-hover:rotate-12 transition-transform"
-              />
-              <span className="font-headline-lg-mobile text-2xl font-black text-white uppercase tracking-tighter">
-                AXRAY
-              </span>
-            </Link>
-            <p className="font-mono-label text-xs text-on-surface-variant font-bold uppercase tracking-widest max-w-xs">
-              © 2026 AXRAY. Built for the machine era by WeMakeDevs Track 01.
-            </p>
-          </div>
-
-          <div className="flex gap-x-8 gap-y-4 flex-wrap justify-center">
-            {['Terms', 'Privacy', 'Security', 'Changelog'].map((link) => (
-              <Link key={link} className="text-on-surface font-mono-label text-xs font-black hover:text-primary-fixed transition-colors uppercase tracking-[0.2em]" href={`/${link.toLowerCase()}`}>
-                {link}
-              </Link>
-            ))}
-            <Link className="text-on-surface font-mono-label text-xs font-black hover:text-primary-fixed transition-colors uppercase tracking-[0.2em] flex items-center gap-3 bg-surface-container px-3 py-1 border-[2px] border-outline-variant" href="#">
-              <div className="w-2 h-2 bg-primary-fixed shadow-[0_0_8px_var(--color-primary-fixed)] animate-pulse"></div>
-              All Systems Operational
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer variant="home" />
     </>
   );
 }
