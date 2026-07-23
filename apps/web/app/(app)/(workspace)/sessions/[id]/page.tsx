@@ -10,7 +10,6 @@ import {
   SessionHeader,
   InitializeContextPanel,
   TimelinePanel,
-  LiveTraceTree,
   TerminalPanel,
   CodeDiffCard,
 } from "@/features/sessions/components";
@@ -43,7 +42,7 @@ export default function SessionIdPage() {
   const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
 
   // Sockets connect and listen ONLY while an agent run is actively executing (status === 'running' | 'pending')
-  const { liveEvents, liveTraces, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined, {
+  const { liveEvents, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined, {
     enabled: isSelectedRunExecuting,
   });
 
@@ -269,15 +268,9 @@ export default function SessionIdPage() {
             />
           </div>
 
-          {/* Row 2: Live Trace Tree and Terminal Window */}
-          <section className="col-span-12 grid grid-cols-12 gap-8 items-stretch">
-            <div className="col-span-12 md:col-span-5 h-full">
-              <LiveTraceTree sessionId={id} runId={activeOrSelectedRun?.id} liveTraces={liveTraces} />
-            </div>
-
-            <div className="col-span-12 md:col-span-7 h-full">
-              <TerminalPanel session={session} selectedRun={activeOrSelectedRun} />
-            </div>
+          {/* Row 2: Terminal Window */}
+          <section className="col-span-12 mt-4">
+            <TerminalPanel session={session} selectedRun={activeOrSelectedRun} />
           </section>
 
           {/* Row 3: Dedicated Full-Width Git Diff Artifact Section */}
