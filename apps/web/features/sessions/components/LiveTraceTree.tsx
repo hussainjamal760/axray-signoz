@@ -1,37 +1,99 @@
-import { Cpu } from "@phosphor-icons/react/dist/ssr";
+"use client";
 
-export function LiveTraceTree() {
+import React from "react";
+import Link from "next/link";
+import { LiveTraceSpan } from "@/features/sessions/hooks/useSessionSocket";
+
+export interface LiveTraceTreeProps {
+  sessionId?: string;
+  runId?: string;
+  liveTraces?: LiveTraceSpan[];
+}
+
+export function LiveTraceTree({ sessionId = "", liveTraces = [] }: LiveTraceTreeProps) {
+  const observerUrl = sessionId ? `/sessions/${sessionId}/observer` : "#";
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+      case "success":
+        return "text-emerald-400 border-emerald-500/40 bg-emerald-500/10";
+      case "failed":
+      case "error":
+        return "text-error border-error/40 bg-error/10";
+      case "running":
+        return "text-primary-fixed border-primary-fixed/40 bg-primary-fixed/10 animate-pulse";
+      default:
+        return "text-outline border-outline-variant bg-surface-container";
+    }
+  };
+
+  const formatDuration = (ms?: number) => {
+    if (ms === undefined || ms === null) return "";
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
+
   return (
-    <div className="col-span-12 md:col-span-5 bg-background border-[3px] border-outline flex flex-col h-[450px] brutalist-shadow relative overflow-hidden">
-      <div className="p-4 border-b-2 border-outline flex items-center justify-between bg-surface z-10 shrink-0">
+    <div className="bg-background border-[3px] border-outline flex flex-col h-[450px] brutalist-shadow relative overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b-2 border-outline flex items-center justify-between bg-black z-10 shrink-0">
         <h4 className="font-black uppercase text-sm flex items-center gap-2 text-on-surface">
           <span className="material-symbols-outlined text-primary-fixed">schema</span>
-          Live Trace Tree
+          Live Trace Preview
         </h4>
-        <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary-fixed transition-none">fullscreen</span>
+        {sessionId && (
+          <Link
+            href={observerUrl}
+            className="font-mono-label text-[10px] font-black uppercase text-primary-fixed border border-primary-fixed px-2 py-1 flex items-center gap-1 hover:bg-primary-fixed hover:text-black transition-colors"
+          >
+            Observer <span className="material-symbols-outlined !text-xs">open_in_new</span>
+          </Link>
+        )}
       </div>
-      
-      {/* Offline Node Visualization replacing Three.js */}
-      <div className="flex-1 relative flex items-center justify-center flex-col group">
-        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: "radial-gradient(#e5e3cf 1px, transparent 1px)", backgroundSize: "16px 16px" }}></div>
-        
-        <Cpu weight="fill" className="text-primary-fixed/20 w-24 h-24 mb-4" />
-        <span className="font-mono-label text-xs text-on-surface-variant uppercase tracking-widest opacity-50">
-          Node Visualization Offline
-        </span>
 
-        {/* Overlay UI mapping to the original HTML overlay */}
-        <div className="absolute inset-0 pointer-events-none p-6 font-mono-label text-[10px] text-primary-fixed/80 uppercase">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-on-surface">root</span> &gt; agent_session_1024
-            </div>
-            <div className="pl-4 border-l border-primary-fixed/30 mt-2">
-              <div>L call: GPT-4</div>
-              <div className="text-on-surface">L tool: READ_FILE [WAIT]</div>
-            </div>
+      {/* Live Trace Preview Stream */}
+      <div className="flex-1 p-4 overflow-y-auto custom-scrollbar font-mono-label space-y-2 relative bg-background">
+        {liveTraces.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-6 space-y-2">
+            <span className="material-symbols-outlined text-primary-fixed/40 text-4xl">memory</span>
+            <p className="text-xs uppercase font-bold text-outline">No live spans captured yet</p>
+            <p className="text-[10px] text-outline-variant">OpenTelemetry spans will stream live over Socket.IO</p>
           </div>
-        </div>
+        ) : (
+          liveTraces.map((span, idx) => (
+            <div
+              key={span.spanId || idx}
+              className="bg-surface border border-outline-variant p-2.5 flex items-center justify-between gap-3 text-xs hover:border-primary-fixed transition-colors"
+            >
+              <div className="flex items-center gap-2 overflow-hidden">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed shrink-0"></span>
+                <span className="font-black uppercase text-on-surface truncate">{span.operation}</span>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                {span.durationMs !== undefined && (
+                  <span className="text-[11px] font-bold text-primary-fixed">
+                    {formatDuration(span.durationMs)}
+                  </span>
+                )}
+                <span className={`text-[9px] uppercase font-black px-1.5 py-0.5 border ${getStatusColor(span.status)}`}>
+                  {span.status}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="p-2 border-t-2 border-outline-variant bg-black shrink-0 flex justify-between items-center px-4 font-mono-label text-[10px] text-outline">
+        <span>PREVIEW_MODE // SOCKET.IO</span>
+        {sessionId && (
+          <Link href={observerUrl} className="text-primary-fixed font-bold hover:underline">
+            Inspect in Observer →
+          </Link>
+        )}
       </div>
     </div>
   );

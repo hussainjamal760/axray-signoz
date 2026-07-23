@@ -6,6 +6,7 @@ import { IWorkspaceSpec } from '../models/session.model';
 import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
+import { emitLiveEvent } from '../sockets/socket.emitter';
 
 /**
  * Workspace Service
@@ -34,6 +35,23 @@ export const cloneRepository = async (
   containerId: string,
   telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
+  const sessionId = telemetryContext?.sessionId;
+  const runId = telemetryContext?.runId;
+
+  if (sessionId) {
+    emitLiveEvent(sessionId, {
+      sessionId,
+      runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'workspace.cloning',
+      phase: 'workspace',
+      status: 'running',
+      title: 'Cloning Repository',
+      description: `Cloning https://github.com/${repositoryFullName}.git`,
+      metadata: { repository: repositoryFullName },
+    });
+  }
+
   const span = tracer.startSpan('workspace.clone', {
     attributes: {
       [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
@@ -64,6 +82,19 @@ export const cloneRepository = async (
       }
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
+
+      if (sessionId) {
+        emitLiveEvent(sessionId, {
+          sessionId,
+          runId,
+          timestamp: new Date().toISOString(),
+          eventType: 'workspace.clone.completed',
+          phase: 'workspace',
+          status: 'completed',
+          title: 'Repository Ready',
+          description: `Repository ${repositoryFullName} ready at ${WORKSPACE_DIR}`,
+        });
+      }
       return;
     }
 
@@ -71,7 +102,7 @@ export const cloneRepository = async (
     const cloneResult = await containerService.executeCommand(
       containerId,
       `git clone https://github.com/${repositoryFullName}.git ${WORKSPACE_DIR}`,
-      { timeoutMs: 120000 } // 2 min timeout for clone
+      { timeoutMs: 120000 }
     );
 
     if (cloneResult.exitCode !== 0) {
@@ -84,6 +115,19 @@ export const cloneRepository = async (
     console.log(`[Workspace] Repository ${repositoryFullName} cloned successfully.`);
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
+
+    if (sessionId) {
+      emitLiveEvent(sessionId, {
+        sessionId,
+        runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'workspace.clone.completed',
+        phase: 'workspace',
+        status: 'completed',
+        title: 'Repository Cloned',
+        description: `Cloned ${repositoryFullName} successfully`,
+      });
+    }
   } catch (err: any) {
     span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message || String(err) });
     span.end();
@@ -153,8 +197,21 @@ export const ensureRuntime = async (
   });
 
   console.log(`[Workspace] Selected runtime image: ${resolution.imageName}`);
-  console.log(`[Workspace] Using prebuilt Node runtime container for "${spec.runtime}". Skipped dynamic package installation.`);
   
+  if (telemetryContext?.sessionId) {
+    emitLiveEvent(telemetryContext.sessionId, {
+      sessionId: telemetryContext.sessionId,
+      runId: telemetryContext.runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'workspace.runtime.selected',
+      phase: 'workspace',
+      status: 'completed',
+      title: 'Node Runtime Ready',
+      description: `Container using prebuilt runtime ${resolution.imageName}`,
+      metadata: { runtime: spec.runtime, image: resolution.imageName },
+    });
+  }
+
   span.setStatus({ code: SpanStatusCode.OK });
   span.end();
 };
@@ -164,6 +221,23 @@ export const installDependencies = async (
   installCommand: string,
   telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
+  const sessionId = telemetryContext?.sessionId;
+  const runId = telemetryContext?.runId;
+
+  if (sessionId) {
+    emitLiveEvent(sessionId, {
+      sessionId,
+      runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'workspace.dependencies.install.started',
+      phase: 'workspace',
+      status: 'running',
+      title: 'Installing Dependencies',
+      description: `Executing: ${installCommand}`,
+      metadata: { commandSummary: installCommand },
+    });
+  }
+
   const span = tracer.startSpan('workspace.install_deps', {
     attributes: {
       [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
@@ -180,7 +254,7 @@ export const installDependencies = async (
     const installResult = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && ${installCommand}`,
-      { timeoutMs: 300000 } // 5 minute timeout for dependency installs
+      { timeoutMs: 300000 }
     );
 
     if (installResult.exitCode !== 0) {
@@ -191,6 +265,19 @@ export const installDependencies = async (
 
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
+
+    if (sessionId) {
+      emitLiveEvent(sessionId, {
+        sessionId,
+        runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'workspace.dependencies.install.completed',
+        phase: 'workspace',
+        status: 'completed',
+        title: 'Dependencies Installed',
+        description: `Completed: ${installCommand}`,
+      });
+    }
   } catch (err: any) {
     span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message || String(err) });
     span.end();
@@ -227,6 +314,19 @@ export const prepareWorkspace = async (
     await checkoutBranch(params.branch, params.containerId, telContext);
 
     // Step 3: AI-First Workspace Inspection
+    if (params.sessionId) {
+      emitLiveEvent(params.sessionId, {
+        sessionId: params.sessionId,
+        runId: params.runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'workspace.analysis.started',
+        phase: 'workspace',
+        status: 'running',
+        title: 'Analyzing Workspace',
+        description: 'AI inspection of package manifests and configuration',
+      });
+    }
+
     const analyzeSpan = tracer.startSpan('workspace.analyze', {
       attributes: {
         [AXRAY_ATTRIBUTES.RUN_ID]: params.runId || '',
@@ -242,6 +342,20 @@ export const prepareWorkspace = async (
     analyzeSpan.setAttribute('workspace.install_command', spec.installCommand || '');
     analyzeSpan.setStatus({ code: SpanStatusCode.OK });
     analyzeSpan.end();
+
+    if (params.sessionId) {
+      emitLiveEvent(params.sessionId, {
+        sessionId: params.sessionId,
+        runId: params.runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'workspace.analysis.completed',
+        phase: 'workspace',
+        status: 'completed',
+        title: 'Workspace Analyzed',
+        description: `Detected runtime: ${spec.runtime || 'node'} (${spec.packageManager || 'npm'})`,
+        metadata: { runtime: spec.runtime, packageManager: spec.packageManager },
+      });
+    }
 
     span.setAttribute(AXRAY_ATTRIBUTES.RUNTIME, spec.runtime);
 

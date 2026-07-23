@@ -3,19 +3,25 @@ import React, { useState } from "react";
 export interface InitializeContextPanelProps {
   onSubmit?: (prompt: string) => void;
   isPending?: boolean;
+  isRunning?: boolean;
   disabled?: boolean;
+  liveStatusText?: string;
 }
 
 export function InitializeContextPanel({
   onSubmit,
   isPending = false,
+  isRunning = false,
   disabled = false,
+  liveStatusText,
 }: InitializeContextPanelProps) {
   const [prompt, setPrompt] = useState("");
 
+  const isActive = isPending || isRunning;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim() && onSubmit && !isPending && !disabled) {
+    if (prompt.trim() && onSubmit && !isActive && !disabled) {
       onSubmit(prompt.trim());
       setPrompt("");
     }
@@ -28,17 +34,24 @@ export function InitializeContextPanel({
           <span className="material-symbols-outlined text-primary-fixed !text-3xl">rocket_launch</span>
           Initialize Context
         </h3>
-        <span className="font-mono-label text-xs font-bold bg-primary-fixed text-on-primary-fixed px-2 py-1">GROQ_POWERED</span>
+        {isActive ? (
+          <span className="font-mono-label text-xs font-black uppercase bg-primary-fixed text-on-primary-fixed px-3 py-1 animate-pulse flex items-center gap-2">
+            <span className="w-2 h-2 bg-on-primary-fixed rounded-full animate-ping"></span>
+            {liveStatusText || "Running..."}
+          </span>
+        ) : (
+          <span className="font-mono-label text-xs font-bold bg-primary-fixed text-on-primary-fixed px-2 py-1">GROQ_POWERED</span>
+        )}
       </div>
 
       <div className="space-y-2 flex-1">
         <label className="font-mono-label text-xs font-black uppercase text-primary-fixed">Task Objective</label>
         <textarea 
           value={prompt}
-          disabled={isPending || disabled}
+          disabled={isActive || disabled}
           onChange={(e) => setPrompt(e.target.value)}
           className="w-full h-full min-h-[120px] bg-background border-[2px] border-outline p-4 text-on-surface font-mono-label text-sm focus:border-primary-fixed ring-0 outline-none resize-none disabled:opacity-50" 
-          placeholder="DESCRIBE_TASK_HERE (e.g. 'Fix the failing test in auth module' or 'Analyze package setup')..."
+          placeholder={isActive ? liveStatusText || "Agent execution in progress..." : "DESCRIBE_TASK_HERE (e.g. 'Fix the failing test in auth module' or 'Analyze package setup')..."}
         ></textarea>
       </div>
 
@@ -46,7 +59,7 @@ export function InitializeContextPanel({
         <div className="flex gap-6">
           <div className="flex items-center gap-2 font-mono-label text-xs font-bold uppercase">
             <span className="material-symbols-outlined text-primary-fixed">bolt</span>
-            Low_Latency
+            Live_Socket_IO
           </div>
           <div className="flex items-center gap-2 font-mono-label text-xs font-bold uppercase">
             <span className="material-symbols-outlined text-primary-fixed">visibility</span>
@@ -56,13 +69,13 @@ export function InitializeContextPanel({
 
         <button
           type="submit"
-          disabled={!prompt.trim() || isPending || disabled}
+          disabled={!prompt.trim() || isActive || disabled}
           className="px-10 py-4 bg-primary-fixed text-on-primary-fixed font-black uppercase text-lg border-[3px] border-on-background brutalist-shadow-sm flex items-center gap-4 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isPending ? (
+          {isActive ? (
             <>
               <span className="animate-spin material-symbols-outlined font-black">sync</span>
-              Running Agent...
+              {liveStatusText || "Executing..."}
             </>
           ) : (
             <>

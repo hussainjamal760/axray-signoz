@@ -3,11 +3,13 @@ import * as containerService from './container.service';
 import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
+import { emitLiveEvent } from '../sockets/socket.emitter';
 
 /**
  * Agent Service
  * Dedicated AI execution engine using Groq LLM function calling.
  * Pure service: Accepts containerId, runId, sessionId and prompt. Routes tool calls via containerService.
+ * Emits live Socket.IO events for LLM requests and tool calls.
  */
 
 const WORKSPACE_DIR = '/workspace';
@@ -98,6 +100,9 @@ RULES:
 export const executePrompt = async (
   options: AgentExecutionOptions
 ): Promise<AgentExecutionResult> => {
+  const sessionId = options.sessionId;
+  const runId = options.runId;
+
   const span = tracer.startSpan('agent.execute', {
     attributes: {
       [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
@@ -138,6 +143,20 @@ export const executePrompt = async (
       turn++;
       console.log(`[Agent Turn ${turn}/${maxTurns}] Querying Groq (${DEFAULT_GROQ_MODEL})...`);
 
+      if (sessionId) {
+        emitLiveEvent(sessionId, {
+          sessionId,
+          runId,
+          timestamp: new Date().toISOString(),
+          eventType: 'llm.request.started',
+          phase: 'llm',
+          status: 'running',
+          title: `LLM Turn ${turn}`,
+          description: DEFAULT_GROQ_MODEL,
+          metadata: { turn, model: DEFAULT_GROQ_MODEL },
+        });
+      }
+
       const llmSpan = tracer.startSpan('llm.request', {
         attributes: {
           [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
@@ -152,6 +171,10 @@ export const executePrompt = async (
       });
 
       let completion: any;
+      let pTokens = 0;
+      let cTokens = 0;
+      let tTokens = 0;
+
       try {
         completion = await groq.chat.completions.create({
           model: DEFAULT_GROQ_MODEL,
@@ -161,9 +184,9 @@ export const executePrompt = async (
         });
 
         if (completion.usage) {
-          const pTokens = completion.usage.prompt_tokens || 0;
-          const cTokens = completion.usage.completion_tokens || 0;
-          const tTokens = completion.usage.total_tokens || (pTokens + cTokens);
+          pTokens = completion.usage.prompt_tokens || 0;
+          cTokens = completion.usage.completion_tokens || 0;
+          tTokens = completion.usage.total_tokens || (pTokens + cTokens);
           totalTokens += tTokens;
 
           llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_INPUT_TOKENS, pTokens);
@@ -181,6 +204,26 @@ export const executePrompt = async (
         throw llmErr;
       }
       llmSpan.end();
+
+      if (sessionId) {
+        emitLiveEvent(sessionId, {
+          sessionId,
+          runId,
+          timestamp: new Date().toISOString(),
+          eventType: 'llm.request.completed',
+          phase: 'llm',
+          status: 'completed',
+          title: `LLM Turn ${turn}`,
+          description: DEFAULT_GROQ_MODEL,
+          metadata: {
+            turn,
+            model: DEFAULT_GROQ_MODEL,
+            inputTokens: pTokens,
+            outputTokens: cTokens,
+            totalTokens: tTokens,
+          },
+        });
+      }
 
       const responseMessage = completion.choices[0]?.message;
       if (!responseMessage) {
@@ -204,6 +247,24 @@ export const executePrompt = async (
 
           console.log(`[Agent Tool Call] Function: "${fnName}", Args:`, fnArgs);
 
+          if (sessionId) {
+            emitLiveEvent(sessionId, {
+              sessionId,
+              runId,
+              timestamp: new Date().toISOString(),
+              eventType: 'tool.started',
+              phase: 'tool',
+              status: 'running',
+              title: `Tool: ${fnName}`,
+              description: fnArgs.path || fnArgs.command || fnName,
+              metadata: {
+                toolName: fnName,
+                filePath: fnArgs.path,
+                commandSummary: fnArgs.command,
+              },
+            });
+          }
+
           const toolSpan = tracer.startSpan('tool.execute', {
             attributes: {
               [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
@@ -216,6 +277,7 @@ export const executePrompt = async (
           });
 
           let toolOutput = '';
+          let exitCode = 0;
 
           if (fnName === 'read_file') {
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
@@ -224,8 +286,9 @@ export const executePrompt = async (
               `head -n 500 ${WORKSPACE_DIR}/${fnArgs.path}`,
               { timeoutMs: 15000, maxBufferBytes: 100000 }
             );
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, readRes.exitCode);
-            toolOutput = readRes.exitCode === 0
+            exitCode = readRes.exitCode;
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+            toolOutput = exitCode === 0
               ? readRes.output
               : `Error reading file ${fnArgs.path}: ${readRes.output}`;
           } else if (fnName === 'write_file') {
@@ -239,14 +302,16 @@ export const executePrompt = async (
             );
             if (mkdirRes.exitCode !== 0) {
               toolOutput = `Error creating directory for ${filePath}: ${mkdirRes.output}`;
+              exitCode = mkdirRes.exitCode;
             } else {
               const writeRes = await containerService.executeCommand(
                 options.containerId,
                 `echo '${base64Content}' | base64 -d > ${WORKSPACE_DIR}/${filePath}`,
                 { timeoutMs: 15000 }
               );
-              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, writeRes.exitCode);
-              toolOutput = writeRes.exitCode === 0
+              exitCode = writeRes.exitCode;
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+              toolOutput = exitCode === 0
                 ? `Successfully wrote file ${filePath}`
                 : `Error writing file ${filePath}: ${writeRes.output}`;
             }
@@ -257,14 +322,35 @@ export const executePrompt = async (
               `cd ${WORKSPACE_DIR} && ${fnArgs.command}`,
               { timeoutMs: 30000, maxBufferBytes: 100000 }
             );
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, cmdRes.exitCode);
-            toolOutput = `Exit Code: ${cmdRes.exitCode}\nOutput:\n${cmdRes.output}`;
+            exitCode = cmdRes.exitCode;
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+            toolOutput = `Exit Code: ${exitCode}\nOutput:\n${cmdRes.output}`;
           } else {
             toolOutput = `Unknown tool "${fnName}"`;
+            exitCode = 1;
           }
 
           toolSpan.setStatus({ code: SpanStatusCode.OK });
           toolSpan.end();
+
+          if (sessionId) {
+            emitLiveEvent(sessionId, {
+              sessionId,
+              runId,
+              timestamp: new Date().toISOString(),
+              eventType: 'tool.completed',
+              phase: 'tool',
+              status: exitCode === 0 ? 'completed' : 'failed',
+              title: `Tool: ${fnName}`,
+              description: fnArgs.path || fnArgs.command || fnName,
+              metadata: {
+                toolName: fnName,
+                filePath: fnArgs.path,
+                commandSummary: fnArgs.command,
+                exitCode,
+              },
+            });
+          }
 
           // Append tool execution result message
           messages.push({

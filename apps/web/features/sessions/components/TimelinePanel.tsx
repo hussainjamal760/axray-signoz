@@ -8,20 +8,27 @@ export interface TimelinePanelProps {
   selectedRunId?: string;
   runStatus?: string;
   sessionId?: string;
+  liveSocketEvents?: TimelineEvent[];
+  isLive?: boolean;
 }
 
-export function TimelinePanel({ selectedRunId, runStatus }: TimelinePanelProps) {
+export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [], isLive = false }: TimelinePanelProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isRunning = runStatus === "running" || runStatus === "pending";
 
+  // Fetch historical timeline from SigNoz only when NOT relying on live socket stream for an active run
   const { data: timelineData, isLoading } = useRunTimeline(selectedRunId, {
-    refetchInterval: isRunning ? 2500 : false,
-    enabled: Boolean(selectedRunId),
+    enabled: Boolean(selectedRunId) && !isLive && !isRunning,
+    refetchInterval: false, // NO REST polling on Session Dashboard!
   });
 
-  const events = timelineData?.events || [];
+  // Combine live socket stream for active runs, or historical fetched events for finished runs
+  const events: TimelineEvent[] = (isLive || isRunning) && liveSocketEvents.length > 0
+    ? liveSocketEvents
+    : (timelineData?.events || []);
+
   const summary = timelineData?.summary;
   const telemetryStatus = timelineData?.telemetryStatus;
 
@@ -125,10 +132,10 @@ export function TimelinePanel({ selectedRunId, runStatus }: TimelinePanelProps) 
         </div>
 
         <div className="flex items-center gap-2 font-mono-label text-xs font-bold">
-          {isRunning ? (
+          {isRunning || isLive ? (
             <span className="flex items-center gap-2 text-primary-fixed uppercase italic font-black animate-pulse">
               <span className="w-2.5 h-2.5 bg-primary-fixed"></span>
-              Live Polling (2.5s)
+              Live Stream (Socket.IO)
             </span>
           ) : telemetryStatus === "authoritative_signoz" ? (
             <span className="text-emerald-400 font-mono text-[10px] uppercase border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-bold flex items-center gap-1">
@@ -148,30 +155,31 @@ export function TimelinePanel({ selectedRunId, runStatus }: TimelinePanelProps) 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 relative bg-background"
       >
-        {isLoading && events.length === 0 ? (
+        {isLoading && events.length === 0 && !isLive && !isRunning ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8 animate-pulse">
             Querying SigNoz telemetry traces...
           </div>
-        ) : telemetryStatus === "unavailable" && events.length === 0 ? (
+        ) : telemetryStatus === "unavailable" && events.length === 0 && !isLive && !isRunning ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8">
             # Execution telemetry is temporarily unavailable.
           </div>
-        ) : !selectedRunId || events.length === 0 ? (
+        ) : (!selectedRunId && events.length === 0) || (events.length === 0 && !isLive && !isRunning) ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8 space-y-2">
             <span className="material-symbols-outlined text-primary-fixed !text-3xl block">rocket_launch</span>
             <p className="font-black text-on-surface uppercase text-sm">Start your first run and see the magic here!</p>
             <p className="text-[11px] text-outline font-bold">Telemetry traces will stream live as the agent executes.</p>
           </div>
         ) : (
-          events.map((item) => {
+          events.map((item, idx) => {
             const statusStyle = getStatusClasses(item.status);
-            const isExpanded = expandedId === item.id;
+            const itemId = item.id || `evt-${idx}-${item.timestamp}`;
+            const isExpanded = expandedId === itemId;
             const hasMeta = item.metadata && Object.keys(item.metadata).some(k => item.metadata![k] !== undefined);
 
             return (
               <div
-                key={item.id}
-                onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                key={itemId}
+                onClick={() => setExpandedId(isExpanded ? null : itemId)}
                 className="relative pl-12 group cursor-pointer"
               >
                 {/* Square Timeline Node */}

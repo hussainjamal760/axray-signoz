@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSession } from "@/features/sessions/hooks";
+import { useSession, useSessionSocket } from "@/features/sessions/hooks";
 import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
-import { ACTIVE_RUN_STATUSES, AgentRunSummary } from "@/features/agent-runs/types";
+import { AgentRunSummary, TimelineEvent } from "@/features/agent-runs/types";
 import { AgentRunsList } from "@/features/agent-runs/components";
 import {
   SessionHeader,
@@ -23,29 +23,132 @@ export default function SessionIdPage() {
 
   const [manuallySelectedRun, setManuallySelectedRun] = useState<AgentRunSummary | null>(null);
 
-  // First fetch runs to evaluate active run statuses
-  const { data: initialRuns = [] } = useRuns(id);
+  // Subscribe to real-time Socket.IO events for live execution state (NO REST POLLING!)
+  const { liveEvents, liveTraces, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined);
 
-  // Initial session fetch to evaluate infrastructure status
-  const { data: initialSession } = useSession(id);
-
-  // Evaluate polling strategy: poll if runs are active or infrastructure is provisioning
-  const isAnyRunActive = initialRuns.some(r => (ACTIVE_RUN_STATUSES as readonly string[]).includes(r.status));
-  const isInfraProvisioning = initialSession && (
-    initialSession.containerStatus === 'creating' ||
-    (!initialSession.workspaceInitialized && initialSession.containerStatus !== 'failed' && initialSession.containerStatus !== 'stopped')
-  );
-  const shouldPoll = isAnyRunActive || isInfraProvisioning;
-  const refetchInterval = shouldPoll ? 1500 : false;
-
-  // Generic hooks with dynamic refetchInterval options
-  const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval });
-  const { data: runs = [], isLoading: runsLoading } = useRuns(id, { refetchInterval });
+  // Initial REST fetch once (refetchInterval: false across all queries for zero-polling)
+  const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval: false });
+  const { data: fetchedRuns = [], isLoading: runsLoading } = useRuns(id, { refetchInterval: false });
   const { mutate: createRun, isPending: isCreatingRun } = useCreateRun(id);
 
-  // Default to manually selected run, or latest run in runs array
-  const activeOrSelectedRun = manuallySelectedRun || runs[0] || null;
+  // Maintain local runs list for instant Socket.IO real-time updates
+  const [runsState, setRunsState] = useState<AgentRunSummary[]>([]);
+
+  // Sync initial REST runs into runsState
+  useEffect(() => {
+    if (fetchedRuns.length > 0 && runsState.length === 0) {
+      setRunsState(fetchedRuns);
+    }
+  }, [fetchedRuns]);
+
+  // Handle incoming Socket.IO events to update live run state and history
+  useEffect(() => {
+    if (!latestEvent) return;
+
+    if (latestEvent.eventType === 'run.completed' || latestEvent.eventType === 'run.failed') {
+      const isFailed = latestEvent.eventType === 'run.failed';
+      const meta = latestEvent.metadata || {};
+
+      setRunsState((prev) => {
+        const targetId = latestEvent.runId;
+        if (!targetId) return prev;
+
+        const idx = prev.findIndex((r) => r.id === targetId);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = {
+            ...updated[idx],
+            status: isFailed ? 'failed' : 'completed',
+            response: (meta.response as string) || updated[idx].response,
+            tokensUsed: (meta.tokensUsed as number) || updated[idx].tokensUsed,
+            durationMs: latestEvent.durationMs || updated[idx].durationMs,
+            changeSummary: (meta.changeSummary as string) || updated[idx].changeSummary,
+            filesChanged: (meta.filesChanged as unknown as string[]) || updated[idx].filesChanged,
+            insertions: (meta.insertions as number) || updated[idx].insertions,
+            deletions: (meta.deletions as number) || updated[idx].deletions,
+            errorMessage: isFailed ? (meta.errorMessage as string) : undefined,
+            completedAt: latestEvent.timestamp,
+          };
+          return updated;
+        }
+        return prev;
+      });
+    } else if (latestEvent.eventType === 'git.diff.completed') {
+      const meta = latestEvent.metadata || {};
+      const targetId = latestEvent.runId;
+
+      if (targetId) {
+        setRunsState((prev) => {
+          const idx = prev.findIndex((r) => r.id === targetId);
+          if (idx !== -1) {
+            const updated = [...prev];
+            updated[idx] = {
+              ...updated[idx],
+              diff: (meta.rawDiff as string) || updated[idx].diff,
+              filesChanged: (meta.filesChanged as unknown as string[]) || updated[idx].filesChanged,
+              insertions: (meta.insertions as number) || updated[idx].insertions,
+              deletions: (meta.deletions as number) || updated[idx].deletions,
+              diffTruncated: (meta.diffTruncated as boolean) || updated[idx].diffTruncated,
+              diffSize: (meta.diffSize as number) || updated[idx].diffSize,
+              changeSummary: (meta.changeSummary as string) || updated[idx].changeSummary,
+            };
+            return updated;
+          }
+          return prev;
+        });
+      }
+    }
+  }, [latestEvent]);
+
+  // Default to manually selected run, or latest run in runsState
+  const activeOrSelectedRun = manuallySelectedRun || runsState[0] || fetchedRuns[0] || null;
   const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
+
+  // Map Socket.IO liveEvents into TimelineEvent[] format
+  const liveTimelineEvents: TimelineEvent[] = useMemo(() => {
+    return liveEvents.map((evt, idx) => ({
+      id: `${evt.eventType}-${idx}-${evt.timestamp}`,
+      timestamp: evt.timestamp,
+      title: evt.title,
+      description: evt.description,
+      phase: evt.phase,
+      eventType: evt.eventType,
+      status: evt.status,
+      durationMs: evt.durationMs,
+      metadata: evt.metadata,
+    }));
+  }, [liveEvents]);
+
+  // Derive human-readable live status text for prompt box
+  const liveStatusText = useMemo(() => {
+    if (!latestEvent) return isCreatingRun ? "Initializing Run..." : undefined;
+    switch (latestEvent.eventType) {
+      case "workspace.started":
+      case "workspace.cloning":
+        return "Workspace Preparing...";
+      case "workspace.analysis.started":
+      case "workspace.analysis.completed":
+        return "Analyzing Repository...";
+      case "workspace.dependencies.install.started":
+      case "workspace.dependencies.install.completed":
+        return "Installing Dependencies...";
+      case "llm.request.started":
+      case "llm.request.completed":
+        return `Calling LLM (Turn ${latestEvent.metadata?.turn || 1})...`;
+      case "tool.started":
+      case "tool.completed":
+        return `Executing Tool: ${latestEvent.metadata?.toolName || 'tool'}...`;
+      case "git.diff.started":
+      case "git.diff.completed":
+        return "Generating Git Diff...";
+      case "run.completed":
+        return "Run Completed";
+      case "run.failed":
+        return "Run Failed";
+      default:
+        return "Agent Executing...";
+    }
+  }, [latestEvent, isCreatingRun]);
 
   if (sessionLoading) {
     return (
@@ -79,11 +182,16 @@ export default function SessionIdPage() {
   };
 
   const handlePromptSubmit = (promptText: string) => {
-    createRun({ prompt: promptText }, {
-      onSuccess: (newRun) => {
-        setManuallySelectedRun(newRun);
+    clearLiveEvents();
+    createRun(
+      { prompt: promptText },
+      {
+        onSuccess: (newRun) => {
+          setManuallySelectedRun(newRun);
+          setRunsState((prev) => [newRun, ...prev]);
+        },
       }
-    });
+    );
   };
 
   return (
@@ -100,6 +208,8 @@ export default function SessionIdPage() {
             <InitializeContextPanel
               onSubmit={handlePromptSubmit}
               isPending={isCreatingRun}
+              isRunning={isSelectedRunExecuting}
+              liveStatusText={liveStatusText}
               disabled={session.containerStatus === 'failed' || session.containerStatus === 'stopped'}
             />
           </div>
@@ -109,13 +219,15 @@ export default function SessionIdPage() {
               selectedRunId={activeOrSelectedRun?.id}
               runStatus={activeOrSelectedRun?.status}
               sessionId={id}
+              liveSocketEvents={liveTimelineEvents}
+              isLive={isSelectedRunExecuting}
             />
           </div>
 
           {/* Row 2: Live Trace Tree and Terminal Window */}
           <section className="col-span-12 grid grid-cols-12 gap-8 items-stretch">
             <div className="col-span-12 md:col-span-5 h-full">
-              <LiveTraceTree />
+              <LiveTraceTree sessionId={id} runId={activeOrSelectedRun?.id} liveTraces={liveTraces} />
             </div>
 
             <div className="col-span-12 md:col-span-7 h-full">
@@ -133,7 +245,7 @@ export default function SessionIdPage() {
               diffTruncated={activeOrSelectedRun?.diffTruncated}
               diffSize={activeOrSelectedRun?.diffSize}
               changeSummary={activeOrSelectedRun?.changeSummary}
-              isLoading={isSelectedRunExecuting}
+              isLoading={isSelectedRunExecuting && !activeOrSelectedRun?.diff}
             />
           </section>
 
@@ -144,7 +256,7 @@ export default function SessionIdPage() {
                 <span className="material-symbols-outlined text-primary-fixed">history</span>
                 Execution History
               </h3>
-              <AgentRunsList runs={runs} onSelectRun={handleSelectRun} loading={runsLoading} />
+              <AgentRunsList runs={runsState.length > 0 ? runsState : fetchedRuns} onSelectRun={handleSelectRun} loading={runsLoading} />
             </div>
           </section>
 

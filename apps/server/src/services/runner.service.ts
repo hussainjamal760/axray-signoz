@@ -7,10 +7,12 @@ import * as gitService from './git.service';
 import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
+import { emitLiveEvent } from '../sockets/socket.emitter';
 
 /**
  * Runner Service
  * Orchestrates background execution by connecting Container, Workspace, Agent, Git, and Session services.
+ * Emits live Socket.IO events for Session Dashboard real-time updates.
  */
 
 export const executeRun = async (runId: string): Promise<void> => {
@@ -31,10 +33,12 @@ export const executeRun = async (runId: string): Promise<void> => {
     return;
   }
 
+  const sessionIdStr = session._id.toString();
+
   const span = tracer.startSpan('agent.run', {
     attributes: {
       [AXRAY_ATTRIBUTES.RUN_ID]: runId,
-      [AXRAY_ATTRIBUTES.SESSION_ID]: session._id.toString(),
+      [AXRAY_ATTRIBUTES.SESSION_ID]: sessionIdStr,
       [AXRAY_ATTRIBUTES.REPOSITORY]: session.repositoryFullName,
       [AXRAY_ATTRIBUTES.BRANCH]: session.branch,
       [AXRAY_ATTRIBUTES.PHASE]: 'agent',
@@ -46,11 +50,28 @@ export const executeRun = async (runId: string): Promise<void> => {
   run.traceId = traceId;
   await run.save();
 
+  // Emit agent.started live socket event
+  emitLiveEvent(sessionIdStr, {
+    sessionId: sessionIdStr,
+    runId,
+    timestamp: new Date().toISOString(),
+    eventType: 'agent.started',
+    phase: 'agent',
+    status: 'running',
+    title: 'Agent Started',
+    description: `Groq AI execution started for prompt`,
+    metadata: {
+      prompt: run.prompt,
+      repository: session.repositoryFullName,
+      branch: session.branch,
+    },
+  });
+
   try {
     // 1. Ensure Container exists and is running
     const { containerId, containerStatus } = await containerService.ensureContainerRunning({
       containerId: session.containerId,
-      sessionId: session._id.toString(),
+      sessionId: sessionIdStr,
       repositoryFullName: session.repositoryFullName,
       branch: session.branch,
     });
@@ -64,12 +85,24 @@ export const executeRun = async (runId: string): Promise<void> => {
     // 2. Ensure Workspace Initialized (clone, checkout, AI workspace spec, dependency install)
     if (!session.workspaceInitialized) {
       console.log(`[Runner] Preparing workspace for session ${session._id} during run ${run._id}...`);
+      
+      emitLiveEvent(sessionIdStr, {
+        sessionId: sessionIdStr,
+        runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'workspace.started',
+        phase: 'workspace',
+        status: 'running',
+        title: 'Workspace Preparation Started',
+        description: `Cloning ${session.repositoryFullName} and preparing runtime`,
+      });
+
       const { spec } = await workspaceService.prepareWorkspace({
         repositoryFullName: session.repositoryFullName,
         branch: session.branch,
         containerId: session.containerId!,
         runId,
-        sessionId: session._id.toString(),
+        sessionId: sessionIdStr,
       });
       
       // Update MongoDB Session document after workspace preparation succeeds
@@ -93,14 +126,14 @@ export const executeRun = async (runId: string): Promise<void> => {
       containerId: session.containerId!,
       prompt: run.prompt,
       runId,
-      sessionId: session._id.toString(),
+      sessionId: sessionIdStr,
     });
 
     // 5. Capture Git Diff with Size Truncation Check
     try {
       const gitDiff = await gitService.getDiff(session.containerId!, {
         runId,
-        sessionId: session._id.toString(),
+        sessionId: sessionIdStr,
       });
       run.diff = gitDiff.rawDiff;
       run.filesChanged = gitDiff.filesChanged;
@@ -127,7 +160,7 @@ export const executeRun = async (runId: string): Promise<void> => {
     const completionSpan = tracer.startSpan('run.completed', {
       attributes: {
         [AXRAY_ATTRIBUTES.RUN_ID]: runId,
-        [AXRAY_ATTRIBUTES.SESSION_ID]: session._id.toString(),
+        [AXRAY_ATTRIBUTES.SESSION_ID]: sessionIdStr,
         [AXRAY_ATTRIBUTES.PHASE]: 'completion',
         [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'run.completed',
         [AXRAY_ATTRIBUTES.RUN_STATUS]: 'completed',
@@ -139,6 +172,27 @@ export const executeRun = async (runId: string): Promise<void> => {
 
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
+
+    // Emit run.completed socket event
+    emitLiveEvent(sessionIdStr, {
+      sessionId: sessionIdStr,
+      runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'run.completed',
+      phase: 'completion',
+      status: 'completed',
+      title: 'Run Completed',
+      description: `Agent completed execution successfully`,
+      durationMs: run.durationMs,
+      metadata: {
+        response: run.response,
+        tokensUsed: run.tokensUsed,
+        changeSummary: run.changeSummary,
+        filesChanged: run.filesChanged,
+        insertions: run.insertions,
+        deletions: run.deletions,
+      },
+    });
 
     console.log(`[Runner] Run ${run._id} completed successfully in ${run.durationMs}ms with diff (${run.changeSummary}).`);
   } catch (error: unknown) {
@@ -157,7 +211,7 @@ export const executeRun = async (runId: string): Promise<void> => {
     const failureSpan = tracer.startSpan('run.failed', {
       attributes: {
         [AXRAY_ATTRIBUTES.RUN_ID]: runId,
-        [AXRAY_ATTRIBUTES.SESSION_ID]: session._id.toString(),
+        [AXRAY_ATTRIBUTES.SESSION_ID]: sessionIdStr,
         [AXRAY_ATTRIBUTES.PHASE]: 'completion',
         [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'run.failed',
         [AXRAY_ATTRIBUTES.RUN_STATUS]: 'failed',
@@ -169,5 +223,21 @@ export const executeRun = async (runId: string): Promise<void> => {
 
     span.setStatus({ code: SpanStatusCode.ERROR, message: errMessage });
     span.end();
+
+    // Emit run.failed socket event
+    emitLiveEvent(sessionIdStr, {
+      sessionId: sessionIdStr,
+      runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'run.failed',
+      phase: 'completion',
+      status: 'failed',
+      title: 'Run Failed',
+      description: errMessage,
+      durationMs: run.durationMs,
+      metadata: {
+        errorMessage: errMessage,
+      },
+    });
   }
 };

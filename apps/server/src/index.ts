@@ -1,3 +1,5 @@
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import { startTelemetry } from './lib/telemetry';
 // Initialize OpenTelemetry SDK before starting Express or other modules
 startTelemetry();
@@ -6,6 +8,7 @@ import { app } from './app';
 import { config } from './config';
 import { connectDatabase } from './lib/mongo';
 import { ensureDefaultImageExists } from './lib/docker';
+import { initSocketIO } from './sockets/socket.emitter';
 
 const startServer = async () => {
   try {
@@ -17,9 +20,19 @@ const startServer = async () => {
       console.warn('[Docker Startup Warning] Failed to pre-warm image:', err.message || err);
     });
 
-    // 3. Start HTTP server
-    app.listen(config.PORT, () => {
-      console.log(`🚀 AXRAY backend running on port ${config.PORT} [${config.NODE_ENV}]`);
+    // 3. Create HTTP & Socket.IO server
+    const server = http.createServer(app);
+    const io = new SocketIOServer(server, {
+      cors: {
+        origin: config.FRONTEND_URL,
+        credentials: true,
+      },
+    });
+
+    initSocketIO(io);
+
+    server.listen(config.PORT, () => {
+      console.log(`🚀 AXRAY backend running on port ${config.PORT} [${config.NODE_ENV}] with Socket.IO enabled`);
     });
   } catch (error) {
     console.error('❌ Failed to start the server:', error);

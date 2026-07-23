@@ -72,6 +72,25 @@ export class SpanStoreProcessor implements SpanProcessor {
     if (this.completedSpans.length > 2000) {
       this.completedSpans.shift();
     }
+
+    const sessionId = record.attributes?.['axray.session.id'] || record.attributes?.['session.id'];
+    const runId = record.attributes?.['axray.run.id'] || record.attributes?.['run.id'];
+    if (sessionId) {
+      try {
+        const { emitLiveTrace } = require('../sockets/socket.emitter');
+        emitLiveTrace(sessionId, {
+          sessionId,
+          runId,
+          traceId: record.traceId,
+          spanId: record.id,
+          operation: record.name,
+          status: record.status,
+          durationMs: record.durationMs,
+          startTime: record.startTime,
+          attributes: record.attributes,
+        });
+      } catch {}
+    }
   }
 
   forceFlush(): Promise<void> {

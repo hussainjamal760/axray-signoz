@@ -3,6 +3,7 @@ import { parseNumstat, NumstatParsedResult } from '../utils/diff-parser';
 import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
+import { emitLiveEvent } from '../sockets/socket.emitter';
 
 export { parseNumstat, NumstatParsedResult };
 
@@ -23,11 +24,28 @@ export interface GitDiffResult {
  * Git Service
  * Responsible for inspecting Git repository diffs inside Docker workspace containers.
  * Implements safe size limits & truncation for large diffs.
+ * Emits real-time socket events when git diff is captured.
  */
 export const getDiff = async (
   containerId: string,
   telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<GitDiffResult> => {
+  const sessionId = telemetryContext?.sessionId;
+  const runId = telemetryContext?.runId;
+
+  if (sessionId) {
+    emitLiveEvent(sessionId, {
+      sessionId,
+      runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'git.diff.started',
+      phase: 'git',
+      status: 'running',
+      title: 'Capturing Git Diff',
+      description: 'Inspecting workspace repository changes',
+    });
+  }
+
   const span = tracer.startSpan('git.diff', {
     attributes: {
       [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
@@ -99,7 +117,7 @@ export const getDiff = async (
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
 
-    return {
+    const result: GitDiffResult = {
       rawDiff,
       filesChanged,
       insertions,
@@ -108,11 +126,36 @@ export const getDiff = async (
       diffSize,
       changeSummary,
     };
+
+    if (sessionId) {
+      emitLiveEvent(sessionId, {
+        sessionId,
+        runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'git.diff.completed',
+        phase: 'git',
+        status: 'completed',
+        title: 'Git Diff Captured',
+        description: changeSummary,
+        metadata: {
+          rawDiff: result.rawDiff,
+          filesChanged: result.filesChanged,
+          insertions: result.insertions,
+          deletions: result.deletions,
+          diffTruncated: result.truncated,
+          diffSize: result.diffSize,
+          changeSummary: result.changeSummary,
+        },
+      });
+    }
+
+    return result;
   } catch (error: any) {
     console.warn(`[Git Warning] Failed to get diff:`, error?.message || String(error));
     span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message || String(error) });
     span.end();
-    return {
+
+    const emptyResult: GitDiffResult = {
       rawDiff: '',
       filesChanged: [],
       insertions: 0,
@@ -121,5 +164,21 @@ export const getDiff = async (
       diffSize: 0,
       changeSummary: '0 files changed',
     };
+
+    if (sessionId) {
+      emitLiveEvent(sessionId, {
+        sessionId,
+        runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'git.diff.completed',
+        phase: 'git',
+        status: 'failed',
+        title: 'Git Diff Failed',
+        description: 'Failed to capture git diff',
+        metadata: emptyResult as any,
+      });
+    }
+
+    return emptyResult;
   }
 };

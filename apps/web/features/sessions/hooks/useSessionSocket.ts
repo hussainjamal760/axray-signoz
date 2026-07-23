@@ -1,0 +1,101 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import { getSocket } from '@/lib/socket';
+import { TimelineEvent, TimelineEventMetadata, AxrayPhase } from '@/features/agent-runs/types';
+
+export interface LiveSocketEvent {
+  sessionId: string;
+  runId?: string;
+  timestamp: string;
+  eventType: string;
+  phase: AxrayPhase;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  title: string;
+  description?: string;
+  durationMs?: number;
+  metadata?: TimelineEventMetadata;
+}
+
+export interface LiveTraceSpan {
+  sessionId: string;
+  runId?: string;
+  traceId: string;
+  spanId: string;
+  operation: string;
+  status: 'completed' | 'running' | 'failed' | 'skipped';
+  durationMs?: number;
+  startTime: string;
+  attributes?: Record<string, unknown>;
+}
+
+export function useSessionSocket(sessionId?: string) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [liveEvents, setLiveEvents] = useState<LiveSocketEvent[]>([]);
+  const [liveTraces, setLiveTraces] = useState<LiveTraceSpan[]>([]);
+  const [latestEvent, setLatestEvent] = useState<LiveSocketEvent | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const socket = getSocket();
+
+    const handleConnect = () => {
+      setIsConnected(true);
+      socket.emit('join_session', sessionId);
+    };
+
+    const handleDisconnect = () => {
+      setIsConnected(false);
+    };
+
+    const handleExecutionEvent = (event: LiveSocketEvent) => {
+      if (event.sessionId === sessionId) {
+        setLatestEvent(event);
+        setLiveEvents((prev) => [...prev, event]);
+      }
+    };
+
+    const handleExecutionTrace = (span: LiveTraceSpan) => {
+      if (span.sessionId === sessionId) {
+        setLiveTraces((prev) => {
+          const next = [span, ...prev];
+          return next.slice(0, 20); // Keep latest 20 live trace previews
+        });
+      }
+    };
+
+    if (socket.connected) {
+      handleConnect();
+    } else {
+      socket.connect();
+    }
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('execution.event', handleExecutionEvent);
+    socket.on('execution.trace', handleExecutionTrace);
+
+    return () => {
+      socket.emit('leave_session', sessionId);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('execution.event', handleExecutionEvent);
+      socket.off('execution.trace', handleExecutionTrace);
+    };
+  }, [sessionId]);
+
+  const clearLiveEvents = () => {
+    setLiveEvents([]);
+    setLiveTraces([]);
+    setLatestEvent(null);
+  };
+
+  return {
+    isConnected,
+    liveEvents,
+    liveTraces,
+    latestEvent,
+    clearLiveEvents,
+  };
+}
