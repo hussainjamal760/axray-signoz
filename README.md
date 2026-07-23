@@ -272,7 +272,7 @@ All alerts are Trace-based rules in SigNoz, scoped to `service.name = 'axray-age
 |---|---|---|---|---|---|
 | 1 | Session Failure | `name = 'agent.session' AND status_code = 2` | count > 0 / 5m | critical | Catch failed agent runs |
 | 2 | Self-Correction Triggered | `name = 'agent.self_check' AND self_check.triggered_correction = true` | count > 0 / 5m | warning | Confirms the self-correction feature is firing |
-| 3 | LLM Cost Threshold | `sum(llm.cost_usd)` where `name = 'llm.call'` | > $0.05 / 15m | warning | Cost control |
+| 3 | LLM Cost Threshold | `sum(llm.cost_usd)` where `name = 'llm.call'` | > $0.01 / 15m | warning | Cost control |
 | 4 | Groq API Errors | `server.address = 'api.groq.com' AND http.response.status_code >= 400` | count > 0 / 5m | warning | Upstream API reliability (e.g. rate limits) |
 | 5 | Slow Turn Detected | `p95(duration)` where `name = 'agent.turn'` | > 20s / 5m | warning | Performance regressions |
 | 6 | MCP Self-Check Fallback | `name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'` | count > 0 / 5m | info | MCP integration health |
