@@ -14,3 +14,6 @@ export * from './InitializeContextPanel';
 export * from './ContainerStatusBadge';
 export * from './WorkspaceStatusBadge';
 export * from './SessionSearchModal';
+export * from './CodeDiffCard';
+export * from './FileDiff';
+export * from './SideBySidePane';
