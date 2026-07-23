@@ -1,7 +1,10 @@
 import * as containerService from './container.service';
+import { parseNumstat, NumstatParsedResult } from '../utils/diff-parser';
+
+export { parseNumstat, NumstatParsedResult };
 
 const WORKSPACE_DIR = '/workspace';
-const MAX_DIFF_BYTES = 500000; // 50 KB safe inline diff limit for MVP
+const MAX_DIFF_BYTES = 500000; // Safe inline diff limit for MVP
 
 export interface GitDiffResult {
   rawDiff: string;
@@ -38,25 +41,8 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
       { maxBufferBytes: 100000 }
     );
 
-    const filesChanged: string[] = [];
-    let totalInsertions = 0;
-    let totalDeletions = 0;
-
-    if (numstatRes.exitCode === 0 && numstatRes.output) {
-      const lines = numstatRes.output.split('\n');
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 3) {
-          const ins = parseInt(parts[0], 10);
-          const del = parseInt(parts[1], 10);
-          const file = parts.slice(2).join(' ');
-
-          if (!isNaN(ins)) totalInsertions += ins;
-          if (!isNaN(del)) totalDeletions += del;
-          if (file) filesChanged.push(file);
-        }
-      }
-    }
+    const numstatOutput = numstatRes.exitCode === 0 ? numstatRes.output : '';
+    const { filesChanged, insertions, deletions } = parseNumstat(numstatOutput);
 
     // 3. Check for untracked files (git status --porcelain)
     const statusRes = await containerService.executeCommand(
@@ -81,10 +67,10 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
     const truncated = diffSize > MAX_DIFF_BYTES;
     let rawDiff = fullDiff;
     if (truncated) {
-      rawDiff = fullDiff.substring(0, MAX_DIFF_BYTES) + `\n\n[Diff truncated: Total diff size is ${diffSize} bytes. Showing 50KB preview...]`;
+      rawDiff = fullDiff.substring(0, MAX_DIFF_BYTES) + `\n\n[Diff truncated: Total diff size is ${diffSize} bytes. Showing 500KB preview...]`;
     }
 
-    const changeSummary = `${filesChanged.length} ${filesChanged.length === 1 ? 'file' : 'files'} changed (+${totalInsertions}/-${totalDeletions})`;
+    const changeSummary = `${filesChanged.length} ${filesChanged.length === 1 ? 'file' : 'files'} changed (+${insertions}/-${deletions})`;
 
     console.log(
       `[Git] Diff captured: ${changeSummary} (Size: ${diffSize} bytes, Truncated: ${truncated})`
@@ -93,8 +79,8 @@ export const getDiff = async (containerId: string): Promise<GitDiffResult> => {
     return {
       rawDiff,
       filesChanged,
-      insertions: totalInsertions,
-      deletions: totalDeletions,
+      insertions,
+      deletions,
       truncated,
       diffSize,
       changeSummary,
