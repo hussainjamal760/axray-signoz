@@ -2,17 +2,18 @@
 
 import React, { useState } from "react";
 import { ParsedFileDiff } from "../lib/diff-parser";
-import { SideBySidePane } from "./SideBySidePane";
+import { HunkHeader } from "./HunkHeader";
+import { DiffLine } from "./DiffLine";
 
-export interface FileDiffProps {
+export interface FileDiffCardProps {
   fileDiff: ParsedFileDiff;
 }
 
-export function FileDiff({ fileDiff }: FileDiffProps) {
+export function FileDiffCard({ fileDiff }: FileDiffCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <div className="border border-outline bg-surface rounded-none overflow-hidden mb-4 brutalist-shadow-sm">
+    <div className="border border-outline bg-surface rounded-none overflow-hidden mb-6 brutalist-shadow-sm">
       {/* File Header */}
       <button
         type="button"
@@ -20,7 +21,10 @@ export function FileDiff({ fileDiff }: FileDiffProps) {
         className="w-full bg-surface-container text-white px-4 py-3 font-mono-label font-bold flex justify-between items-center border-b border-outline hover:bg-surface-container-high transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-sm text-outline transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+          <span
+            className="material-symbols-outlined text-sm text-outline transition-transform duration-200"
+            style={{ transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}
+          >
             chevron_right
           </span>
           <span className="material-symbols-outlined text-sm text-primary-fixed">description</span>
@@ -37,17 +41,24 @@ export function FileDiff({ fileDiff }: FileDiffProps) {
         </div>
       </button>
 
-      {/* File Diff Content */}
+      {/* File Diff Body */}
       {isExpanded && (
-        <div>
+        <div className="bg-background">
           {fileDiff.isBinary ? (
             <div className="p-4 bg-background text-outline-variant font-mono-label text-xs italic flex items-center gap-2">
               <span className="material-symbols-outlined text-sm">image</span>
               <span>Binary content changed ({fileDiff.filename}). Diff preview omitted.</span>
             </div>
           ) : fileDiff.hunks.length > 0 ? (
-            fileDiff.hunks.map((hunk, idx) => (
-              <SideBySidePane key={idx} hunk={hunk} />
+            fileDiff.hunks.map((hunk, hIdx) => (
+              <div key={hIdx} className="mb-2">
+                <HunkHeader header={hunk.header} />
+                <div>
+                  {hunk.lines.map((line, lIdx) => (
+                    <DiffLine key={lIdx} line={line} />
+                  ))}
+                </div>
+              </div>
             ))
           ) : (
             <div className="p-4 bg-background text-outline-variant font-mono-label text-xs italic">

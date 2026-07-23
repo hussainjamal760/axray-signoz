@@ -15,5 +15,6 @@ export * from './ContainerStatusBadge';
 export * from './WorkspaceStatusBadge';
 export * from './SessionSearchModal';
 export * from './CodeDiffCard';
-export * from './FileDiff';
-export * from './SideBySidePane';
+export * from './FileDiffCard';
+export * from './DiffLine';
+export * from './HunkHeader';

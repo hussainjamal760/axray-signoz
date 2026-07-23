@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { parseUnifiedDiff } from "../lib/diff-parser";
-import { FileDiff } from "./FileDiff";
+import { FileDiffCard } from "./FileDiffCard";
 
 export interface CodeDiffCardProps {
   diff?: string;
@@ -139,16 +139,16 @@ export function CodeDiffCard({
         </div>
       )}
 
-      {/* Body: Split Side-by-Side File Diffs */}
+      {/* Body: GitHub-Style Unified File Diffs */}
       <div className="p-6 bg-background max-h-[650px] overflow-y-auto custom-scrollbar space-y-6">
         {filesToDisplay.length > 0 ? (
           filesToDisplay.map((fileDiff, idx) => (
-            <FileDiff key={idx} fileDiff={fileDiff} />
+            <FileDiffCard key={idx} fileDiff={fileDiff} />
           ))
         ) : (
           <div className="bg-surface border border-outline p-6 font-mono-label text-xs text-on-surface flex items-center justify-between">
             <span className="font-bold">Modified Files: {filesChanged.join(", ")}</span>
-            <span className="text-outline-variant italic">Full unified diff body available in run history</span>
+            <span className="text-outline-variant italic">Full unified diff payload pending</span>
           </div>
         )}
       </div>
