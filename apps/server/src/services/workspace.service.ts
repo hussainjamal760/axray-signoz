@@ -132,7 +132,7 @@ export const ensureRuntime = async (
   const installRes = await containerService.executeCommand(
     containerId,
     `apk add --no-cache ${apkPackages}`,
-    { timeoutMs: 180000 }
+    { timeoutMs: 600000 }
   );
 
   if (installRes.exitCode !== 0) {
