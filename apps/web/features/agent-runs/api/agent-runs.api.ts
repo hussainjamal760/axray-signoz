@@ -17,6 +17,10 @@ interface BackendRun {
   containerId?: string;
   worktreePath?: string;
   branchCommit?: string;
+  diff?: string;
+  filesChanged?: string[];
+  insertions?: number;
+  deletions?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,6 +42,10 @@ function mapRun(run: BackendRun): AgentRunSummary {
     containerId: run.containerId,
     worktreePath: run.worktreePath,
     branchCommit: run.branchCommit,
+    diff: run.diff,
+    filesChanged: run.filesChanged,
+    insertions: run.insertions,
+    deletions: run.deletions,
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
   };

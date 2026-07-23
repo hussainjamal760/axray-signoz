@@ -1,5 +1,6 @@
 import { SessionSummary } from '../types/sessions.types';
 import { AgentRunSummary } from '@/features/agent-runs/types';
+import { CodeDiffCard } from './CodeDiffCard';
 
 export interface TerminalPanelProps {
   session?: SessionSummary;
@@ -11,7 +12,7 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
   const isRunning = selectedRun?.status === 'running' || selectedRun?.status === 'pending';
 
   return (
-    <div className="col-span-12 md:col-span-7 bg-background border-[3px] border-outline flex flex-col h-[450px] brutalist-shadow">
+    <div className="col-span-12 md:col-span-7 bg-background border-[3px] border-outline flex flex-col h-[520px] brutalist-shadow">
       <div className="p-4 border-b-2 border-outline flex items-center justify-between bg-surface shrink-0">
         <div className="flex items-center gap-4">
           <div className="flex gap-2">
@@ -46,13 +47,13 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
 
         {/* Selected / Active Run Output */}
         {selectedRun ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="text-outline-variant flex items-center gap-2">
               <span className="text-primary-fixed font-bold">&gt; Prompt:</span>
               <span className="text-white font-bold">{selectedRun.prompt}</span>
             </div>
 
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-3 text-xs flex-wrap">
               <span className="text-outline">Status:</span>
               <span className={`px-2 py-0.5 font-bold uppercase ${
                 selectedRun.status === 'completed'
@@ -72,7 +73,7 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
             </div>
 
             {selectedRun.response && (
-              <div className="mt-4 bg-surface p-4 border border-outline space-y-2">
+              <div className="bg-surface p-4 border border-outline space-y-2">
                 <div className="text-xs font-bold text-primary-fixed uppercase flex items-center gap-2">
                   <span className="material-symbols-outlined text-sm">smart_toy</span>
                   Groq AI Agent Response
@@ -81,6 +82,16 @@ export function TerminalPanel({ session, selectedRun }: TerminalPanelProps) {
                   {selectedRun.response}
                 </pre>
               </div>
+            )}
+
+            {/* Render Git Diff Card if diff/filesChanged exist */}
+            {(selectedRun.diff || (selectedRun.filesChanged && selectedRun.filesChanged.length > 0)) && (
+              <CodeDiffCard
+                diff={selectedRun.diff}
+                filesChanged={selectedRun.filesChanged}
+                insertions={selectedRun.insertions}
+                deletions={selectedRun.deletions}
+              />
             )}
 
             {selectedRun.errorMessage && (

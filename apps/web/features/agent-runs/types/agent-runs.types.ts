@@ -18,6 +18,10 @@ export interface AgentRunSummary {
   containerId?: string;
   worktreePath?: string;
   branchCommit?: string;
+  diff?: string;
+  filesChanged?: string[];
+  insertions?: number;
+  deletions?: number;
   createdAt: string;
   updatedAt: string;
 }

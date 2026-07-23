@@ -3,12 +3,13 @@ import { Session } from '../models/session.model';
 import * as containerService from './container.service';
 import * as workspaceService from './workspace.service';
 import * as agentService from './agent.service';
+import * as gitService from './git.service';
 import { tracer } from '../lib/telemetry';
 import { SpanStatusCode } from '@opentelemetry/api';
 
 /**
  * Runner Service
- * Orchestrates background execution by connecting Container, Workspace, Agent, and Session services.
+ * Orchestrates background execution by connecting Container, Workspace, Agent, Git, and Session services.
  */
 
 export const executeRun = async (runId: string): Promise<void> => {
@@ -83,7 +84,18 @@ export const executeRun = async (runId: string): Promise<void> => {
       prompt: run.prompt,
     });
 
-    // 5. Complete run
+    // 5. Capture Git Diff
+    try {
+      const gitDiff = await gitService.getDiff(session.containerId!);
+      run.diff = gitDiff.rawDiff;
+      run.filesChanged = gitDiff.filesChanged;
+      run.insertions = gitDiff.insertions;
+      run.deletions = gitDiff.deletions;
+    } catch (gitErr) {
+      console.warn('[Runner Warning] Failed to capture git diff:', gitErr);
+    }
+
+    // 6. Complete run
     run.status = 'completed';
     run.response = result.response;
     run.tokensUsed = result.tokensUsed;
@@ -96,7 +108,7 @@ export const executeRun = async (runId: string): Promise<void> => {
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
 
-    console.log(`[Runner] Run ${run._id} completed successfully in ${run.durationMs}ms`);
+    console.log(`[Runner] Run ${run._id} completed successfully in ${run.durationMs}ms with diff (${run.filesChanged?.length || 0} files modified).`);
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : String(error);
     console.error(`[Runner] Execution failed for run ${runId}:`, errMessage);

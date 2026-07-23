@@ -17,6 +17,10 @@ export interface IAgentRun extends Document {
   containerId?: string;
   worktreePath?: string;
   branchCommit?: string;
+  diff?: string;
+  filesChanged?: string[];
+  insertions?: number;
+  deletions?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +45,10 @@ const AgentRunSchema: Schema = new Schema(
     containerId: { type: String },
     worktreePath: { type: String },
     branchCommit: { type: String },
+    diff: { type: String },
+    filesChanged: { type: [String] },
+    insertions: { type: Number },
+    deletions: { type: Number },
   },
   {
     timestamps: true,

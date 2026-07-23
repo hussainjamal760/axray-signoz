@@ -58,47 +58,62 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
               <tr className="bg-surface-container-high border-b-[3px] border-outline">
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Prompt</th>
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Status</th>
+                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Changes / Diff</th>
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Created</th>
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Duration</th>
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Model</th>
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-outline-variant">
-              {runs.map((run) => (
-                <tr
-                  key={run.id}
-                  onClick={() => onSelectRun(run)}
-                  className="hover:bg-surface-container cursor-pointer transition-colors group"
-                >
-                  <td className="px-6 py-5 font-black text-on-surface max-w-xs md:max-w-md truncate">
-                    {run.prompt}
-                  </td>
-                  <td className="px-6 py-5">
-                    <RunStatusBadge status={run.status} />
-                  </td>
-                  <td className="px-6 py-5 text-on-surface-variant">
-                    {getFormattedDate(run.createdAt)}
-                  </td>
-                  <td className="px-6 py-5 text-on-surface-variant">
-                    {getDurationString(run.durationMs)}
-                  </td>
-                  <td className="px-6 py-5 text-on-surface-variant">
-                    {run.modelName || '-'}
-                  </td>
-                  <td className="px-6 py-5">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectRun(run);
-                      }}
-                      className="px-3 py-1 bg-surface-container border border-outline text-[10px] font-black uppercase hover:bg-primary-fixed hover:text-background transition-colors"
-                    >
-                      View Trace
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {runs.map((run) => {
+                const fileCount = run.filesChanged?.length || 0;
+                const hasDiff = fileCount > 0 || !!run.diff;
+
+                return (
+                  <tr
+                    key={run.id}
+                    onClick={() => onSelectRun(run)}
+                    className="hover:bg-surface-container cursor-pointer transition-colors group"
+                  >
+                    <td className="px-6 py-5 font-black text-on-surface max-w-xs md:max-w-md truncate">
+                      {run.prompt}
+                    </td>
+                    <td className="px-6 py-5">
+                      <RunStatusBadge status={run.status} />
+                    </td>
+                    <td className="px-6 py-5">
+                      {hasDiff ? (
+                        <div className="flex items-center gap-2 font-bold">
+                          <span className="text-emerald-400">+{run.insertions || 0}</span>
+                          <span className="text-error">-{run.deletions || 0}</span>
+                          <span className="text-outline-variant text-[10px]">
+                            ({fileCount} {fileCount === 1 ? 'file' : 'files'})
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-outline-variant italic">No changes</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-5 text-on-surface-variant">
+                      {getFormattedDate(run.createdAt)}
+                    </td>
+                    <td className="px-6 py-5 text-on-surface-variant">
+                      {getDurationString(run.durationMs)}
+                    </td>
+                    <td className="px-6 py-5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectRun(run);
+                        }}
+                        className="px-3 py-1 bg-surface-container border border-outline text-[10px] font-black uppercase hover:bg-primary-fixed hover:text-background transition-colors"
+                      >
+                        View Diff &amp; Trace
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
