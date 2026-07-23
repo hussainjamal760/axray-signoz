@@ -162,9 +162,13 @@ export const ensureContainerRunning = async (params: {
 
 export const executeCommand = async (
   containerId: string,
-  command: string
+  command: string,
+  options?: { timeoutMs?: number; maxBufferBytes?: number }
 ): Promise<{ exitCode: number; output: string }> => {
-  console.log(`[Docker] Executing command in ${containerId}: "${command}"`);
+  const timeoutMs = options?.timeoutMs ?? 30000;
+  const maxBufferBytes = options?.maxBufferBytes ?? 100000; // 100KB max
+
+  console.log(`[Docker] Executing command in ${containerId} (timeout=${timeoutMs}ms): "${command}"`);
   try {
     const container = docker.getContainer(containerId);
     const exec = await container.exec({
@@ -175,13 +179,35 @@ export const executeCommand = async (
 
     const stream = await exec.start({});
     let output = '';
+    let isTimedOut = false;
 
     await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        isTimedOut = true;
+        try {
+          (stream as any).destroy?.();
+        } catch {}
+        reject(new Error(`Command execution timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+
       stream.on('data', (chunk: Buffer) => {
-        output += chunk.toString('utf8');
+        if (output.length < maxBufferBytes) {
+          output += chunk.toString('utf8');
+          if (output.length >= maxBufferBytes) {
+            output += '\n[Output truncated due to size limits]';
+          }
+        }
       });
-      stream.on('end', resolve);
-      stream.on('error', reject);
+
+      stream.on('end', () => {
+        clearTimeout(timer);
+        if (!isTimedOut) resolve();
+      });
+
+      stream.on('error', (err) => {
+        clearTimeout(timer);
+        if (!isTimedOut) reject(err);
+      });
     });
 
     const inspectData = await exec.inspect();

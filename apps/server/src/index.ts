@@ -1,3 +1,7 @@
+import { startTelemetry } from './lib/telemetry';
+// Initialize OpenTelemetry SDK before starting Express or other modules
+startTelemetry();
+
 import { app } from './app';
 import { config } from './config';
 import { connectDatabase } from './lib/mongo';

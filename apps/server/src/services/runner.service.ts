@@ -3,13 +3,12 @@ import { Session } from '../models/session.model';
 import * as containerService from './container.service';
 import * as workspaceService from './workspace.service';
 import * as agentService from './agent.service';
+import { tracer } from '../lib/telemetry';
+import { SpanStatusCode } from '@opentelemetry/api';
 
 /**
  * Runner Service
  * Orchestrates background execution by connecting Container, Workspace, Agent, and Session services.
- * 
- * Flow:
- * Find Run -> Find Session -> Ensure Container -> Ensure Workspace -> Status: Running (Socket) -> Execute Agent (Socket steps) -> Status: Completed (Socket)
  */
 
 export const executeRun = async (runId: string): Promise<void> => {
@@ -30,6 +29,15 @@ export const executeRun = async (runId: string): Promise<void> => {
     return;
   }
 
+  const span = tracer.startSpan('agent.run', {
+    attributes: {
+      'run.id': runId,
+      'session.id': session._id.toString(),
+      'repository.name': session.repositoryFullName,
+      'git.branch': session.branch,
+    },
+  });
+
   try {
     // 1. Ensure Container exists and is running
     const { containerId, containerStatus } = await containerService.ensureContainerRunning({
@@ -44,34 +52,32 @@ export const executeRun = async (runId: string): Promise<void> => {
       await session.save();
     }
 
-    // 2. Ensure Workspace Initialized (clone & checkout if not yet initialized)
+    // 2. Ensure Workspace Initialized (clone, checkout, AI workspace spec, dependency install)
     if (!session.workspaceInitialized) {
       console.log(`[Runner] Preparing workspace for session ${session._id}...`);
-      // TODO (Streaming): io.to(`session:${session._id}`).emit('workspace:status', { status: 'preparing' });
-      await workspaceService.prepareWorkspace({
+      const { spec } = await workspaceService.prepareWorkspace({
         repositoryFullName: session.repositoryFullName,
         branch: session.branch,
         containerId: session.containerId!,
       });
       
-      // Update database state after workspace preparation succeeds
+      // Update MongoDB Session document after workspace preparation succeeds
+      session.workspaceSpec = spec;
       session.workspaceInitialized = true;
       await session.save();
-      // TODO (Streaming): io.to(`session:${session._id}`).emit('workspace:status', { status: 'ready' });
     } else {
       console.log(`[Runner] Workspace already initialized for session ${session._id}. Skipping preparation.`);
     }
 
-    // 3. Transition status to running
+    // 3. Transition run status to running
     run.status = 'running';
     run.startedAt = new Date();
     run.containerId = session.containerId;
     await run.save();
-    // TODO (Streaming): io.to(`session:${session._id}`).emit('run:status', { runId: run._id, status: 'running' });
 
-    console.log(`[Runner] Executing agent for run ${run._id} in container ${session.containerId}`);
+    console.log(`[Runner] Executing Groq AI agent for run ${run._id} in container ${session.containerId}`);
 
-    // 4. Delegate prompt execution to AgentService (which streams execution steps)
+    // 4. Delegate prompt execution to AgentService
     const result = await agentService.executePrompt({
       containerId: session.containerId!,
       prompt: run.prompt,
@@ -81,13 +87,14 @@ export const executeRun = async (runId: string): Promise<void> => {
     run.status = 'completed';
     run.response = result.response;
     run.tokensUsed = result.tokensUsed;
-    run.cost = result.cost;
     run.completedAt = new Date();
     if (run.startedAt) {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     await run.save();
-    // TODO (Streaming): io.to(`session:${session._id}`).emit('run:status', { runId: run._id, status: 'completed', result });
+
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
 
     console.log(`[Runner] Run ${run._id} completed successfully in ${run.durationMs}ms`);
   } catch (error: unknown) {
@@ -101,6 +108,8 @@ export const executeRun = async (runId: string): Promise<void> => {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     await run.save();
-    // TODO (Streaming): io.to(`session:${session._id}`).emit('run:status', { runId: run._id, status: 'failed', error: errMessage });
+
+    span.setStatus({ code: SpanStatusCode.ERROR, message: errMessage });
+    span.end();
   }
 };

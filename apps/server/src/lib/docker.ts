@@ -2,7 +2,7 @@ import Docker from 'dockerode';
 
 const isWindows = process.platform === 'win32';
 
-export const DOCKER_RUNTIME_IMAGE = process.env.DOCKER_RUNTIME_IMAGE || 'node:22-alpine';
+export const DOCKER_RUNTIME_IMAGE = process.env.DOCKER_RUNTIME_IMAGE || 'axray-workspace:latest';
 
 export const docker = new Docker(
   isWindows

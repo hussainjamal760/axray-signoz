@@ -3,6 +3,17 @@ import mongoose, { Schema, Document } from 'mongoose';
 export type SessionStatus = 'active' | 'archived';
 export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
 
+export interface IWorkspaceSpec {
+  runtime: string;
+  runtimeVersion: string;
+  packageManager: string;
+  installCommand: string;
+  buildCommand?: string | null;
+  runCommand?: string | null;
+  testCommand?: string | null;
+  reasoning: string;
+}
+
 export interface ISession extends Document {
   userId: mongoose.Types.ObjectId;
   repositoryId: number;
@@ -12,10 +23,25 @@ export interface ISession extends Document {
   containerId?: string;
   containerStatus?: ContainerStatus;
   workspaceInitialized: boolean;
+  workspaceSpec?: IWorkspaceSpec;
   latestRunId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const WorkspaceSpecSchema: Schema = new Schema(
+  {
+    runtime: { type: String, required: true },
+    runtimeVersion: { type: String, required: true },
+    packageManager: { type: String, required: true },
+    installCommand: { type: String, required: true },
+    buildCommand: { type: String },
+    runCommand: { type: String },
+    testCommand: { type: String },
+    reasoning: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const SessionSchema: Schema = new Schema(
   {
@@ -35,6 +61,7 @@ const SessionSchema: Schema = new Schema(
       default: 'creating',
     },
     workspaceInitialized: { type: Boolean, default: false, required: true },
+    workspaceSpec: { type: WorkspaceSpecSchema },
     latestRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
   },
   {

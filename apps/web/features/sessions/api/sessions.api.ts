@@ -11,6 +11,7 @@ interface BackendSession {
   containerStatus?: ContainerStatus;
   workspaceReady?: boolean;
   workspaceInitialized?: boolean;
+  workspaceSpec?: SessionSummary['workspaceSpec'];
   latestRunId?: string;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +27,7 @@ function mapSession(session: BackendSession): SessionSummary {
     containerId: session.containerId,
     containerStatus: session.containerStatus,
     workspaceInitialized: session.workspaceInitialized ?? session.workspaceReady ?? false,
+    workspaceSpec: session.workspaceSpec,
     latestRunId: session.latestRunId,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,

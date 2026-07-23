@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/features/sessions/hooks";
 import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
-import { ACTIVE_RUN_STATUSES } from "@/features/agent-runs/types";
+import { ACTIVE_RUN_STATUSES, AgentRunSummary } from "@/features/agent-runs/types";
 import { AgentRunsList } from "@/features/agent-runs/components";
 import {
   SessionHeader,
@@ -18,6 +19,8 @@ export default function SessionIdPage() {
   const router = useRouter();
   const id = typeof params?.id === "string" ? params.id : "";
   const isValidId = !!id && id !== "undefined" && id !== "null";
+
+  const [manuallySelectedRun, setManuallySelectedRun] = useState<AgentRunSummary | null>(null);
 
   // First fetch runs to evaluate active run statuses
   const { data: initialRuns = [] } = useRuns(id);
@@ -38,6 +41,9 @@ export default function SessionIdPage() {
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval });
   const { data: runs = [], isLoading: runsLoading } = useRuns(id, { refetchInterval });
   const { mutate: createRun, isPending: isCreatingRun } = useCreateRun(id);
+
+  // Default to manually selected run, or latest run in runs array
+  const activeOrSelectedRun = manuallySelectedRun || runs[0] || null;
 
   if (sessionLoading) {
     return (
@@ -66,12 +72,16 @@ export default function SessionIdPage() {
     );
   }
 
-  const handleSelectRun = (run: any) => {
-    console.log("Selected run for tracing:", run);
+  const handleSelectRun = (run: AgentRunSummary) => {
+    setManuallySelectedRun(run);
   };
 
   const handlePromptSubmit = (promptText: string) => {
-    createRun({ prompt: promptText });
+    createRun({ prompt: promptText }, {
+      onSuccess: (newRun) => {
+        setManuallySelectedRun(newRun);
+      }
+    });
   };
 
   return (
@@ -85,7 +95,11 @@ export default function SessionIdPage() {
 
           {/* Top Left: Initialize Context */}
           <div className="col-span-12 lg:col-span-7">
-            <InitializeContextPanel />
+            <InitializeContextPanel
+              onSubmit={handlePromptSubmit}
+              isPending={isCreatingRun}
+              disabled={session.containerStatus === 'failed' || session.containerStatus === 'stopped'}
+            />
           </div>
 
           {/* Top Right: Timeline */}
@@ -102,7 +116,7 @@ export default function SessionIdPage() {
 
             {/* Terminal Window */}
             <div className="col-span-12 md:col-span-7 h-full">
-              <TerminalPanel />
+              <TerminalPanel session={session} selectedRun={activeOrSelectedRun} />
             </div>
           </section>
 

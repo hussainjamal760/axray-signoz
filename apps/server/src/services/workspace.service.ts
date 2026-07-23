@@ -1,14 +1,18 @@
 import * as containerService from './container.service';
+import * as workspaceAnalysisService from './workspace-analysis.service';
 import { AppError } from '../errors/AppError';
+import { IWorkspaceSpec } from '../models/session.model';
+import { tracer } from '../lib/telemetry';
+import { SpanStatusCode } from '@opentelemetry/api';
 
 /**
  * Workspace Service
  * Responsible ONLY for workspace preparation inside Docker containers:
  * - Cloning Git repositories
  * - Checking out target branches
- * - Detecting project runtime requirements
+ * - Delegating AI workspace analysis
  * - Validating runtime environments
- * - Installing project dependencies
+ * - Executing dependency installation commands
  * 
  * Pure service: Does NOT depend on MongoDB models or touch database records directly.
  */
@@ -21,22 +25,12 @@ export interface PrepareWorkspaceParams {
   containerId: string;
 }
 
-export interface RuntimeInfo {
-  runtime: string;
-  version: string;
-}
-
-/**
- * Clones a Git repository into the container's deterministic workspace directory (/workspace).
- * Reuses existing repo if already cloned.
- */
 export const cloneRepository = async (
   repositoryFullName: string,
   containerId: string
 ): Promise<void> => {
   console.log(`[Workspace] Checking repository status for ${repositoryFullName} in container ${containerId}...`);
 
-  // Check if /workspace is already a Git repository
   const checkRepo = await containerService.executeCommand(
     containerId,
     `git -C ${WORKSPACE_DIR} rev-parse --is-inside-work-tree`
@@ -57,7 +51,8 @@ export const cloneRepository = async (
   console.log(`[Workspace] Cloning https://github.com/${repositoryFullName}.git into ${WORKSPACE_DIR}...`);
   const cloneResult = await containerService.executeCommand(
     containerId,
-    `git clone https://github.com/${repositoryFullName}.git ${WORKSPACE_DIR}`
+    `git clone https://github.com/${repositoryFullName}.git ${WORKSPACE_DIR}`,
+    { timeoutMs: 120000 } // 2 min timeout for clone
   );
 
   if (cloneResult.exitCode !== 0) {
@@ -70,19 +65,14 @@ export const cloneRepository = async (
   console.log(`[Workspace] Repository ${repositoryFullName} cloned successfully.`);
 };
 
-/**
- * Checks out the specified branch inside /workspace.
- */
 export const checkoutBranch = async (
   branch: string,
   containerId: string
 ): Promise<void> => {
   console.log(`[Workspace] Checking out branch "${branch}" in container ${containerId}...`);
 
-  // Fetch latest branch info first
   await containerService.executeCommand(containerId, `git -C ${WORKSPACE_DIR} fetch origin`);
 
-  // Attempt checkout of existing branch or creation from origin/branch
   const checkoutResult = await containerService.executeCommand(
     containerId,
     `git -C ${WORKSPACE_DIR} checkout ${branch} || git -C ${WORKSPACE_DIR} checkout -b ${branch} origin/${branch}`
@@ -98,166 +88,129 @@ export const checkoutBranch = async (
   console.log(`[Workspace] Branch "${branch}" checked out successfully.`);
 };
 
-/**
- * Inspects project files (.nvmrc, .node-version, package.json engines) to detect runtime specs.
- */
-export const detectProjectRuntime = async (
-  containerId: string,
-  workspacePath: string = WORKSPACE_DIR
-): Promise<RuntimeInfo> => {
-  console.log(`[Workspace] Detecting project runtime in ${workspacePath}...`);
-
-  // 1. Check .nvmrc
-  const nvmrcCheck = await containerService.executeCommand(
-    containerId,
-    `cat ${workspacePath}/.nvmrc`
-  );
-  if (nvmrcCheck.exitCode === 0 && nvmrcCheck.output) {
-    const version = nvmrcCheck.output.trim().replace(/^v/, '');
-    console.log(`[Workspace] Detected Node version from .nvmrc: ${version}`);
-    return { runtime: 'node', version };
-  }
-
-  // 2. Check .node-version
-  const nodeVerCheck = await containerService.executeCommand(
-    containerId,
-    `cat ${workspacePath}/.node-version`
-  );
-  if (nodeVerCheck.exitCode === 0 && nodeVerCheck.output) {
-    const version = nodeVerCheck.output.trim().replace(/^v/, '');
-    console.log(`[Workspace] Detected Node version from .node-version: ${version}`);
-    return { runtime: 'node', version };
-  }
-
-  // 3. Check package.json engines
-  const pkgCheck = await containerService.executeCommand(
-    containerId,
-    `cat ${workspacePath}/package.json`
-  );
-  if (pkgCheck.exitCode === 0 && pkgCheck.output) {
-    try {
-      const pkg = JSON.parse(pkgCheck.output);
-      if (pkg.engines?.node) {
-        const rawVersion = pkg.engines.node.replace(/[^0-9.]/g, '');
-        console.log(`[Workspace] Detected Node version from package.json engines: ${rawVersion}`);
-        return { runtime: 'node', version: rawVersion || '22' };
-      }
-    } catch {
-      // Ignore JSON parse error if package.json is malformed
-    }
-  }
-
-  console.log(`[Workspace] Defaulting runtime to Node 22`);
-  return { runtime: 'node', version: '22' };
-};
-
-/**
- * Ensures the required runtime is available inside the container.
- * TODO (Future): Integrate version managers (mise / nvm) for multi-version switching.
- */
 export const ensureRuntime = async (
   containerId: string,
-  runtimeInfo: RuntimeInfo
+  spec: IWorkspaceSpec
 ): Promise<void> => {
-  console.log(`[Workspace] Ensuring runtime ${runtimeInfo.runtime}@${runtimeInfo.version} in container ${containerId}...`);
+  const runtime = (spec.runtime || 'node').toLowerCase();
+  console.log(`[Workspace] Dynamically ensuring runtime "${runtime}" (${spec.runtimeVersion}) in container ${containerId}...`);
 
-  const nodeCheck = await containerService.executeCommand(containerId, 'node -v');
-  if (nodeCheck.exitCode === 0) {
-    console.log(`[Workspace] Active Node runtime in container: ${nodeCheck.output}`);
+  let apkPackages = '';
+  let checkCmd = '';
+
+  if (runtime.includes('node') || runtime.includes('javascript') || runtime.includes('typescript')) {
+    apkPackages = 'nodejs npm make g++';
+    checkCmd = 'node -v';
+  } else if (runtime.includes('python')) {
+    apkPackages = 'python3 py3-pip make g++';
+    checkCmd = 'python3 --version';
+  } else if (runtime.includes('go')) {
+    apkPackages = 'go make g++';
+    checkCmd = 'go version';
+  } else if (runtime.includes('rust')) {
+    apkPackages = 'cargo make g++';
+    checkCmd = 'cargo --version';
+  } else if (runtime.includes('php')) {
+    apkPackages = 'php composer';
+    checkCmd = 'php -v';
+  } else if (runtime.includes('ruby')) {
+    apkPackages = 'ruby';
+    checkCmd = 'ruby -v';
   } else {
-    console.warn(`[Workspace Warning] Node executable check failed: ${nodeCheck.output}`);
+    apkPackages = 'nodejs npm';
+    checkCmd = 'node -v';
   }
-};
 
-/**
- * Detects package manager and installs project dependencies inside /workspace.
- */
-export const installDependencies = async (
-  containerId: string,
-  workspacePath: string = WORKSPACE_DIR
-): Promise<void> => {
-  console.log(`[Workspace] Detecting package manager and installing dependencies in ${workspacePath}...`);
-
-  // Check package.json presence
-  const pkgCheck = await containerService.executeCommand(
-    containerId,
-    `[ -f ${workspacePath}/package.json ]`
-  );
-
-  if (pkgCheck.exitCode !== 0) {
-    console.log(`[Workspace] No package.json found in ${workspacePath}. Skipping dependency installation.`);
+  // Check if runtime is already present
+  const existingCheck = await containerService.executeCommand(containerId, checkCmd);
+  if (existingCheck.exitCode === 0) {
+    console.log(`[Workspace] Runtime "${runtime}" is already installed: ${existingCheck.output}`);
     return;
   }
 
-  // Detect lockfiles
-  const pnpmCheck = await containerService.executeCommand(
+  console.log(`[Workspace] Executing dynamic runtime installation: "apk add --no-cache ${apkPackages}"`);
+  const installRes = await containerService.executeCommand(
     containerId,
-    `[ -f ${workspacePath}/pnpm-lock.yaml ]`
-  );
-  const yarnCheck = await containerService.executeCommand(
-    containerId,
-    `[ -f ${workspacePath}/yarn.lock ]`
-  );
-  const npmLockCheck = await containerService.executeCommand(
-    containerId,
-    `[ -f ${workspacePath}/package-lock.json ]`
+    `apk add --no-cache ${apkPackages}`,
+    { timeoutMs: 180000 }
   );
 
-  let installCmd = 'npm install';
-  if (pnpmCheck.exitCode === 0) {
-    installCmd = 'pnpm install || npm install';
-  } else if (yarnCheck.exitCode === 0) {
-    installCmd = 'yarn install || npm install';
-  } else if (npmLockCheck.exitCode === 0) {
-    installCmd = 'npm install';
+  if (installRes.exitCode !== 0) {
+    console.warn(`[Workspace Warning] Dynamic runtime installation returned non-zero exit code: ${installRes.output}`);
+  } else {
+    console.log(`[Workspace] Dynamic runtime "${runtime}" installed successfully.`);
   }
+};
 
-  console.log(`[Workspace] Executing dependency installation: "${installCmd}"`);
+export const installDependencies = async (
+  containerId: string,
+  installCommand: string
+): Promise<void> => {
+  console.log(`[Workspace] Executing dependency installation: "${installCommand}"...`);
+
   const installResult = await containerService.executeCommand(
     containerId,
-    `cd ${workspacePath} && ${installCmd}`
+    `cd ${WORKSPACE_DIR} && ${installCommand}`,
+    { timeoutMs: 300000 } // 5 minute timeout for dependency installs
   );
 
   if (installResult.exitCode !== 0) {
-    console.warn(`[Workspace Warning] Dependency installation finished with non-zero exit code: ${installResult.output}`);
+    console.warn(`[Workspace Warning] Dependency installation warning: ${installResult.output}`);
   } else {
     console.log(`[Workspace] Dependencies installed successfully.`);
   }
 };
 
-/**
- * Full workspace preparation workflow:
- * 1. Clone repository
- * 2. Checkout branch
- * 3. Detect project runtime
- * 4. Ensure runtime environment
- * 5. Install dependencies
- */
 export const prepareWorkspace = async (
   params: PrepareWorkspaceParams
-): Promise<{ status: 'ready' }> => {
-  console.log(
-    `[Workspace] Starting full workspace preparation for repo=${params.repositoryFullName} branch=${params.branch} in container ${params.containerId}`
-  );
+): Promise<{ status: 'ready'; spec: IWorkspaceSpec }> => {
+  const span = tracer.startSpan('workspace.prepare', {
+    attributes: {
+      'repository.fullname': params.repositoryFullName,
+      'git.branch': params.branch,
+      'container.id': params.containerId,
+    },
+  });
 
-  // Step A: Clone repository
-  await cloneRepository(params.repositoryFullName, params.containerId);
+  try {
+    console.log(
+      `[Workspace] Starting workspace preparation for repo=${params.repositoryFullName} branch=${params.branch} in container ${params.containerId}`
+    );
 
-  // Step B: Checkout branch
-  await checkoutBranch(params.branch, params.containerId);
+    // Step 1: Clone repository
+    await cloneRepository(params.repositoryFullName, params.containerId);
 
-  // Step C: Detect runtime
-  const runtimeInfo = await detectProjectRuntime(params.containerId, WORKSPACE_DIR);
+    // Step 2: Checkout branch
+    await checkoutBranch(params.branch, params.containerId);
 
-  // Step D: Ensure runtime
-  await ensureRuntime(params.containerId, runtimeInfo);
+    // Step 3: AI-First Workspace Inspection
+    const spec = await workspaceAnalysisService.inspectWorkspace(params.containerId);
+    span.setAttribute('workspace.runtime', spec.runtime);
+    span.setAttribute('workspace.package_manager', spec.packageManager);
+    span.setAttribute('workspace.install_command', spec.installCommand);
 
-  // Step E: Install dependencies
-  await installDependencies(params.containerId, WORKSPACE_DIR);
+    // Step 4: Ensure Runtime
+    await ensureRuntime(params.containerId, spec);
 
-  console.log(
-    `[Workspace] Workspace preparation complete and READY for repo=${params.repositoryFullName} branch=${params.branch}`
-  );
+    // Step 5: Install Dependencies
+    if (spec.installCommand) {
+      await installDependencies(params.containerId, spec.installCommand);
+    }
 
-  return { status: 'ready' };
+    console.log(
+      `[Workspace] Workspace preparation complete and READY for repo=${params.repositoryFullName} branch=${params.branch}`
+    );
+
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
+
+    return { status: 'ready', spec };
+  } catch (error: any) {
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: error?.message || String(error),
+    });
+    span.end();
+    throw error;
+  }
 };

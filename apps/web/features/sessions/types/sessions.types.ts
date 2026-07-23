@@ -1,6 +1,17 @@
 export type SessionStatus = 'active' | 'archived';
 export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
 
+export interface IWorkspaceSpec {
+  runtime: string;
+  runtimeVersion: string;
+  packageManager: string;
+  installCommand: string;
+  buildCommand?: string | null;
+  runCommand?: string | null;
+  testCommand?: string | null;
+  reasoning: string;
+}
+
 export interface SessionSummary {
   id: string;
   repositoryId: number;
@@ -10,6 +21,7 @@ export interface SessionSummary {
   containerId?: string;
   containerStatus?: ContainerStatus;
   workspaceInitialized: boolean;
+  workspaceSpec?: IWorkspaceSpec;
   latestRunId?: string;
   createdAt: string;
   updatedAt: string;
