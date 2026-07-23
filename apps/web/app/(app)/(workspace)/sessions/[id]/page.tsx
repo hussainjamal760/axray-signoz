@@ -23,23 +23,29 @@ export default function SessionIdPage() {
 
   const [manuallySelectedRun, setManuallySelectedRun] = useState<AgentRunSummary | null>(null);
 
-  // Subscribe to real-time Socket.IO events for live execution state (NO REST POLLING!)
-  const { liveEvents, liveTraces, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined);
-
-  // Initial REST fetch once (refetchInterval: false across all queries for zero-polling)
+  // Hydrate initial REST data from backend API on every page mount (staleTime: 0, refetchOnMount: true)
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval: false });
-  const { data: fetchedRuns = [], isLoading: runsLoading } = useRuns(id, { refetchInterval: false });
+  const { data: fetchedRuns = [], isLoading: runsLoading, refetch: refetchRuns } = useRuns(id, { refetchInterval: false });
   const { mutate: createRun, isPending: isCreatingRun } = useCreateRun(id);
 
   // Maintain local runs list for instant Socket.IO real-time updates
   const [runsState, setRunsState] = useState<AgentRunSummary[]>([]);
 
-  // Sync initial REST runs into runsState
+  // Synchronize runsState with fresh backend fetchedRuns on mount and API refetches
   useEffect(() => {
-    if (fetchedRuns.length > 0 && runsState.length === 0) {
+    if (fetchedRuns.length > 0) {
       setRunsState(fetchedRuns);
     }
   }, [fetchedRuns]);
+
+  // Evaluate active run status from backend state
+  const activeOrSelectedRun = manuallySelectedRun || runsState[0] || fetchedRuns[0] || null;
+  const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
+
+  // Sockets connect and listen ONLY while an agent run is actively executing (status === 'running' | 'pending')
+  const { liveEvents, liveTraces, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined, {
+    enabled: isSelectedRunExecuting,
+  });
 
   // Handle incoming Socket.IO events to update live run state and history
   useEffect(() => {
@@ -92,11 +98,13 @@ export default function SessionIdPage() {
           }
           return prev;
         });
+
+        // Refetch fresh authoritative data from MongoDB API to ensure React Query cache is fully synchronized
+        void refetchRuns();
       }
     } else if (latestEvent.eventType === 'git.diff.completed') {
       const meta = latestEvent.metadata || {};
       const targetId = latestEvent.runId;
-      const isFailed = latestEvent.status === 'failed';
 
       if (targetId) {
         setRunsState((prev) => {
@@ -118,7 +126,6 @@ export default function SessionIdPage() {
           return prev;
         });
 
-        // Also synchronize manuallySelectedRun if it matches targetId
         setManuallySelectedRun((prev) => {
           if (prev && prev.id === targetId) {
             return {
@@ -136,12 +143,8 @@ export default function SessionIdPage() {
         });
       }
     }
-  }, [latestEvent]);
+  }, [latestEvent, refetchRuns]);
 
-  // Default to manually selected run, or latest run in runsState
-  const activeOrSelectedRun = manuallySelectedRun || runsState[0] || fetchedRuns[0] || null;
-  const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
-  
   // Loading state for Git diff terminates as soon as run completes/fails OR diff arrives
   const isDiffLoading = isSelectedRunExecuting && activeOrSelectedRun?.diff === undefined;
   const isDiffError = (activeOrSelectedRun?.status === 'failed' && !activeOrSelectedRun?.diff) || false;

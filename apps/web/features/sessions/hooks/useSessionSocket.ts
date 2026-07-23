@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSocket } from '@/lib/socket';
-import { TimelineEvent, TimelineEventMetadata, AxrayPhase } from '@/features/agent-runs/types';
+import { TimelineEventMetadata, AxrayPhase } from '@/features/agent-runs/types';
 
 export interface LiveSocketEvent {
   sessionId: string;
@@ -29,14 +29,23 @@ export interface LiveTraceSpan {
   attributes?: Record<string, unknown>;
 }
 
-export function useSessionSocket(sessionId?: string) {
+export interface UseSessionSocketOptions {
+  enabled?: boolean;
+}
+
+export function useSessionSocket(sessionId?: string, options?: UseSessionSocketOptions) {
   const [isConnected, setIsConnected] = useState(false);
   const [liveEvents, setLiveEvents] = useState<LiveSocketEvent[]>([]);
   const [liveTraces, setLiveTraces] = useState<LiveTraceSpan[]>([]);
   const [latestEvent, setLatestEvent] = useState<LiveSocketEvent | null>(null);
 
+  const isEnabled = options?.enabled ?? true;
+
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || !isEnabled) {
+      setIsConnected(false);
+      return;
+    }
 
     const socket = getSocket();
 
@@ -83,7 +92,7 @@ export function useSessionSocket(sessionId?: string) {
       socket.off('execution.event', handleExecutionEvent);
       socket.off('execution.trace', handleExecutionTrace);
     };
-  }, [sessionId]);
+  }, [sessionId, isEnabled]);
 
   const clearLiveEvents = () => {
     setLiveEvents([]);
