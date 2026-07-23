@@ -61,7 +61,6 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Changes / Diff</th>
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Created</th>
                 <th className="px-6 py-4 font-black uppercase text-primary-fixed">Duration</th>
-                <th className="px-6 py-4 font-black uppercase text-primary-fixed">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-outline-variant">
@@ -99,17 +98,6 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
                     </td>
                     <td className="px-6 py-5 text-on-surface-variant">
                       {getDurationString(run.durationMs)}
-                    </td>
-                    <td className="px-6 py-5">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectRun(run);
-                        }}
-                        className="px-3 py-1 bg-surface-container border border-outline text-[10px] font-black uppercase hover:bg-primary-fixed hover:text-background transition-colors"
-                      >
-                        View Diff &amp; Trace
-                      </button>
                     </td>
                   </tr>
                 );

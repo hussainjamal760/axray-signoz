@@ -223,7 +223,7 @@ export default function SessionIdPage() {
   }
 
   const handleSelectRun = (run: AgentRunSummary) => {
-    setManuallySelectedRun(run);
+    router.push(`/sessions/${id}/observer?runId=${run.id}`);
   };
 
   const handlePromptSubmit = (promptText: string) => {

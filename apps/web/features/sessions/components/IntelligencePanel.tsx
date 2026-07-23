@@ -1,7 +1,16 @@
 import React from 'react';
 import { Cpu } from "@phosphor-icons/react/dist/ssr";
+import { AgentRunSummary } from "@/features/agent-runs/types";
 
-export function IntelligencePanel() {
+export interface IntelligencePanelProps {
+  activeRun?: AgentRunSummary | null;
+}
+
+export function IntelligencePanel({ activeRun }: IntelligencePanelProps) {
+  const durationStr = activeRun?.durationMs ? `${(activeRun.durationMs / 1000).toFixed(1)}s` : '-';
+  const tokensStr = activeRun?.tokensUsed ? `${activeRun.tokensUsed.toLocaleString()}` : '-';
+  const modelStr = activeRun?.modelName || 'openai/gpt-oss-20b';
+
   return (
     <div className="w-96 flex-col bg-surface shrink-0 hidden xl:flex">
       <div className="p-4 border-b-[3px] border-outline-variant bg-surface-container-high shrink-0">
@@ -9,24 +18,26 @@ export function IntelligencePanel() {
       </div>
       
       <div className="p-gutter border-b-2 border-outline-variant shrink-0">
-        <h3 className="font-mono-label text-mono-label uppercase opacity-60 mb-2">Current Decision</h3>
+        <h3 className="font-mono-label text-mono-label uppercase opacity-60 mb-2">Target Objective</h3>
         <p className="font-body-md text-body-md font-bold text-primary-fixed">
-          "Modify authentication middleware to handle invalid user contexts and return standardized JSON errors for better test compatibility."
+          "{activeRun?.prompt || 'No active prompt objective selected.'}"
         </p>
       </div>
       
       <div className="grid grid-cols-3 border-b-2 border-outline-variant shrink-0">
-        <div className="p-4 border-r-2 border-outline-variant flex flex-col items-center">
+        <div className="p-4 border-r-2 border-outline-variant flex flex-col items-center text-center">
           <span className="font-mono-label text-[10px] opacity-60">TOKENS</span>
-          <span className="font-mono-label text-mono-label font-black text-primary-fixed">2.4k</span>
+          <span className="font-mono-label text-mono-label font-black text-primary-fixed">{tokensStr}</span>
         </div>
-        <div className="p-4 border-r-2 border-outline-variant flex flex-col items-center">
-          <span className="font-mono-label text-[10px] opacity-60">COST</span>
-          <span className="font-mono-label text-mono-label font-black text-primary-fixed">$0.03</span>
+        <div className="p-4 border-r-2 border-outline-variant flex flex-col items-center text-center">
+          <span className="font-mono-label text-[10px] opacity-60">MODEL</span>
+          <span className="font-mono-label text-[11px] font-black text-primary-fixed truncate max-w-[80px]" title={modelStr}>
+            {modelStr.split('/')[1] || modelStr}
+          </span>
         </div>
-        <div className="p-4 flex flex-col items-center">
+        <div className="p-4 flex flex-col items-center text-center">
           <span className="font-mono-label text-[10px] opacity-60">LATENCY</span>
-          <span className="font-mono-label text-mono-label font-black text-primary-fixed">2.4s</span>
+          <span className="font-mono-label text-mono-label font-black text-primary-fixed">{durationStr}</span>
         </div>
       </div>
       
@@ -42,7 +53,7 @@ export function IntelligencePanel() {
           
           <Cpu weight="fill" className="text-primary-fixed/20 w-24 h-24 mb-4 group-hover:scale-110 transition-transform duration-700" />
           <span className="font-mono-label text-xs text-on-surface-variant uppercase tracking-widest opacity-50">
-            Node Visualization Offline
+            Logic Tree Ready
           </span>
 
           {/* Overlay for stylistic purposes */}
