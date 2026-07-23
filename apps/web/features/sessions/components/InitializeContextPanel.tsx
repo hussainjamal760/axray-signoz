@@ -75,7 +75,7 @@ export function InitializeContextPanel({
           {isActive ? (
             <>
               <span className="animate-spin material-symbols-outlined font-black">sync</span>
-              {liveStatusText || "Executing..."}
+              Run Agent
             </>
           ) : (
             <>
