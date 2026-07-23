@@ -25,6 +25,7 @@ export interface AgentRunSummary {
   diffTruncated?: boolean;
   diffSize?: number;
   changeSummary?: string;
+  terminalOutput?: string;
   createdAt: string;
   updatedAt: string;
 }

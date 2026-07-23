@@ -29,6 +29,14 @@ export interface LiveTraceSpan {
   attributes?: Record<string, unknown>;
 }
 
+export interface LiveTerminalLine {
+  sessionId: string;
+  runId?: string;
+  timestamp: string;
+  type: 'command' | 'stdout' | 'stderr' | 'agent' | 'success' | 'error';
+  text: string;
+}
+
 export interface UseSessionSocketOptions {
   enabled?: boolean;
 }
@@ -37,6 +45,7 @@ export function useSessionSocket(sessionId?: string, options?: UseSessionSocketO
   const [isConnected, setIsConnected] = useState(false);
   const [liveEvents, setLiveEvents] = useState<LiveSocketEvent[]>([]);
   const [liveTraces, setLiveTraces] = useState<LiveTraceSpan[]>([]);
+  const [liveTerminalLines, setLiveTerminalLines] = useState<LiveTerminalLine[]>([]);
   const [latestEvent, setLatestEvent] = useState<LiveSocketEvent | null>(null);
 
   const isEnabled = options?.enabled ?? true;
@@ -74,6 +83,12 @@ export function useSessionSocket(sessionId?: string, options?: UseSessionSocketO
       }
     };
 
+    const handleTerminalLine = (line: LiveTerminalLine) => {
+      if (line.sessionId === sessionId) {
+        setLiveTerminalLines((prev) => [...prev, line]);
+      }
+    };
+
     if (socket.connected) {
       handleConnect();
     } else {
@@ -84,6 +99,7 @@ export function useSessionSocket(sessionId?: string, options?: UseSessionSocketO
     socket.on('disconnect', handleDisconnect);
     socket.on('execution.event', handleExecutionEvent);
     socket.on('execution.trace', handleExecutionTrace);
+    socket.on('terminal.line', handleTerminalLine);
 
     return () => {
       socket.emit('leave_session', sessionId);
@@ -91,12 +107,14 @@ export function useSessionSocket(sessionId?: string, options?: UseSessionSocketO
       socket.off('disconnect', handleDisconnect);
       socket.off('execution.event', handleExecutionEvent);
       socket.off('execution.trace', handleExecutionTrace);
+      socket.off('terminal.line', handleTerminalLine);
     };
   }, [sessionId, isEnabled]);
 
   const clearLiveEvents = () => {
     setLiveEvents([]);
     setLiveTraces([]);
+    setLiveTerminalLines([]);
     setLatestEvent(null);
   };
 
@@ -104,6 +122,7 @@ export function useSessionSocket(sessionId?: string, options?: UseSessionSocketO
     isConnected,
     liveEvents,
     liveTraces,
+    liveTerminalLines,
     latestEvent,
     clearLiveEvents,
   };

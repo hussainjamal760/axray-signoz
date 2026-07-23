@@ -7,6 +7,7 @@ import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { emitLiveEvent } from '../sockets/socket.emitter';
+import { appendTerminalLine } from './terminal-logger.service';
 
 /**
  * Workspace Service
@@ -38,7 +39,8 @@ export const cloneRepository = async (
   const sessionId = telemetryContext?.sessionId;
   const runId = telemetryContext?.runId;
 
-  if (sessionId) {
+  if (sessionId && runId) {
+    appendTerminalLine(sessionId, runId, 'command', `git clone https://github.com/${repositoryFullName}.git /workspace`);
     emitLiveEvent(sessionId, {
       sessionId,
       runId,
@@ -83,7 +85,8 @@ export const cloneRepository = async (
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
 
-      if (sessionId) {
+      if (sessionId && runId) {
+        appendTerminalLine(sessionId, runId, 'stdout', `Repository ${repositoryFullName} ready in /workspace.`);
         emitLiveEvent(sessionId, {
           sessionId,
           runId,
@@ -106,6 +109,10 @@ export const cloneRepository = async (
     );
 
     if (cloneResult.exitCode !== 0) {
+      if (sessionId && runId) {
+        appendTerminalLine(sessionId, runId, 'stderr', cloneResult.output);
+        appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${cloneResult.exitCode}`);
+      }
       throw new AppError(
         500,
         `Git clone failed for ${repositoryFullName}: ${cloneResult.output}`
@@ -116,7 +123,8 @@ export const cloneRepository = async (
     span.setStatus({ code: SpanStatusCode.OK });
     span.end();
 
-    if (sessionId) {
+    if (sessionId && runId) {
+      appendTerminalLine(sessionId, runId, 'stdout', `Cloned https://github.com/${repositoryFullName}.git successfully.`);
       emitLiveEvent(sessionId, {
         sessionId,
         runId,
@@ -140,6 +148,13 @@ export const checkoutBranch = async (
   containerId: string,
   telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
+  const sessionId = telemetryContext?.sessionId;
+  const runId = telemetryContext?.runId;
+
+  if (sessionId && runId) {
+    appendTerminalLine(sessionId, runId, 'command', `git checkout ${branch}`);
+  }
+
   const span = tracer.startSpan('workspace.checkout', {
     attributes: {
       [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
@@ -162,10 +177,18 @@ export const checkoutBranch = async (
     );
 
     if (checkoutResult.exitCode !== 0) {
+      if (sessionId && runId) {
+        appendTerminalLine(sessionId, runId, 'stderr', checkoutResult.output);
+        appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${checkoutResult.exitCode}`);
+      }
       throw new AppError(
         500,
         `Git checkout failed for branch "${branch}": ${checkoutResult.output}`
       );
+    }
+
+    if (sessionId && runId) {
+      appendTerminalLine(sessionId, runId, 'stdout', `Switched to branch '${branch}'`);
     }
 
     console.log(`[Workspace] Branch "${branch}" checked out successfully.`);
@@ -198,7 +221,8 @@ export const ensureRuntime = async (
 
   console.log(`[Workspace] Selected runtime image: ${resolution.imageName}`);
   
-  if (telemetryContext?.sessionId) {
+  if (telemetryContext?.sessionId && telemetryContext?.runId) {
+    appendTerminalLine(telemetryContext.sessionId, telemetryContext.runId, 'agent', `Using prebuilt runtime image ${resolution.imageName}`);
     emitLiveEvent(telemetryContext.sessionId, {
       sessionId: telemetryContext.sessionId,
       runId: telemetryContext.runId,
@@ -224,7 +248,8 @@ export const installDependencies = async (
   const sessionId = telemetryContext?.sessionId;
   const runId = telemetryContext?.runId;
 
-  if (sessionId) {
+  if (sessionId && runId) {
+    appendTerminalLine(sessionId, runId, 'command', installCommand);
     emitLiveEvent(sessionId, {
       sessionId,
       runId,
@@ -256,6 +281,11 @@ export const installDependencies = async (
       `cd ${WORKSPACE_DIR} && ${installCommand}`,
       { timeoutMs: 300000 }
     );
+
+    if (sessionId && runId) {
+      appendTerminalLine(sessionId, runId, installResult.exitCode === 0 ? 'stdout' : 'stderr', installResult.output);
+      appendTerminalLine(sessionId, runId, installResult.exitCode === 0 ? 'success' : 'error', `Exit Code: ${installResult.exitCode}`);
+    }
 
     if (installResult.exitCode !== 0) {
       console.warn(`[Workspace Warning] Dependency installation warning: ${installResult.output}`);
@@ -343,7 +373,8 @@ export const prepareWorkspace = async (
     analyzeSpan.setStatus({ code: SpanStatusCode.OK });
     analyzeSpan.end();
 
-    if (params.sessionId) {
+    if (params.sessionId && params.runId) {
+      appendTerminalLine(params.sessionId, params.runId, 'agent', `Detected runtime: ${spec.runtime || 'node'} (Package Manager: ${spec.packageManager || 'npm'})`);
       emitLiveEvent(params.sessionId, {
         sessionId: params.sessionId,
         runId: params.runId,

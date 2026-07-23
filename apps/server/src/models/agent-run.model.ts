@@ -25,6 +25,7 @@ export interface IAgentRun extends Document {
   diffSize?: number;
   changeSummary?: string;
   traceId?: string;
+  terminalOutput?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +58,7 @@ const AgentRunSchema: Schema = new Schema(
     diffSize: { type: Number },
     changeSummary: { type: String },
     traceId: { type: String },
+    terminalOutput: { type: String },
   },
   {
     timestamps: true,

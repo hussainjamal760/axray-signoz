@@ -26,6 +26,14 @@ export interface LiveTraceSpan {
   attributes?: Record<string, unknown>;
 }
 
+export interface LiveTerminalLine {
+  sessionId: string;
+  runId?: string;
+  timestamp: string;
+  type: 'command' | 'stdout' | 'stderr' | 'agent' | 'success' | 'error';
+  text: string;
+}
+
 let ioInstance: SocketIOServer | null = null;
 
 export function initSocketIO(io: SocketIOServer): void {
@@ -67,4 +75,10 @@ export function emitLiveTrace(sessionId: string, span: LiveTraceSpan): void {
   if (!ioInstance || !sessionId) return;
   const room = `session:${sessionId}`;
   ioInstance.to(room).emit('execution.trace', span);
+}
+
+export function emitTerminalLine(sessionId: string, line: LiveTerminalLine): void {
+  if (!ioInstance || !sessionId) return;
+  const room = `session:${sessionId}`;
+  ioInstance.to(room).emit('terminal.line', line);
 }

@@ -4,6 +4,7 @@ import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { emitLiveEvent } from '../sockets/socket.emitter';
+import { appendTerminalLine } from './terminal-logger.service';
 
 /**
  * Agent Service
@@ -120,6 +121,9 @@ export const executePrompt = async (
   const groqApiKey = process.env.GROQ_API_KEY;
   if (!groqApiKey) {
     console.warn(`[Agent Warning] GROQ_API_KEY missing. Returning fallback simulation.`);
+    if (sessionId && runId) {
+      appendTerminalLine(sessionId, runId, 'error', 'GROQ_API_KEY missing. Unable to run live LLM agent.');
+    }
     span.setAttribute('agent.status', 'fallback_no_api_key');
     span.end();
     return {
@@ -280,6 +284,9 @@ export const executePrompt = async (
           let exitCode = 0;
 
           if (fnName === 'read_file') {
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'agent', `Reading file ${fnArgs.path}...`);
+            }
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
             const readRes = await containerService.executeCommand(
               options.containerId,
@@ -288,13 +295,25 @@ export const executePrompt = async (
             );
             exitCode = readRes.exitCode;
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
-            toolOutput = exitCode === 0
-              ? readRes.output
-              : `Error reading file ${fnArgs.path}: ${readRes.output}`;
+            if (exitCode === 0) {
+              toolOutput = readRes.output;
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'stdout', readRes.output);
+              }
+            } else {
+              toolOutput = `Error reading file ${fnArgs.path}: ${readRes.output}`;
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
+                appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
+              }
+            }
           } else if (fnName === 'write_file') {
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
             const filePath = fnArgs.path || '';
             const content = fnArgs.content || '';
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'agent', `Writing file ${filePath}...`);
+            }
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, filePath);
             const base64Content = Buffer.from(content, 'utf8').toString('base64');
             const mkdirRes = await containerService.executeCommand(
               options.containerId,
@@ -303,6 +322,10 @@ export const executePrompt = async (
             if (mkdirRes.exitCode !== 0) {
               toolOutput = `Error creating directory for ${filePath}: ${mkdirRes.output}`;
               exitCode = mkdirRes.exitCode;
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
+                appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
+              }
             } else {
               const writeRes = await containerService.executeCommand(
                 options.containerId,
@@ -311,23 +334,44 @@ export const executePrompt = async (
               );
               exitCode = writeRes.exitCode;
               toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
-              toolOutput = exitCode === 0
-                ? `Successfully wrote file ${filePath}`
-                : `Error writing file ${filePath}: ${writeRes.output}`;
+              if (exitCode === 0) {
+                toolOutput = `Successfully wrote file ${filePath}`;
+                if (sessionId && runId) {
+                  appendTerminalLine(sessionId, runId, 'success', toolOutput);
+                }
+              } else {
+                toolOutput = `Error writing file ${filePath}: ${writeRes.output}`;
+                if (sessionId && runId) {
+                  appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
+                  appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
+                }
+              }
             }
           } else if (fnName === 'run_command') {
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, fnArgs.command || '');
+            const command = fnArgs.command || '';
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'command', command);
+            }
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, command);
             const cmdRes = await containerService.executeCommand(
               options.containerId,
-              `cd ${WORKSPACE_DIR} && ${fnArgs.command}`,
+              `cd ${WORKSPACE_DIR} && ${command}`,
               { timeoutMs: 30000, maxBufferBytes: 100000 }
             );
             exitCode = cmdRes.exitCode;
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
             toolOutput = `Exit Code: ${exitCode}\nOutput:\n${cmdRes.output}`;
+
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, exitCode === 0 ? 'stdout' : 'stderr', cmdRes.output);
+              appendTerminalLine(sessionId, runId, exitCode === 0 ? 'success' : 'error', `Exit Code: ${exitCode}`);
+            }
           } else {
             toolOutput = `Unknown tool "${fnName}"`;
             exitCode = 1;
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'error', toolOutput);
+            }
           }
 
           toolSpan.setStatus({ code: SpanStatusCode.OK });
@@ -363,6 +407,10 @@ export const executePrompt = async (
         // Final text summary from AI
         const finalContent = responseMessage.content || 'Execution completed.';
         console.log(`[Agent] Finished execution in ${turn} turns (${totalTokens} tokens).`);
+
+        if (sessionId && runId) {
+          appendTerminalLine(sessionId, runId, 'agent', `Finished task execution in ${turn} turns.`);
+        }
 
         span.setAttribute('agent.turns_used', turn);
         span.setAttribute('agent.total_tokens', totalTokens);

@@ -8,6 +8,11 @@ import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { emitLiveEvent } from '../sockets/socket.emitter';
+import {
+  initRunTerminal,
+  appendTerminalLine,
+  flushAndPersistTerminalOutput,
+} from './terminal-logger.service';
 
 /**
  * Runner Service
@@ -34,6 +39,10 @@ export const executeRun = async (runId: string): Promise<void> => {
   }
 
   const sessionIdStr = session._id.toString();
+
+  // Initialize terminal logger buffer for this run
+  initRunTerminal(runId);
+  appendTerminalLine(sessionIdStr, runId, 'agent', `Task Prompt: "${run.prompt}"`);
 
   const span = tracer.startSpan('agent.run', {
     attributes: {
@@ -131,6 +140,7 @@ export const executeRun = async (runId: string): Promise<void> => {
 
     // 5. Capture Git Diff with Size Truncation Check
     try {
+      appendTerminalLine(sessionIdStr, runId, 'command', 'git diff --numstat');
       const gitDiff = await gitService.getDiff(session.containerId!, {
         runId,
         sessionId: sessionIdStr,
@@ -142,6 +152,8 @@ export const executeRun = async (runId: string): Promise<void> => {
       run.diffTruncated = gitDiff.truncated;
       run.diffSize = gitDiff.diffSize;
       run.changeSummary = gitDiff.changeSummary;
+
+      appendTerminalLine(sessionIdStr, runId, 'stdout', gitDiff.changeSummary);
     } catch (gitErr) {
       console.warn('[Runner Warning] Failed to capture git diff:', gitErr);
     }
@@ -154,6 +166,12 @@ export const executeRun = async (runId: string): Promise<void> => {
     if (run.startedAt) {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
+    
+    appendTerminalLine(sessionIdStr, runId, 'success', `Run completed successfully in ${((run.durationMs || 0) / 1000).toFixed(1)}s (${run.tokensUsed || 0} tokens used).`);
+
+    // Flush accumulated terminal output and persist onto AgentRun
+    const finalTerminalOutput = await flushAndPersistTerminalOutput(runId);
+    run.terminalOutput = finalTerminalOutput;
     await run.save();
 
     // Emit explicit run.completed OpenTelemetry span
@@ -199,9 +217,13 @@ export const executeRun = async (runId: string): Promise<void> => {
     const errMessage = error instanceof Error ? error.message : String(error);
     console.error(`[Runner] Execution failed for run ${runId}:`, errMessage);
 
+    appendTerminalLine(sessionIdStr, runId, 'error', `Run failed: ${errMessage}`);
+    const finalTerminalOutput = await flushAndPersistTerminalOutput(runId);
+
     run.status = 'failed';
     run.errorMessage = errMessage;
     run.completedAt = new Date();
+    run.terminalOutput = finalTerminalOutput;
     if (run.startedAt) {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }

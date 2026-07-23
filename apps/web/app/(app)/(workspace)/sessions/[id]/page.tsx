@@ -42,7 +42,7 @@ export default function SessionIdPage() {
   const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
 
   // Sockets connect and listen ONLY while an agent run is actively executing (status === 'running' | 'pending')
-  const { liveEvents, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined, {
+  const { liveEvents, liveTerminalLines, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined, {
     enabled: isSelectedRunExecuting,
   });
 
@@ -270,7 +270,11 @@ export default function SessionIdPage() {
 
           {/* Row 2: Terminal Window */}
           <section className="col-span-12 mt-4">
-            <TerminalPanel session={session} selectedRun={activeOrSelectedRun} />
+            <TerminalPanel
+              session={session}
+              selectedRun={activeOrSelectedRun}
+              liveTerminalLines={liveTerminalLines}
+            />
           </section>
 
           {/* Row 3: Dedicated Full-Width Git Diff Artifact Section */}
