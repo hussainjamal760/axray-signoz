@@ -1,7 +1,7 @@
 import * as containerService from './container.service';
 
 const WORKSPACE_DIR = '/workspace';
-const MAX_DIFF_BYTES = 50000; // 50 KB safe inline diff limit for MVP
+const MAX_DIFF_BYTES = 500000; // 50 KB safe inline diff limit for MVP
 
 export interface GitDiffResult {
   rawDiff: string;
