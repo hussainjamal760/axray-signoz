@@ -113,6 +113,7 @@ const TOOL_DECLARATIONS: any[] = [
 const SYSTEM_PROMPT = `You are AXRAY, an expert AI coding agent operating inside an isolated Docker environment.
 
 STRICT WORKSPACE RULES:
+0. You must always respond with exactly one tool call. Never respond with plain text, explanations, or reasoning outside of a tool call. If you need to think before acting, use the tool call itself (e.g. read_file or search_files) as your next action.
 1. All commands execute strictly within /workspace.
 2. ALWAYS inspect the workspace first using run_command (e.g. "ls -la") or read_file.
 3. When searching for code patterns or symbols, ALWAYS prefer the dedicated tool "search_files(pattern, path)" instead of running shell grep.
@@ -163,6 +164,7 @@ export const executePrompt = async (
   let turn = 0;
   const maxTurns = options.maxTurns || MAX_TURNS;
   let totalTokens = 0;
+  const executedToolsCache = new Map<string, { output: string; exitCode: number }>();
 
   try {
     while (turn < maxTurns) {
@@ -202,12 +204,43 @@ export const executePrompt = async (
       let tTokens = 0;
 
       try {
-        completion = await groq.chat.completions.create({
-          model: DEFAULT_GROQ_MODEL,
-          messages,
-          tools: TOOL_DECLARATIONS,
-          temperature: 0.2,
-        });
+        const fetchCompletion = async (overrideToolChoice?: any) => {
+          return await groq.chat.completions.create({
+            model: DEFAULT_GROQ_MODEL,
+            messages,
+            tools: TOOL_DECLARATIONS,
+            tool_choice: overrideToolChoice || 'required',
+            temperature: 0.2,
+          });
+        };
+
+        try {
+          completion = await fetchCompletion('required');
+        } catch (initialErr: any) {
+          const isParseError =
+            initialErr?.error?.code === 'output_parse_failed' ||
+            initialErr?.code === 'output_parse_failed' ||
+            (typeof initialErr?.message === 'string' && initialErr.message.includes('output_parse_failed'));
+
+          if (isParseError) {
+            console.warn(`[Agent Turn ${turn}/${maxTurns}] output_parse_failed detected, retrying with correction...`);
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'agent', `[Turn ${turn}] output_parse_failed detected. Retrying with correction...`);
+            }
+            const failedGen = initialErr?.error?.failed_generation || initialErr?.failed_generation || '';
+            const feedback = `Your previous response was not a valid tool call${failedGen ? ` (failed generation: "${failedGen}")` : ''}. You must respond with exactly one tool call and nothing else. Try again.`;
+
+            messages.push({
+              role: 'user',
+              content: feedback,
+            });
+
+            // Retry once with tool_choice forced to 'required'
+            completion = await fetchCompletion('required');
+          } else {
+            throw initialErr;
+          }
+        }
 
         if (completion.usage) {
           pTokens = completion.usage.prompt_tokens || 0;
@@ -256,8 +289,24 @@ export const executePrompt = async (
         throw new Error('Groq returned empty response message');
       }
 
-      // Append assistant response to messages array
-      messages.push(responseMessage);
+      // Sanitize responseMessage for messages history (strip heavy write_file content)
+      const sanitizedResponseMessage = JSON.parse(JSON.stringify(responseMessage));
+      if (sanitizedResponseMessage.tool_calls) {
+        for (const tc of sanitizedResponseMessage.tool_calls) {
+          if (tc.function?.name === 'write_file') {
+            try {
+              const parsedArgs = JSON.parse(tc.function.arguments || '{}');
+              if (parsedArgs.content) {
+                parsedArgs.content = '<content written, see file on disk>';
+                tc.function.arguments = JSON.stringify(parsedArgs);
+              }
+            } catch {}
+          }
+        }
+      }
+
+      // Append sanitized response to messages array
+      messages.push(sanitizedResponseMessage);
 
       // Check if LLM requested tool calls
       const toolCalls = responseMessage.tool_calls;
@@ -305,14 +354,26 @@ export const executePrompt = async (
           let toolOutput = '';
           let exitCode = 0;
 
-          if (fnName === 'read_file') {
+          const cacheKey = `${fnName}:${JSON.stringify(fnArgs)}`;
+          let isCached = false;
+
+          if (executedToolsCache.has(cacheKey)) {
+            const cached = executedToolsCache.get(cacheKey)!;
+            isCached = true;
+            exitCode = cached.exitCode;
+            toolOutput = `[Cached result - identical call already executed this run]\n${cached.output}`;
+            console.log(`[Agent Tool Cache Hit] Function: "${fnName}", Args:`, fnArgs);
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'agent', `[Cached Result] ${fnName}(${fnArgs.path || fnArgs.command || fnArgs.pattern || ''})`);
+            }
+          } else if (fnName === 'read_file') {
             if (sessionId && runId) {
               appendTerminalLine(sessionId, runId, 'agent', `Reading file ${fnArgs.path}...`);
             }
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
             const readRes = await containerService.executeCommand(
               options.containerId,
-              `head -n 500 ${WORKSPACE_DIR}/${fnArgs.path}`,
+              `head -n 100 ${WORKSPACE_DIR}/${fnArgs.path}`,
               { timeoutMs: 15000, maxBufferBytes: 100000 }
             );
             exitCode = readRes.exitCode;
@@ -436,11 +497,25 @@ export const executePrompt = async (
             });
           }
 
+          // Truncate tool output for LLM message history (4,000 char max limit)
+          const MAX_TOOL_OUTPUT_CHARS = 4000;
+          let llmToolOutput = toolOutput;
+          if (llmToolOutput.length > MAX_TOOL_OUTPUT_CHARS) {
+            const originalLen = llmToolOutput.length;
+            llmToolOutput =
+              llmToolOutput.substring(0, MAX_TOOL_OUTPUT_CHARS) +
+              `\n[...output truncated, ${originalLen} total characters. Refine your search/command if you need more.]`;
+          }
+
+          if (!isCached) {
+            executedToolsCache.set(cacheKey, { output: llmToolOutput, exitCode });
+          }
+
           // Tool resilience: Always pass tool output back to model (even on non-zero exit codes/timeouts)
           messages.push({
             role: 'tool',
             tool_call_id: toolCall.id,
-            content: toolOutput,
+            content: llmToolOutput,
           });
         }
       } else {
