@@ -39,26 +39,29 @@ export function RootCauseCard({ activeRun, events = [] }: RootCauseCardProps) {
   }, [fullText]);
 
   return (
-    <div className="bg-surface-container border-[3px] border-background brutalist-shadow p-6 reveal-text" style={{ animationDelay: '0.1s' }}>
-      <div className="flex justify-between items-start mb-6">
+    <div className="bg-surface-container-lowest/50 backdrop-blur-md rounded-2xl border border-rose-500/20 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.12)] reveal-text relative overflow-hidden group" style={{ animationDelay: '0.1s' }}>
+      {/* Subtle Glow */}
+      <div className="absolute w-40 h-40 bg-rose-500/5 rounded-full blur-3xl -top-10 -right-10 pointer-events-none group-hover:bg-rose-500/10 transition-all duration-700"></div>
+
+      <div className="flex justify-between items-start mb-6 relative z-10">
         <div className="flex-1 pr-6">
-          <h2 className="text-2xl md:text-3xl font-black uppercase mb-4 text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-rose-500">troubleshoot</span>
+          <h2 className="text-xl md:text-2xl font-bold text-on-surface mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]">troubleshoot</span>
             Root Cause Detected
           </h2>
-          <p className="text-rose-400 font-mono text-sm max-w-3xl min-h-[48px] break-words whitespace-pre-wrap">
+          <p className="text-rose-400 font-mono text-sm max-w-3xl min-h-[48px] break-words whitespace-pre-wrap leading-relaxed">
             {displayText}
             <span className="inline-block w-2 h-4 bg-primary-fixed animate-pulse ml-1 align-middle"></span>
           </p>
         </div>
         <div className="text-right shrink-0 hidden sm:block">
-          <div className="font-mono-label text-xs font-bold text-on-surface-variant uppercase mb-1">Confidence</div>
-          <div className="text-4xl font-black text-primary-fixed">High</div>
+          <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Confidence</div>
+          <div className="text-2xl font-black text-primary-fixed drop-shadow-[0_0_12px_rgba(var(--color-primary-fixed),0.4)]">High</div>
         </div>
       </div>
-      <div className="flex items-center gap-4 bg-background p-4 border-2 border-background w-fit">
-        <span className="material-symbols-outlined text-primary-fixed">history</span>
-        <span className="font-mono-label text-sm font-bold uppercase text-on-surface">Failure localized at: <span className="text-rose-500">{failureTurn}</span></span>
+      <div className="flex items-center gap-3 bg-rose-500/10 p-3 rounded-xl border border-rose-500/20 w-fit relative z-10 shadow-sm">
+        <span className="material-symbols-outlined text-rose-400 text-[18px]">history</span>
+        <span className="text-xs font-medium text-rose-300">Failure localized at: <span className="text-white font-bold">{failureTurn}</span></span>
       </div>
     </div>
   );

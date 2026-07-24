@@ -63,27 +63,62 @@ export default function FailureAnalysisPage() {
 
       {/* Main Content (Left Column) */}
       <section className="col-span-12 lg:col-span-8 flex flex-col space-y-6">
-        <RootCauseCard activeRun={activeRun} events={events} />
-        <CodeDiffCard
-            sessionId={id}
-            pullRequest={session?.pullRequest}
-            diff={activeRun?.diff}
-            filesChanged={activeRun?.filesChanged}
-            insertions={activeRun?.insertions}
-            deletions={activeRun?.deletions}
-            diffTruncated={activeRun?.diffTruncated}
-            diffSize={activeRun?.diffSize}
-            changeSummary={activeRun?.changeSummary}
-            isLoading={timelineLoading}
-            isError={activeRun?.status === 'failed' && !activeRun?.diff}
-        />
-        <SuggestedFixCard activeRun={activeRun} />
+        {activeRun.status === 'failed' ? (
+          <>
+            <RootCauseCard activeRun={activeRun} events={events} />
+            <CodeDiffCard
+                sessionId={id}
+                pullRequest={session?.pullRequest}
+                diff={activeRun?.diff}
+                filesChanged={activeRun?.filesChanged}
+                insertions={activeRun?.insertions}
+                deletions={activeRun?.deletions}
+                diffTruncated={activeRun?.diffTruncated}
+                diffSize={activeRun?.diffSize}
+                changeSummary={activeRun?.changeSummary}
+                isLoading={timelineLoading}
+                isError={true}
+            />
+            <SuggestedFixCard activeRun={activeRun} />
+          </>
+        ) : (
+          <>
+            {/* Success State Hero */}
+            <div className="bg-surface-container-lowest/40 backdrop-blur-md border border-emerald-500/20 rounded-[24px] p-8 flex flex-col items-center justify-center text-center shadow-[0_8px_30px_rgb(0,0,0,0.12)] min-h-[250px] relative overflow-hidden group">
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "radial-gradient(#10b981 1px, transparent 1px)", backgroundSize: "24px 24px" }}></div>
+              <div className="absolute w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -top-10 -right-10 pointer-events-none group-hover:bg-emerald-500/20 transition-all duration-700"></div>
+              
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30 mb-6 shadow-inner relative z-10">
+                <span className="material-symbols-outlined text-emerald-400 text-3xl">task_alt</span>
+                <div className="absolute inset-0 rounded-full border border-emerald-500/50 animate-ping opacity-20"></div>
+              </div>
+              <h2 className="text-2xl font-bold text-on-surface tracking-tight mb-3 relative z-10">Run Completed Successfully</h2>
+              <p className="text-sm text-on-surface-variant max-w-md relative z-10">
+                The agent successfully fulfilled the prompt objective without encountering any unhandled exceptions. No failure analysis is required.
+              </p>
+            </div>
+            
+            <CodeDiffCard
+                sessionId={id}
+                pullRequest={session?.pullRequest}
+                diff={activeRun?.diff}
+                filesChanged={activeRun?.filesChanged}
+                insertions={activeRun?.insertions}
+                deletions={activeRun?.deletions}
+                diffTruncated={activeRun?.diffTruncated}
+                diffSize={activeRun?.diffSize}
+                changeSummary={activeRun?.changeSummary}
+                isLoading={timelineLoading}
+                isError={false}
+            />
+          </>
+        )}
       </section>
 
       {/* Right Sidebar */}
       <aside className="col-span-12 lg:col-span-4 flex flex-col space-y-6">
         <StatsModule activeRun={activeRun} />
-        <FailureVisualization run={activeRun} />
+        {activeRun.status === 'failed' && <FailureVisualization run={activeRun} />}
         <EvidenceTimeline events={events} />
       </aside>
     </main>
