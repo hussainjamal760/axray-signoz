@@ -267,7 +267,7 @@ The exported dashboard JSON is in `deploy/dashboards/`. To import:
 
 ## Alerts
 
-We use all four SigNoz alert signal types — Traces, Metrics, Logs, and Exceptions — to cover reliability, cost, performance, and integration health end to end. Exported rule definitions (all 14) live in deploy/alerts/axray-alert-rules.json, and can be recreated on a fresh instance with deploy/alerts/import-alerts.sh (see Reproducing this deployment).
+We use all four SigNoz alert signal types — Traces, Metrics, Logs, and Exceptions — to cover reliability, cost, performance, and integration health end to end. **All agent alerts are connected to Slack, and all notifications are sent directly there.** Exported rule definitions (all 14) live in deploy/alerts/axray-alert-rules.json, and can be recreated on a fresh instance with deploy/alerts/import-alerts.sh (see Reproducing this deployment).
 
 Trace-based (9)
 #	Alert	Filter	Condition	Severity	Purpose
