@@ -65,6 +65,7 @@ export default function AnalyticsDashboardPage() {
   return (
     <main
       className="flex-1 overflow-y-auto min-h-0 w-full relative z-10 custom-scrollbar p-6 md:p-8 bg-background"
+      style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
       data-lenis-prevent="true"
     >
       <AnalyticsHeader

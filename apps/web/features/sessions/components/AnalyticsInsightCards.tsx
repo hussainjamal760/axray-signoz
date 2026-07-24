@@ -19,7 +19,7 @@ export function AnalyticsInsightCards({ metrics, isLoading }: AnalyticsInsightCa
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 w-full">
 
       {/* Avg Duration */}
-      <div className="border-[3px] border-white p-6 bg-surface-container brutalist-shadow hover:border-primary-fixed group transition-all cursor-default">
+      <div className="bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm hover:border-primary-fixed/50 hover:-translate-y-1 hover:shadow-lg group transition-all cursor-default">
         <div className="flex justify-between items-start mb-4">
           <span className="material-symbols-outlined text-white group-hover:text-primary-fixed transition-colors">speed</span>
           <span className={`font-mono-label text-[10px] px-2 py-0.5 font-black ${
@@ -38,7 +38,7 @@ export function AnalyticsInsightCards({ metrics, isLoading }: AnalyticsInsightCa
       </div>
 
       {/* Avg tokens */}
-      <div className="border-[3px] border-white p-6 bg-surface-container brutalist-shadow hover:border-primary-fixed group transition-all cursor-default">
+      <div className="bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm hover:border-primary-fixed/50 hover:-translate-y-1 hover:shadow-lg group transition-all cursor-default">
         <div className="flex justify-between items-start mb-4">
           <span className="material-symbols-outlined text-white group-hover:text-primary-fixed transition-colors">memory</span>
           <span className="font-mono-label text-[10px] bg-secondary-container text-white font-black px-2 py-0.5 border border-white">OPENTELEMETRY</span>
@@ -51,7 +51,7 @@ export function AnalyticsInsightCards({ metrics, isLoading }: AnalyticsInsightCa
       </div>
 
       {/* Most common failure */}
-      <div className="border-[3px] border-white p-6 bg-surface-container brutalist-shadow hover:border-error group transition-all cursor-default">
+      <div className="bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm hover:border-error/50 hover:-translate-y-1 hover:shadow-lg group transition-all cursor-default">
         <div className="flex justify-between items-start mb-4">
           <span className="material-symbols-outlined text-error">warning</span>
           <span className={`font-mono-label text-[10px] font-black px-2 py-0.5 ${metrics.failedCount > 0 ? 'bg-error text-black' : 'bg-emerald-400 text-black'}`}>

@@ -26,19 +26,21 @@ interface StatCardProps {
   isLoading?: boolean;
 }
 
-function StatCard({ label, value, sub, subColor = "text-primary-fixed", hoverBorder = "hover:border-primary-fixed", isLoading }: StatCardProps) {
+function StatCard({ label, value, sub, subColor = "text-primary-fixed", hoverBorder = "hover:border-primary-fixed/50", isLoading }: StatCardProps) {
   return (
-    <div className={`border-[3px] border-white p-6 bg-[#0d0e08] brutalist-shadow transition-all ${hoverBorder} hover:-translate-y-1 hover:-translate-x-1 hover:shadow-none cursor-default relative overflow-hidden`}>
-      <div className="absolute inset-0 opacity-[0.025]" style={{
-        backgroundImage: "linear-gradient(#dcee00 1px, transparent 1px), linear-gradient(90deg, #dcee00 1px, transparent 1px)",
+    <div className={`bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl p-6 border border-outline-variant/30 shadow-sm transition-all duration-300 ${hoverBorder} hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] cursor-default relative overflow-hidden group`}>
+      <div className="absolute inset-0 opacity-[0.03]" style={{
+        backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
         backgroundSize: "20px 20px",
       }} />
-      <p className="font-mono-label text-[10px] text-on-surface-variant uppercase mb-4 font-bold relative z-10">{label}</p>
-      <p className={`text-4xl font-black text-white relative z-10 ${isLoading ? "animate-pulse opacity-40" : ""}`}
-        style={!isLoading && value !== "-" ? { textShadow: "0 0 20px rgba(220,238,0,0.3)" } : {}}>
+      {/* Subtle Glow */}
+      <div className="absolute w-32 h-32 rounded-full blur-3xl -top-10 -right-10 pointer-events-none transition-all duration-700 bg-primary-fixed/5 group-hover:bg-primary-fixed/10"></div>
+
+      <p className="font-mono text-[11px] text-on-surface-variant uppercase mb-4 font-bold tracking-wider relative z-10">{label}</p>
+      <p className={`text-3xl font-black text-white relative z-10 tracking-tight ${isLoading ? "animate-pulse opacity-40" : ""}`}>
         {isLoading ? "---" : value}
       </p>
-      <p className={`font-mono-label text-[10px] mt-2 font-bold relative z-10 ${subColor}`}>{sub}</p>
+      <p className={`font-mono text-[10px] mt-2 font-semibold relative z-10 uppercase tracking-widest ${subColor}`}>{sub}</p>
     </div>
   );
 }

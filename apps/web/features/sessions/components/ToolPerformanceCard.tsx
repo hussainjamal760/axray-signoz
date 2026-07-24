@@ -9,7 +9,7 @@ export function ToolPerformanceCard({ sessionId }: ToolPerformanceCardProps) {
 
   if (isLoading) {
     return (
-      <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col justify-center items-center relative overflow-hidden">
+      <div className="h-full w-full bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group">
         <div className="animate-spin w-8 h-8 border-4 border-primary-fixed border-t-transparent rounded-full mb-4"></div>
         <div className="font-mono-label uppercase text-xs font-bold text-on-surface-variant tracking-widest">
           Analyzing Telemetry...
@@ -20,7 +20,7 @@ export function ToolPerformanceCard({ sessionId }: ToolPerformanceCardProps) {
 
   if (error || !tools) {
     return (
-      <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col justify-center items-center relative overflow-hidden">
+      <div className="h-full w-full bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm flex flex-col justify-center items-center relative overflow-hidden group">
         <span className="material-symbols-outlined text-error text-3xl mb-2">warning</span>
         <div className="font-mono-label uppercase text-xs font-bold text-error tracking-widest">
           Failed to load telemetry
@@ -31,7 +31,7 @@ export function ToolPerformanceCard({ sessionId }: ToolPerformanceCardProps) {
 
   if (tools.length === 0) {
     return (
-      <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col justify-center items-center text-center relative overflow-hidden">
+      <div className="h-full w-full bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm flex flex-col justify-center items-center text-center relative overflow-hidden group">
         <span className="material-symbols-outlined text-on-surface-variant text-4xl mb-3">query_stats</span>
         <h3 className="font-mono-label font-bold uppercase text-white mb-2">No Tool Telemetry</h3>
         <p className="text-sm text-on-surface-variant max-w-[200px]">
@@ -44,7 +44,7 @@ export function ToolPerformanceCard({ sessionId }: ToolPerformanceCardProps) {
   const maxAvgMs = Math.max(...tools.map(t => t.avgDurationMs), 1);
 
   return (
-    <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col relative overflow-hidden">
+    <div className="h-full w-full bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm flex flex-col relative overflow-hidden group">
       <div className="absolute inset-0 opacity-[0.025]" style={{
         backgroundImage: "linear-gradient(#dcee00 1px, transparent 1px), linear-gradient(90deg, #dcee00 1px, transparent 1px)",
         backgroundSize: "32px 32px",

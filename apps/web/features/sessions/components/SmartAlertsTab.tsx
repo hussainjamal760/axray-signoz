@@ -73,41 +73,41 @@ export const SmartAlertsTab: React.FC<SmartAlertsTabProps> = ({ runs }) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className={`p-4 rounded-lg border ${
-              anomaly.severity === 'critical' ? 'bg-red-500/10 border-red-500/30' :
-              anomaly.severity === 'high' ? 'bg-amber-500/10 border-amber-500/30' :
-              'bg-yellow-500/10 border-yellow-500/30'
+            className={`p-4 rounded-2xl border backdrop-blur-md shadow-sm ${
+              anomaly.severity === 'critical' ? 'bg-red-500/10 border-red-500/20' :
+              anomaly.severity === 'high' ? 'bg-amber-500/10 border-amber-500/20' :
+              'bg-yellow-500/10 border-yellow-500/20'
             }`}
           >
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider ${
-                    anomaly.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
-                    anomaly.severity === 'high' ? 'bg-amber-500/20 text-amber-400' :
-                    'bg-yellow-500/20 text-yellow-400'
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest ${
+                    anomaly.severity === 'critical' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                    anomaly.severity === 'high' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                    'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                   }`}>
                     {anomaly.type.replace('_', ' ')}
                   </span>
-                  <span className="text-gray-500 text-xs">
+                  <span className="text-on-surface-variant font-mono text-xs">
                     {new Date(anomaly.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
-                <h4 className={`text-base font-semibold mt-2 ${
-                  anomaly.severity === 'critical' ? 'text-red-100' :
-                  anomaly.severity === 'high' ? 'text-amber-100' :
-                  'text-yellow-100'
+                <h4 className={`text-base font-bold mt-3 tracking-tight ${
+                  anomaly.severity === 'critical' ? 'text-red-300' :
+                  anomaly.severity === 'high' ? 'text-amber-300' :
+                  'text-yellow-300'
                 }`}>
                   {anomaly.title}
                 </h4>
-                <p className="text-sm text-gray-400 mt-1">
+                <p className="text-sm text-on-surface-variant/90 mt-1.5 leading-relaxed">
                   {anomaly.description}
                 </p>
               </div>
-              <div className={`p-2 rounded-full ${
-                anomaly.severity === 'critical' ? 'bg-red-500/10 text-red-400' :
-                anomaly.severity === 'high' ? 'bg-amber-500/10 text-amber-400' :
-                'bg-yellow-500/10 text-yellow-400'
+              <div className={`p-2.5 rounded-full ${
+                anomaly.severity === 'critical' ? 'bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.2)]' :
+                anomaly.severity === 'high' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.2)]' :
+                'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 shadow-[0_0_12px_rgba(234,179,8,0.2)]'
               }`}>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {anomaly.type.includes('COST') ? (

@@ -21,8 +21,8 @@ export function SuccessRateChart({ dailyBuckets, isLoading }: Props) {
   const maxSuccess = hasData ? Math.max(...dailyBuckets.map(d => d.success)) : 0;
 
   return (
-    <div
-      className="col-span-12 lg:col-span-8 border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow relative overflow-hidden"
+    <div 
+      className="col-span-12 lg:col-span-8 bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl p-6 border border-outline-variant/30 shadow-sm relative overflow-hidden group"
     >
       {/* Neon grid background */}
       <div className="absolute inset-0 opacity-[0.03]" style={{

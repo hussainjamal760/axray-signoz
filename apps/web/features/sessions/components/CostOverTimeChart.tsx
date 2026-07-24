@@ -23,8 +23,8 @@ export function CostOverTimeChart({ dailyBuckets, isLoading }: Props) {
   const maxIdx = hasData ? dailyBuckets.findIndex(d => d.cost === maxCost) : -1;
 
   return (
-    <div
-      className="col-span-12 lg:col-span-6 border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow relative overflow-hidden"
+    <div 
+      className="col-span-12 lg:col-span-6 bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl p-6 border border-outline-variant/30 shadow-sm relative overflow-hidden group"
     >
       <div className="absolute inset-0 opacity-[0.025]" style={{
         backgroundImage: "linear-gradient(#dcee00 1px, transparent 1px), linear-gradient(90deg, #dcee00 1px, transparent 1px)",

@@ -35,26 +35,26 @@ export function AnalyticsHeader({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span className="material-symbols-outlined text-primary-fixed text-2xl">analytics</span>
-            <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter">
-              Analytics
+            <span className="material-symbols-outlined text-primary-fixed text-2xl drop-shadow-[0_0_8px_rgba(var(--color-primary-fixed),0.6)]">analytics</span>
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              Session Analytics
               {session?.repositoryFullName && (
-                <span className="text-outline text-2xl ml-3 font-black">
+                <span className="text-on-surface-variant font-medium ml-3">
                   / {session.repositoryFullName.split("/")[1]}
                 </span>
               )}
             </h1>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <span className="border-2 border-emerald-500/40 bg-emerald-500/10 text-emerald-400 px-2 py-1 font-mono-label text-[10px] font-bold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
-              SIGNOZ CLICKHOUSE
+          <div className="flex flex-wrap gap-3 mt-2">
+            <span className="border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 tracking-wider uppercase shadow-sm">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_currentColor]"></span>
+              ClickHouse Active
             </span>
-            <span className="border-2 border-outline px-2 py-1 font-mono-label text-[10px] bg-surface-container-high text-on-surface-variant font-bold">
-              {isLoading ? "..." : `${metrics.totalRuns} RUNS`}
+            <span className="border border-outline-variant/20 px-3 py-1 rounded-full text-[10px] bg-surface-container/40 text-on-surface-variant font-bold tracking-wider uppercase shadow-sm">
+              {isLoading ? "..." : `${metrics.totalRuns} Runs Indexed`}
             </span>
-            <span className="border-2 border-outline px-2 py-1 font-mono-label text-[10px] bg-surface-container-high text-on-surface-variant font-bold">
-              LAST: {isLoading ? "..." : lastRunTime}
+            <span className="border border-outline-variant/20 px-3 py-1 rounded-full text-[10px] bg-surface-container/40 text-on-surface-variant font-bold tracking-wider uppercase shadow-sm">
+              Last Sync: {isLoading ? "..." : lastRunTime}
             </span>
           </div>
         </div>

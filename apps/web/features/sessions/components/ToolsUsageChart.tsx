@@ -21,7 +21,7 @@ export function ToolsUsageChart({ toolsData, isLoading }: Props) {
   const totalCalls = hasData ? toolsData.reduce((s, t) => s + t.calls, 0) : 0;
 
   return (
-    <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col relative overflow-hidden">
+    <div className="h-full w-full bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 p-6 shadow-sm flex flex-col relative overflow-hidden group">
       <div className="absolute inset-0 opacity-[0.025]" style={{
         backgroundImage: "linear-gradient(#dcee00 1px, transparent 1px), linear-gradient(90deg, #dcee00 1px, transparent 1px)",
         backgroundSize: "32px 32px",

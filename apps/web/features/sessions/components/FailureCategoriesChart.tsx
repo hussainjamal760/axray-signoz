@@ -27,12 +27,9 @@ export function FailureCategoriesChart({ categories, isLoading }: Props) {
   const total = categories.reduce((s, c) => s + c.count, 0);
 
   return (
-    <div className="col-span-12 lg:col-span-4 border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col relative overflow-hidden">
-      {/* Background grid */}
-      <div className="absolute inset-0 opacity-[0.025]" style={{
-        backgroundImage: "linear-gradient(#ef4444 1px, transparent 1px), linear-gradient(90deg, #ef4444 1px, transparent 1px)",
-        backgroundSize: "32px 32px",
-      }} />
+    <div className="col-span-12 lg:col-span-4 bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl p-6 border border-outline-variant/30 shadow-sm flex flex-col relative overflow-hidden group">
+      {/* Subtle Glow */}
+      <div className="absolute w-40 h-40 rounded-full blur-3xl -bottom-10 -right-10 pointer-events-none transition-all duration-700 bg-rose-500/5 group-hover:bg-rose-500/10"></div>
 
       <div className="relative z-10 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-1">
