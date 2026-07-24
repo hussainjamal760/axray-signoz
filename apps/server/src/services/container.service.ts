@@ -1,6 +1,7 @@
 /**
  * Container Service
  * Responsible ONLY for Docker container lifecycle operations via Dockerode.
+ * Includes Command Auto-Transformation, Timeout Safeguards, and Output Protection.
  */
 
 import { docker, DOCKER_RUNTIME_IMAGE } from '../lib/docker';
@@ -29,6 +30,46 @@ function handleDockerError(error: unknown, action: string): never {
   }
 
   throw new AppError(500, `Docker operation failed (${action}): ${message}`);
+}
+
+/**
+ * Backend Command Transformation Middleware
+ * Automatically injects exclusion flags into search commands if missing.
+ */
+export function sanitizeAndTransformCommand(command: string): string {
+  let cmd = command.trim();
+
+  // If invoking grep without --exclude-dir, inject heavy directory exclusions
+  if (/\bgrep\b/.test(cmd) && !cmd.includes('--exclude-dir')) {
+    cmd = cmd.replace(
+      /\bgrep\b/,
+      'grep --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next'
+    );
+  }
+
+  // If invoking ripgrep (rg) without --glob, inject heavy directory exclusions
+  if (/\brg\b/.test(cmd) && !cmd.includes('--glob')) {
+    cmd = cmd.replace(
+      /\brg\b/,
+      "rg --glob '!node_modules' --glob '!.git' --glob '!dist' --glob '!.next'"
+    );
+  }
+
+  return cmd;
+}
+
+/**
+ * Determines intelligent default timeout based on command pattern
+ */
+function getCommandDefaultTimeoutMs(command: string): number {
+  const cmd = command.trim();
+  if (/(install|ci|build)\b/.test(cmd)) {
+    return 120000; // 120s build/install timeout
+  }
+  if (/(test|jest|vitest|playwright)\b/.test(cmd)) {
+    return 60000; // 60s test suite timeout
+  }
+  return 30000; // 30s default timeout
 }
 
 export const createContainer = async (params: {
@@ -74,7 +115,6 @@ export const startContainer = async (containerId: string): Promise<void> => {
     const container = docker.getContainer(containerId);
     await container.start();
 
-    // Verify container state after start
     const data = await container.inspect();
     if (!data.State.Running) {
       throw new Error(`Container process exited immediately (ExitCode: ${data.State.ExitCode})`);
@@ -93,7 +133,6 @@ export const stopContainer = async (containerId: string): Promise<void> => {
     await container.stop();
     console.log(`[Docker] Container stopped.`);
   } catch (error) {
-    // Ignore error if already stopped
     console.log(`[Docker] Stop container result:`, error instanceof Error ? error.message : error);
   }
 };
@@ -105,7 +144,6 @@ export const removeContainer = async (containerId: string): Promise<void> => {
     await container.remove({ force: true });
     console.log(`[Docker] Container removed.`);
   } catch (error) {
-    // Ignore error if already removed
     console.log(`[Docker] Remove container result:`, error instanceof Error ? error.message : error);
   }
 };
@@ -149,7 +187,6 @@ export const ensureContainerRunning = async (params: {
     }
     return { containerId: params.containerId, containerStatus: 'running' };
   } catch {
-    // If container inspect fails or container was deleted, recreate
     const { containerId } = await createContainer({
       sessionId: params.sessionId,
       repositoryFullName: params.repositoryFullName,
@@ -162,13 +199,17 @@ export const ensureContainerRunning = async (params: {
 
 export const executeCommand = async (
   containerId: string,
-  command: string,
+  rawCommand: string,
   options?: { timeoutMs?: number; maxBufferBytes?: number }
 ): Promise<{ exitCode: number; output: string }> => {
-  const timeoutMs = options?.timeoutMs ?? 30000;
+  // Apply backend middleware command transformation (auto-inject exclusions)
+  const command = sanitizeAndTransformCommand(rawCommand);
+
+  const timeoutMs = options?.timeoutMs ?? getCommandDefaultTimeoutMs(command);
   const maxBufferBytes = options?.maxBufferBytes ?? 100000; // 100KB max
 
   console.log(`[Docker] Executing command in ${containerId} (timeout=${timeoutMs}ms): "${command}"`);
+
   try {
     const container = docker.getContainer(containerId);
     const exec = await container.exec({
@@ -187,14 +228,17 @@ export const executeCommand = async (
         try {
           (stream as any).destroy?.();
         } catch {}
-        reject(new Error(`Command execution timed out after ${timeoutMs}ms`));
+        reject(new Error('TIMEOUT'));
       }, timeoutMs);
 
       stream.on('data', (chunk: Buffer) => {
         if (output.length < maxBufferBytes) {
           output += chunk.toString('utf8');
           if (output.length >= maxBufferBytes) {
-            output += '\n[Output truncated due to size limits]';
+            output += '\n[outputTruncated=true: Output truncated due to 100KB size limit. Showing partial output.]';
+            try {
+              (stream as any).destroy?.();
+            } catch {}
           }
         }
       });
@@ -215,7 +259,14 @@ export const executeCommand = async (
       exitCode: inspectData.ExitCode ?? 0,
       output: output.trim(),
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'TIMEOUT') {
+      const sec = (timeoutMs / 1000).toFixed(0);
+      return {
+        exitCode: 124,
+        output: `Command timed out after ${sec}s. Possible cause: recursive search or scanning large directories (e.g., node_modules, .git). Try a more specific search path or use search_files().`,
+      };
+    }
     return handleDockerError(error, 'Execute command');
   }
 };

@@ -73,6 +73,27 @@ const TOOL_DECLARATIONS: any[] = [
   {
     type: 'function',
     function: {
+      name: 'search_files',
+      description: 'Search for a text pattern or symbol in workspace files. Automatically excludes heavy directories like node_modules and .git.',
+      parameters: {
+        type: 'object',
+        properties: {
+          pattern: {
+            type: 'string',
+            description: 'The search string or pattern to look for in workspace files',
+          },
+          path: {
+            type: 'string',
+            description: 'Optional subfolder path relative to /workspace to restrict search, e.g. "src"',
+          },
+        },
+        required: ['pattern'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'run_command',
       description: 'Execute a bash command in /workspace inside the container. Command times out after 30 seconds.',
       parameters: {
@@ -91,12 +112,13 @@ const TOOL_DECLARATIONS: any[] = [
 
 const SYSTEM_PROMPT = `You are AXRAY, an expert AI coding agent operating inside an isolated Docker environment.
 
-RULES:
-1. ALWAYS inspect the workspace first using run_command (e.g. "ls -la") or read_file.
-2. Before modifying or testing, read relevant files using read_file to understand the project structure.
-3. Use write_file to safely edit or create files with complete content. Do NOT write shell heredoc patches.
-4. Use run_command to run test suites, build commands, or shell utilities.
-5. When finished or satisfied with results, respond directly with a concise text response summarizing your actions. Do not invoke tools after completing your objective.`;
+STRICT WORKSPACE RULES:
+1. All commands execute strictly within /workspace.
+2. ALWAYS inspect the workspace first using run_command (e.g. "ls -la") or read_file.
+3. When searching for code patterns or symbols, ALWAYS prefer the dedicated tool "search_files(pattern, path)" instead of running shell grep.
+4. Use read_file to view file contents (bounded to 500 lines) and write_file to edit files safely. Do NOT write shell heredoc patches.
+5. Use run_command to run test suites, build commands, or shell utilities.
+6. When finished or satisfied with results, respond directly with a concise text response summarizing your actions. Do not invoke tools after completing your objective.`;
 
 export const executePrompt = async (
   options: AgentExecutionOptions
@@ -260,11 +282,11 @@ export const executePrompt = async (
               phase: 'tool',
               status: 'running',
               title: `Tool: ${fnName}`,
-              description: fnArgs.path || fnArgs.command || fnName,
+              description: fnArgs.path || fnArgs.command || fnArgs.pattern || fnName,
               metadata: {
                 toolName: fnName,
                 filePath: fnArgs.path,
-                commandSummary: fnArgs.command,
+                commandSummary: fnArgs.command || fnArgs.pattern,
               },
             });
           }
@@ -347,6 +369,25 @@ export const executePrompt = async (
                 }
               }
             }
+          } else if (fnName === 'search_files') {
+            const pattern = fnArgs.pattern || '';
+            const targetSubPath = fnArgs.path ? `${WORKSPACE_DIR}/${fnArgs.path}` : WORKSPACE_DIR;
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, 'agent', `Searching files for pattern "${pattern}"...`);
+            }
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, `search_files ${pattern}`);
+            const searchRes = await containerService.executeCommand(
+              options.containerId,
+              `cd ${WORKSPACE_DIR} && grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next "${pattern}" ${targetSubPath}`,
+              { timeoutMs: 25000, maxBufferBytes: 100000 }
+            );
+            exitCode = searchRes.exitCode;
+            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+            toolOutput = searchRes.output || `No occurrences of "${pattern}" found.`;
+
+            if (sessionId && runId) {
+              appendTerminalLine(sessionId, runId, exitCode === 0 ? 'stdout' : 'stderr', toolOutput);
+            }
           } else if (fnName === 'run_command') {
             const command = fnArgs.command || '';
             if (sessionId && runId) {
@@ -355,8 +396,7 @@ export const executePrompt = async (
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, command);
             const cmdRes = await containerService.executeCommand(
               options.containerId,
-              `cd ${WORKSPACE_DIR} && ${command}`,
-              { timeoutMs: 30000, maxBufferBytes: 100000 }
+              `cd ${WORKSPACE_DIR} && ${command}`
             );
             exitCode = cmdRes.exitCode;
             toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
@@ -386,17 +426,17 @@ export const executePrompt = async (
               phase: 'tool',
               status: exitCode === 0 ? 'completed' : 'failed',
               title: `Tool: ${fnName}`,
-              description: fnArgs.path || fnArgs.command || fnName,
+              description: fnArgs.path || fnArgs.command || fnArgs.pattern || fnName,
               metadata: {
                 toolName: fnName,
                 filePath: fnArgs.path,
-                commandSummary: fnArgs.command,
+                commandSummary: fnArgs.command || fnArgs.pattern,
                 exitCode,
               },
             });
           }
 
-          // Append tool execution result message
+          // Tool resilience: Always pass tool output back to model (even on non-zero exit codes/timeouts)
           messages.push({
             role: 'tool',
             tool_call_id: toolCall.id,
