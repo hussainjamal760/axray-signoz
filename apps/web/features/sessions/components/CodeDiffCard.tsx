@@ -124,10 +124,9 @@ export function CodeDiffCard({
                 href={pullRequest.prUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-3 py-1 hover:bg-emerald-500/30 transition-colors"
+                className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-3 py-1 hover:bg-emerald-500/30 transition-colors font-black text-xs"
               >
-                <span className="material-symbols-outlined text-xs">call_split</span>
-                <span>PR #{pullRequest.prNumber}</span>
+                <span>VIEW PR</span>
                 <span className="material-symbols-outlined text-xs">open_in_new</span>
               </a>
             ) : (

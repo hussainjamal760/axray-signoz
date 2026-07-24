@@ -99,10 +99,7 @@ export function SessionHeader({ session }: { session: SessionSummary }) {
                   pr.status
                 )}`}
               >
-                <span className="material-symbols-outlined text-sm">call_split</span>
-                <span>
-                  PR #{pr.prNumber || pr.number} {pr.status.toUpperCase()}
-                </span>
+                <span>VIEW PR</span>
                 <span className="material-symbols-outlined text-xs">open_in_new</span>
               </a>
 
