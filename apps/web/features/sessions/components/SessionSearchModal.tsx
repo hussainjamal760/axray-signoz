@@ -277,14 +277,14 @@ export function SessionSearchModal({
       role={modal ? "dialog" : undefined}
       aria-modal={modal ? true : undefined}
       className={cn(
-        "mx-auto w-full max-w-2xl rounded-2xl border-[3px] backdrop-blur-xl",
-        "border-outline bg-surface/95 text-on-surface shadow-2xl flex flex-col max-h-[85vh]",
+        "mx-auto w-full max-w-2xl rounded-3xl border border-outline-variant/30 backdrop-blur-2xl",
+        "bg-surface-container-lowest/80 text-on-surface shadow-[0_16px_40px_rgb(0,0,0,0.3)] flex flex-col max-h-[85vh]",
         className
       )}
       style={{ overflow: "clip" }}
     >
       {/* Search bar */}
-      <div className="flex shrink-0 items-center gap-2 border-b-[3px] border-outline-variant px-4 py-4">
+      <div className="flex shrink-0 items-center gap-3 border-b border-outline-variant/20 px-5 py-4">
         <Search className={ICON} />
         <input
           ref={inputRef}
@@ -309,26 +309,26 @@ export function SessionSearchModal({
               <SlidersHorizontal className="h-5 w-5" />
             </button>
             {filtersOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border-[3px] border-outline-variant bg-surface-container-high p-2 shadow-xl z-50">
+              <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-outline-variant/30 bg-surface-container/95 backdrop-blur-xl p-2 shadow-2xl z-50">
                 {tags.map((tag) => {
                   const isActive = activeTags.some((t) => t.label === tag.label);
                   return (
                      <button
                       key={tag.label}
                       onClick={() => toggleTag(tag)}
-                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-surface-container-highest"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-surface-container-highest"
                     >
-                      <div className="flex h-4 w-4 items-center justify-center rounded border-[2px] border-outline-variant">
-                        {isActive && <CheckCheck className="h-3 w-3 text-primary-fixed" />}
+                      <div className="flex h-[18px] w-[18px] items-center justify-center rounded-md border border-outline-variant/50 bg-surface-container-highest">
+                        {isActive && <CheckCheck className="h-3.5 w-3.5 text-primary-fixed" />}
                       </div>
-                      <span className="text-on-surface font-bold text-xs uppercase">{tag.label}</span>
+                      <span className="text-on-surface font-medium text-sm">{tag.label}</span>
                     </button>
                   );
                 })}
               </div>
             )}
           </div>
-          <kbd className="flex items-center gap-1 border-[2px] border-outline-variant bg-surface-container px-2 py-1 text-[10px] font-black text-on-surface-variant shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
+          <kbd className="flex items-center gap-1.5 rounded-md border border-outline-variant/30 bg-surface-container px-2 py-1 text-xs font-semibold text-on-surface-variant shadow-sm">
             <span className="text-sm leading-none">⌘</span>
             {modal && hotkey ? hotkey.toUpperCase() : "K"}
           </kbd>
@@ -342,13 +342,13 @@ export function SessionSearchModal({
       >
         {/* Tags */}
         {activeTags.length > 0 ? (
-          <div className="border-b-[3px] border-outline-variant px-5 py-4 bg-surface-container-low">
-            <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Filter by</span>
+          <div className="border-b border-outline-variant/20 px-5 py-4 bg-transparent">
+            <span className="text-xs font-medium uppercase tracking-wider text-on-surface-variant">Filter by</span>
             <div className="mt-3 flex flex-wrap gap-2">
               {activeTags.map((tag, i) => (
                 <span
                   key={`${tag.label}-${i}`}
-                  className="flex items-center gap-1.5 bg-surface-container px-3 py-1.5 text-[10px] font-black uppercase ring-2 ring-inset ring-outline-variant text-white shadow-[2px_2px_0px_0px_#000]"
+                  className="flex items-center gap-1.5 rounded-full bg-surface-container/50 border border-outline-variant/30 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-all hover:bg-surface-container"
                 >
                   {tag.icon}
                   <span>{tag.label}</span>
@@ -368,23 +368,23 @@ export function SessionSearchModal({
 
         {/* Results */}
         {filteredResults.length > 0 ? (
-          <div className="border-b-[3px] border-outline-variant pb-2">
-            <p className="px-5 pt-4 pb-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+          <div className="border-b border-outline-variant/20 pb-3">
+            <p className="px-5 pt-5 pb-3 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/80">
               Sessions&nbsp;&nbsp;<span className="text-primary-fixed">{filteredResults.length}</span>
             </p>
-            <ul className="px-2">
+            <ul className="px-3">
               {filteredResults.map((result, i) => (
                 <li key={`${result.name}-${i}`}>
                   <button
                     onClick={() => handleSelectResult(result, i)}
-                    className="group relative flex w-full items-center text-left px-4 py-3 transition-colors hover:bg-surface-container-highest focus:bg-surface-container-highest outline-none border-[3px] border-transparent hover:border-outline-variant hover:shadow-[3px_3px_0px_0px_#000]"
+                    className="group relative flex w-full rounded-xl items-center text-left px-4 py-3 transition-all hover:bg-surface-container-highest focus:bg-surface-container-highest outline-none border border-transparent hover:border-outline-variant/20 mb-1"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-background border-[2px] border-outline-variant shadow-[2px_2px_0px_0px_#000] group-hover:border-primary-fixed transition-colors">
+                    <span className="flex h-10 w-10 rounded-xl shrink-0 items-center justify-center bg-surface-container border border-outline-variant/20 shadow-sm group-hover:border-primary-fixed/50 group-hover:bg-primary-fixed/10 transition-colors">
                       {result.icon}
                     </span>
                     <span className="ml-4 flex-1 truncate">
-                      <span className="block text-sm font-black text-white truncate uppercase tracking-widest group-hover:text-primary-fixed transition-colors">{result.name}</span>
-                      {result.meta ? <span className="block text-[10px] font-bold text-on-surface-variant mt-0.5 truncate uppercase tracking-wider">{result.meta}</span> : null}
+                      <span className="block text-sm font-semibold text-white truncate tracking-wide group-hover:text-primary-fixed transition-colors">{result.name}</span>
+                      {result.meta ? <span className="block text-xs text-on-surface-variant/80 mt-0.5 truncate">{result.meta}</span> : null}
                     </span>
                   </button>
                 </li>
@@ -399,8 +399,8 @@ export function SessionSearchModal({
 
         {/* Pages / Quick actions */}
         {showPages && filteredQuickActions.length > 0 ? (
-          <div className="px-2 py-4 bg-surface-container-low">
-            <p className="px-3 pb-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">Pages</p>
+          <div className="px-3 py-4 bg-transparent">
+            <p className="px-3 pb-3 text-xs font-semibold uppercase tracking-widest text-on-surface-variant/80">Pages</p>
             {filteredQuickActions.map((action, i) => (
               <button
                 key={`${action.label}-${i}`}
@@ -409,14 +409,14 @@ export function SessionSearchModal({
                   action.onClick?.();
                   setOpen(false);
                 }}
-                className="group relative flex w-full items-center px-4 py-3 text-left transition-colors hover:bg-surface-container-highest outline-none border-[3px] border-transparent hover:border-outline-variant hover:shadow-[3px_3px_0px_0px_#000]"
+                className="group relative flex w-full rounded-xl items-center px-4 py-3 text-left transition-all hover:bg-surface-container-highest outline-none border border-transparent hover:border-outline-variant/20 mb-1"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-background border-[2px] border-outline-variant shadow-[2px_2px_0px_0px_#000] text-on-surface-variant group-hover:text-primary-fixed group-hover:border-primary-fixed transition-colors">
+                <span className="flex h-10 w-10 shrink-0 rounded-xl items-center justify-center bg-surface-container border border-outline-variant/20 shadow-sm text-on-surface-variant group-hover:text-primary-fixed group-hover:border-primary-fixed/50 group-hover:bg-primary-fixed/10 transition-colors">
                   {action.icon ?? <Plus className="h-4 w-4" />}
                 </span>
-                <span className="pl-4 text-xs font-black uppercase tracking-widest text-white group-hover:text-primary-fixed transition-colors">{action.label}</span>
+                <span className="pl-4 text-sm font-medium text-white group-hover:text-primary-fixed transition-colors">{action.label}</span>
                 {action.shortcut ? (
-                  <kbd className="ml-auto flex h-[26px] w-[26px] items-center justify-center border-[2px] border-outline-variant bg-background text-[10px] font-black text-on-surface-variant shadow-[2px_2px_0px_0px_#000]">
+                  <kbd className="ml-auto flex h-[26px] w-[26px] rounded-md items-center justify-center border border-outline-variant/30 bg-surface-container text-xs font-semibold text-on-surface-variant shadow-sm">
                     {action.shortcut}
                   </kbd>
                 ) : null}
