@@ -178,9 +178,9 @@ export default function TracesExplorerPage() {
   const backToSessionLink = id ? `/sessions/${id}` : "/sessions";
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden font-mono-label">
+    <div className="flex-1 flex flex-col h-full bg-background overflow-hidden font-sans">
       {/* 1. Context Header & Observer-style Dropdown */}
-      <section className="p-4 md:p-6 border-b-[3px] border-primary-fixed bg-surface-container flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
+      <section className="p-4 md:p-6 border-b border-outline-variant/20 bg-surface-container-lowest/40 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
         <div className="space-y-2 max-w-3xl">
           <div className="flex items-center gap-2 font-mono-label text-xs text-on-surface-variant">
             <Link href={backToSessionLink} className="hover:text-primary-fixed cursor-pointer flex items-center gap-1 font-bold">
@@ -213,12 +213,12 @@ export default function TracesExplorerPage() {
 
             {/* Run Selection Dropdown (Observer Page Matching UI) */}
             {runs.length > 0 && (
-              <div className="flex items-center gap-2 bg-black border-2 border-outline px-3 py-1 font-mono-label text-xs font-bold text-primary-fixed brutalist-shadow-sm">
-                <span className="material-symbols-outlined text-sm">history</span>
+              <div className="flex items-center gap-2 bg-surface-container/40 backdrop-blur-sm border border-outline-variant/30 px-3 py-1.5 rounded-full font-mono-label text-xs font-bold text-primary-fixed shadow-sm">
+                <span className="material-symbols-outlined text-[14px]">history</span>
                 <select
                   value={activeRun?.id || ""}
                   onChange={(e) => handleSelectRunChange(e.target.value)}
-                  className="bg-transparent text-primary-fixed font-mono-label text-xs font-black outline-none cursor-pointer max-w-[280px] truncate"
+                  className="bg-transparent text-primary-fixed font-mono-label text-xs font-black outline-none cursor-pointer max-w-[280px] truncate appearance-none"
                 >
                   {runs.map((r, index) => (
                     <option key={r.id} value={r.id} className="bg-black text-on-surface">
@@ -226,6 +226,7 @@ export default function TracesExplorerPage() {
                     </option>
                   ))}
                 </select>
+                <span className="material-symbols-outlined text-[14px] pointer-events-none">expand_more</span>
               </div>
             )}
           </div>
@@ -233,28 +234,28 @@ export default function TracesExplorerPage() {
       </section>
 
       {/* 2. Search & Filter Bar */}
-      <div className="px-6 py-3 bg-surface border-b-2 border-outline flex flex-wrap items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-3 flex-1 min-w-[240px]">
-          <span className="material-symbols-outlined text-outline text-xl">search</span>
+      <div className="px-6 py-4 bg-surface-container-lowest/20 backdrop-blur-sm border-b border-outline-variant/10 flex flex-wrap items-center justify-between gap-4 shrink-0 z-10">
+        <div className="flex items-center gap-3 flex-1 min-w-[240px] bg-surface-container/30 border border-outline-variant/20 rounded-full px-4 py-2">
+          <span className="material-symbols-outlined text-outline text-lg">search</span>
           <input
             type="text"
             placeholder="Search spans, attributes, tools, errors..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent border-none text-xs text-white placeholder-outline focus:outline-none w-full font-mono-label font-bold"
+            className="bg-transparent border-none text-[13px] text-white placeholder-outline focus:outline-none w-full font-medium"
           />
         </div>
 
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white uppercase border-2 border-outline px-3 py-1 bg-black brutalist-shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_rgba(251,191,36,0.2)] hover:border-yellow-400/50">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white uppercase border border-outline-variant/20 rounded-full px-4 py-2 bg-surface-container/30 transition-all hover:bg-surface-container/50 hover:border-yellow-400/30">
             <input 
               type="checkbox" 
               checked={showHallucinations} 
               onChange={(e) => setShowHallucinations(e.target.checked)}
-              className="accent-yellow-400 w-3 h-3"
+              className="accent-yellow-400 w-3.5 h-3.5 rounded-full"
             />
             <span className={showHallucinations ? "text-yellow-400" : "text-on-surface-variant"}>
-              ⚠️ Show Hallucinations
+              <span className="text-[10px] mr-1">⚠️</span>Show Hallucinations
             </span>
           </label>
           <div className="flex items-center gap-2">
@@ -262,10 +263,10 @@ export default function TracesExplorerPage() {
             <button
               key={k}
               onClick={() => setKindFilter(k)}
-              className={`px-2.5 py-1 text-[10px] font-black uppercase border transition-all ${
+              className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase transition-all ${
                 kindFilter === k
-                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed brutalist-shadow-sm"
-                  : "border-outline text-on-surface-variant hover:text-white"
+                  ? "bg-primary-fixed/10 text-primary-fixed border border-primary-fixed/30 shadow-[0_0_12px_rgba(var(--color-primary-fixed),0.3)]"
+                  : "bg-surface-container/30 border border-outline-variant/20 text-on-surface-variant hover:text-white hover:bg-surface-container/50"
               }`}
             >
               {k}
@@ -279,8 +280,8 @@ export default function TracesExplorerPage() {
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden relative">
         {/* Connected Trace Canvas (Fully Scrollable) */}
         <div
-          className="flex-1 overflow-auto p-8 relative bg-surface-dim custom-scrollbar h-full"
-          style={{ backgroundImage: "radial-gradient(var(--color-surface-container-high) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+          className="flex-1 overflow-auto p-8 relative bg-transparent custom-scrollbar h-full"
+          style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "24px 24px" }}
           data-lenis-prevent="true"
         >
           {runsLoading || timelineLoading ? (
@@ -308,53 +309,53 @@ export default function TracesExplorerPage() {
 
         {/* Span Details Side Panel */}
         {selectedSpan && (
-          <div className="w-full lg:w-[420px] border-t-4 lg:border-t-0 lg:border-l-[3px] border-outline bg-surface-container p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6 z-30 shadow-2xl h-full shrink-0" data-lenis-prevent="true">
-            <div className="flex justify-between items-start border-b-2 border-outline pb-4">
+          <div className="w-full lg:w-[420px] border-l border-outline-variant/20 bg-surface-container-lowest/80 backdrop-blur-3xl p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6 z-30 shadow-[-8px_0_30px_rgba(0,0,0,0.2)] h-full shrink-0" data-lenis-prevent="true">
+            <div className="flex justify-between items-start border-b border-outline-variant/20 pb-4">
               <div>
-                <span className="text-[10px] bg-primary-fixed text-on-primary-fixed px-2 py-0.5 font-black uppercase">
+                <span className="text-[10px] bg-primary-fixed/10 text-primary-fixed border border-primary-fixed/20 rounded-full px-2.5 py-1 font-bold uppercase tracking-wider">
                   {selectedSpan.kind} SPAN
                 </span>
-                <h3 className="text-xl font-black text-white mt-2 break-all">{selectedSpan.name}</h3>
+                <h3 className="text-xl font-bold text-white mt-3 break-all">{selectedSpan.name}</h3>
               </div>
               <button
                 onClick={() => setSelectedSpan(null)}
-                className="text-on-surface-variant hover:text-white font-black text-sm border border-outline px-2 py-0.5"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant hover:text-white hover:bg-surface-container transition-all"
               >
-                ✕
+                <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
             </div>
 
             {/* Metrics Breakdown */}
-            <div className="grid grid-cols-2 gap-3 bg-surface p-4 border-2 border-outline">
+            <div className="grid grid-cols-2 gap-3 bg-surface-container/30 rounded-2xl p-4 border border-outline-variant/20 shadow-inner">
               <div>
-                <span className="text-[9px] text-on-surface-variant font-bold uppercase block">Duration</span>
-                <span className="text-lg font-black text-white">{selectedSpan.durationMs}ms</span>
+                <span className="text-[9px] text-on-surface-variant font-bold uppercase block tracking-wider">Duration</span>
+                <span className="text-lg font-mono text-white">{selectedSpan.durationMs}ms</span>
               </div>
               <div>
-                <span className="text-[9px] text-on-surface-variant font-bold uppercase block">Status</span>
-                <span className={`text-lg font-black ${selectedSpan.status === "ERROR" ? "text-error" : "text-emerald-400"}`}>
+                <span className="text-[9px] text-on-surface-variant font-bold uppercase block tracking-wider">Status</span>
+                <span className={`text-lg font-mono font-bold ${selectedSpan.status === "ERROR" ? "text-rose-400" : "text-emerald-400"}`}>
                   {selectedSpan.status}
                 </span>
               </div>
               {selectedSpan.tokens?.total !== undefined && (
                 <div>
-                  <span className="text-[9px] text-on-surface-variant font-bold uppercase block">Tokens</span>
-                  <span className="text-lg font-black text-primary-fixed">{selectedSpan.tokens.total}</span>
+                  <span className="text-[9px] text-on-surface-variant font-bold uppercase block tracking-wider">Tokens</span>
+                  <span className="text-lg font-mono text-primary-fixed">{selectedSpan.tokens.total}</span>
                 </div>
               )}
               {selectedSpan.model && (
                 <div>
-                  <span className="text-[9px] text-on-surface-variant font-bold uppercase block">Model</span>
-                  <span className="text-xs font-black text-white">{selectedSpan.model}</span>
+                  <span className="text-[9px] text-on-surface-variant font-bold uppercase block tracking-wider">Model</span>
+                  <span className="text-xs font-mono text-white">{selectedSpan.model}</span>
                 </div>
               )}
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex items-center gap-4 border-b-2 border-outline pb-2 mt-2">
+            <div className="flex items-center gap-6 border-b border-outline-variant/20 pb-1 mt-2">
               <button
                 onClick={() => setActiveTab("attributes")}
-                className={`text-xs font-black uppercase pb-1 border-b-4 transition-all ${
+                className={`text-[11px] font-bold uppercase pb-2 border-b-[3px] transition-all ${
                   activeTab === "attributes"
                     ? "border-primary-fixed text-primary-fixed"
                     : "border-transparent text-on-surface-variant hover:text-white"
@@ -364,14 +365,14 @@ export default function TracesExplorerPage() {
               </button>
               <button
                 onClick={() => setActiveTab("logs")}
-                className={`text-xs font-black uppercase pb-1 border-b-4 transition-all flex items-center gap-2 ${
+                className={`text-[11px] font-bold uppercase pb-2 border-b-[3px] transition-all flex items-center gap-1.5 ${
                   activeTab === "logs"
                     ? "border-emerald-400 text-emerald-400"
                     : "border-transparent text-on-surface-variant hover:text-white"
                 }`}
               >
                 <span className="material-symbols-outlined text-[14px]">terminal</span>
-                Terminal Logs
+                Logs
               </button>
             </div>
 
@@ -379,15 +380,15 @@ export default function TracesExplorerPage() {
               <>
                 {/* Attributes Table */}
                 <div>
-                  <h4 className="text-xs font-black uppercase text-white mb-3 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm text-primary-fixed">key</span>
+                  <h4 className="text-[10px] font-bold uppercase text-white mb-3 flex items-center gap-2 tracking-widest">
+                    <span className="material-symbols-outlined text-[14px] text-primary-fixed">key</span>
                     Span Attributes
                   </h4>
-                  <div className="bg-[#050503] border-2 border-outline p-3 space-y-2 text-xs overflow-x-auto max-h-[300px] custom-scrollbar" data-lenis-prevent="true">
+                  <div className="bg-[#050503]/50 rounded-xl border border-outline-variant/10 p-4 space-y-3 text-xs overflow-x-auto max-h-[300px] custom-scrollbar shadow-inner" data-lenis-prevent="true">
                     {Object.entries(selectedSpan.attributes).map(([k, v]) => (
-                      <div key={k} className="flex flex-col border-b border-outline/30 pb-1.5 last:border-none">
-                        <span className="text-[10px] text-primary-fixed font-bold">{k}</span>
-                        <span className="text-white font-mono break-all text-[11px]">
+                      <div key={k} className="flex flex-col border-b border-outline-variant/5 pb-2 last:border-none last:pb-0">
+                        <span className="text-[10px] text-primary-fixed/80 font-mono font-medium uppercase">{k}</span>
+                        <span className="text-on-surface-variant/90 font-mono break-all text-[11px] mt-0.5">
                           {typeof v === "object" ? JSON.stringify(v) : String(v)}
                         </span>
                       </div>
@@ -397,15 +398,15 @@ export default function TracesExplorerPage() {
 
                 {/* Raw JSON */}
                 <div>
-                  <h4 className="text-xs font-black uppercase text-white mb-2">OTEL Raw Payload</h4>
-                  <pre className="bg-[#050503] border-2 border-outline p-3 text-[10px] text-emerald-400 font-mono overflow-x-auto max-h-[200px] custom-scrollbar" data-lenis-prevent="true">
+                  <h4 className="text-[10px] font-bold uppercase text-white mb-2 tracking-widest">OTEL Raw Payload</h4>
+                  <pre className="bg-[#050503]/50 rounded-xl border border-outline-variant/10 p-4 text-[10px] text-emerald-400/80 font-mono overflow-x-auto max-h-[200px] custom-scrollbar shadow-inner" data-lenis-prevent="true">
                     {JSON.stringify(selectedSpan, null, 2)}
                   </pre>
                 </div>
               </>
             ) : (
               <div className="flex-1 flex flex-col min-h-[300px]">
-                <div className="bg-[#050503] border-2 border-outline p-4 flex-1 overflow-y-auto custom-scrollbar font-mono text-[11px]" data-lenis-prevent="true">
+                <div className="bg-[#050503]/50 rounded-xl border border-outline-variant/10 p-4 flex-1 overflow-y-auto custom-scrollbar font-mono text-[11px] shadow-inner" data-lenis-prevent="true">
                   {logsLoading ? (
                     <div className="h-full flex flex-col items-center justify-center text-outline animate-pulse">
                       <span className="material-symbols-outlined mb-2 text-2xl">sync</span>
@@ -481,19 +482,20 @@ function ConnectedSpanNodeRenderer({
   const isSelected = selectedSpanId === node.spanId;
 
   const borderColor = isSelected
-    ? "border-white"
+    ? "border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]"
     : isFailed
-    ? "border-error"
+    ? "border-rose-500/30 hover:border-rose-500/60"
     : isLLM
-    ? "border-cyan-400"
+    ? "border-cyan-400/30 hover:border-cyan-400/60"
     : isTool
-    ? "border-yellow-400"
-    : "border-primary-fixed";
+    ? "border-yellow-400/30 hover:border-yellow-400/60"
+    : "border-primary-fixed/30 hover:border-primary-fixed/60";
 
-  const textColor = isFailed ? "text-error" : isLLM ? "text-cyan-400" : isTool ? "text-yellow-400" : "text-primary-fixed";
-  const lineColor = isFailed ? "bg-error" : isLLM ? "bg-cyan-400" : isTool ? "bg-yellow-400" : "bg-primary-fixed";
+  const textColor = isFailed ? "text-rose-400" : isLLM ? "text-cyan-400" : isTool ? "text-yellow-400" : "text-primary-fixed";
+  const lineColor = isFailed ? "bg-rose-500/80" : isLLM ? "bg-cyan-400/80" : isTool ? "bg-yellow-400/80" : "bg-primary-fixed/80";
+  const glowColor = isFailed ? "bg-rose-500/5" : isLLM ? "bg-cyan-400/5" : isTool ? "bg-yellow-400/5" : "bg-primary-fixed/5";
 
-  const cardBase = `bg-background border-[3px] p-4 w-[380px] hover:-translate-x-1 hover:-translate-y-1 transition-all cursor-pointer relative z-10 font-mono-label ${!matchesExactly ? 'opacity-40' : 'opacity-100'}`;
+  const cardBase = `bg-surface-container-lowest/50 backdrop-blur-xl border rounded-2xl p-4 w-[380px] transition-all duration-300 hover:-translate-y-1 cursor-pointer relative z-10 font-sans shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden group ${!matchesExactly ? 'opacity-40' : 'opacity-100'}`;
 
   if (!isVisible) return null;
 
@@ -504,15 +506,16 @@ function ConnectedSpanNodeRenderer({
         onClick={() => onSelectSpan(node)}
         className={`${cardBase} ${borderColor} ${
           isSelected
-            ? "bg-surface-container-high shadow-[6px_6px_0px_0px_rgba(255,255,255,0.8)]"
-            : isRoot
-            ? "w-[420px] bg-surface-container-high brutalist-shadow"
-            : "hover:brutalist-shadow"
+            ? "bg-surface-container/60 shadow-[0_0_24px_rgba(255,255,255,0.1)] border-white/50"
+            : ""
         }`}
       >
-        <div className="flex justify-between items-start mb-3">
-          <span className={`font-mono-label font-bold text-base flex items-center gap-2 ${textColor}`}>
-            <span className="material-symbols-outlined text-[20px]">
+        {/* Subtle background glow type */}
+        <div className={`absolute w-32 h-32 rounded-full blur-3xl -top-10 -right-10 pointer-events-none transition-all duration-700 ${glowColor} group-hover:scale-150 group-hover:opacity-100 opacity-50`}></div>
+
+        <div className="flex justify-between items-start mb-4 relative z-10">
+          <span className={`font-semibold text-[15px] flex items-center gap-2.5 ${textColor}`}>
+            <span className={`material-symbols-outlined text-[18px] drop-shadow-[0_0_8px_currentColor]`}>
               {isRoot ? "rocket_launch" : isLLM ? "psychology" : isTool ? "build" : "hub"}
             </span>
             {node.name}
@@ -521,18 +524,18 @@ function ConnectedSpanNodeRenderer({
             {hasChildren && (
               <button
                 onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-                className={`text-xs font-black px-1.5 py-0.5 border border-current hover:bg-surface-variant transition-colors ${textColor}`}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors bg-white/5 hover:bg-white/10 ${textColor}`}
               >
-                {isExpanded ? "[-]" : "[+]"}
+                {isExpanded ? "Collapse" : "Expand"}
               </button>
             )}
             <span
-              className={`text-[9px] font-bold px-2 py-0.5 uppercase border ${
+              className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border ${
                 isFailed
-                  ? "border-error text-error bg-error/10"
+                  ? "border-rose-500/30 text-rose-400 bg-rose-500/10"
                   : isRoot
-                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed font-black"
-                  : "border-emerald-400 text-emerald-400"
+                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
+                  : "border-emerald-400/30 text-emerald-400 bg-emerald-400/10"
               }`}
             >
               {node.status}
@@ -540,10 +543,10 @@ function ConnectedSpanNodeRenderer({
           </div>
         </div>
 
-        <div className="flex justify-between items-center font-mono-label text-[11px] text-on-surface-variant border-t border-outline/40 pt-2.5">
-          {node.durationMs !== undefined && <span>DUR: <span className="text-white font-bold">{node.durationMs}ms</span></span>}
-          {node.tokens?.total !== undefined && <span>TOKENS: <span className="text-white font-bold">{node.tokens.total}</span></span>}
-          {node.model && <span>MODEL: <span className="text-white font-bold">{node.model}</span></span>}
+        <div className="flex justify-between items-center font-mono text-[10px] text-on-surface-variant border-t border-outline-variant/10 pt-3 relative z-10">
+          {node.durationMs !== undefined && <span>DUR: <span className="text-white font-medium">{node.durationMs}ms</span></span>}
+          {node.tokens?.total !== undefined && <span>TOKENS: <span className="text-white font-medium">{node.tokens.total}</span></span>}
+          {node.model && <span>MODEL: <span className="text-white font-medium">{node.model}</span></span>}
         </div>
       </div>
 
@@ -551,21 +554,24 @@ function ConnectedSpanNodeRenderer({
       {hasChildren && isExpanded && (
         <div className="pl-12 flex flex-col gap-8 relative mt-8">
           {/* Vertical flow line connecting parent node to children */}
-          <div className="absolute left-6 -top-8 bottom-6 w-1 bg-outline-variant">
+          <div className="absolute left-6 -top-8 bottom-6 w-[1.5px] bg-gradient-to-b from-outline-variant/30 to-outline-variant/5">
+            <div className={`absolute inset-0 ${lineColor} blur-[1px] opacity-30`} />
             <div className={`absolute inset-0 ${lineColor}`} />
           </div>
 
           {node.children.map((child) => {
-            const childLineColor = child.status === "ERROR" ? "bg-error" : child.kind === "LLM" ? "bg-cyan-400" : child.kind === "TOOL" ? "bg-yellow-400" : "bg-primary-fixed";
+            const childLineColor = child.status === "ERROR" ? "bg-rose-500" : child.kind === "LLM" ? "bg-cyan-400" : child.kind === "TOOL" ? "bg-yellow-400" : "bg-primary-fixed";
 
             return (
               <div key={child.id} className="relative pl-10">
                 {/* Horizontal flow line connecting main line to child node */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-1 flex items-center bg-outline-variant">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-[1.5px] flex items-center bg-outline-variant/30">
+                  <div className={`absolute inset-0 ${childLineColor} blur-[1px] opacity-30`} />
                   <div className={`absolute inset-0 ${childLineColor}`} />
-                  {/* Joint Connection Dots */}
-                  <div className={`absolute -left-1.5 w-3 h-3 rounded-full border-[3px] border-background z-20 ${childLineColor}`} />
-                  <div className={`absolute -right-1.5 w-3 h-3 rounded-full border-[3px] border-background z-20 ${childLineColor}`} />
+                  
+                  {/* Joint Connection Dots (Glowing Points) */}
+                  <div className={`absolute -left-[3px] w-1.5 h-1.5 rounded-full z-20 ${childLineColor} shadow-[0_0_8px_currentColor]`} />
+                  <div className={`absolute -right-[3px] w-1.5 h-1.5 rounded-full z-20 ${childLineColor} shadow-[0_0_8px_currentColor]`} />
                 </div>
 
                 <ConnectedSpanNodeRenderer
