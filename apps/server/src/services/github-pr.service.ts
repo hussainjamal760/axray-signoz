@@ -20,6 +20,48 @@ function getTimeHeader(): string {
   return `[${hours}:${minutes}:${seconds}]`;
 }
 
+/**
+ * Validates whether the workspace container contains uncommitted changes or unpushed commits.
+ */
+export const validateWorkspaceChanges = async (
+  sessionId: string
+): Promise<{ hasChanges: boolean; message: string }> => {
+  const session = await Session.findById(sessionId);
+  if (!session || !session.containerId) {
+    return { hasChanges: false, message: 'Session container is not ready.' };
+  }
+
+  const containerId = session.containerId;
+
+  // 1. Check uncommitted changes (git status --porcelain)
+  const statusRes = await containerService.executeCommand(
+    containerId,
+    'cd /workspace && git status --porcelain'
+  );
+  const uncommittedOutput = statusRes.exitCode === 0 ? statusRes.output.trim() : '';
+
+  if (uncommittedOutput.length > 0) {
+    return { hasChanges: true, message: 'Workspace contains uncommitted changes.' };
+  }
+
+  // 2. Check unpushed commits against base branch or current diff
+  const baseBranch = session.branch || 'main';
+  const diffRes = await containerService.executeCommand(
+    containerId,
+    `cd /workspace && (git diff origin/${baseBranch} || git diff HEAD)`
+  );
+  const diffOutput = diffRes.exitCode === 0 ? diffRes.output.trim() : '';
+
+  if (diffOutput.length > 0) {
+    return { hasChanges: true, message: 'Workspace contains unpushed commits.' };
+  }
+
+  return {
+    hasChanges: false,
+    message: 'No code changes detected in workspace. Run an agent or modify files before creating a Pull Request.',
+  };
+};
+
 export const createOrUpdatePullRequest = async (
   params: CreatePRParams
 ): Promise<IPullRequest> => {
@@ -32,29 +74,16 @@ export const createOrUpdatePullRequest = async (
     throw new AppError(400, 'Session container is not ready');
   }
 
+  // Validate changes before proceeding
+  const validation = await validateWorkspaceChanges(params.sessionId);
+  if (!validation.hasChanges) {
+    throw new AppError(400, validation.message);
+  }
+
   const runIdStr = session.latestRunId?.toString() || '';
   const branchName = session.pullRequest?.branchName || `axray/session/${params.sessionId}`;
   const baseBranch = session.branch || 'main';
   const { owner, repo } = parseRepository(session.repositoryFullName);
-
-  const containerId = session.containerId;
-
-  // Pre-flight check: Verify if workspace has uncommitted edits or new local commits
-  const statusCheck = await containerService.executeCommand(containerId, 'cd /workspace && git status --porcelain');
-  const hasUncommittedChanges = statusCheck.exitCode === 0 && statusCheck.output.trim().length > 0;
-
-  const cherryCheck = await containerService.executeCommand(containerId, `cd /workspace && (git cherry origin/${baseBranch} || true)`);
-  const hasUnpushedCommits = cherryCheck.output.trim().length > 0;
-
-  if (!hasUncommittedChanges && !hasUnpushedCommits && !session.pullRequest) {
-    appendTerminalLine(
-      params.sessionId,
-      runIdStr,
-      'agent',
-      `${getTimeHeader()} Workspace clean. No code changes to push for Pull Request.`
-    );
-    throw new AppError(400, 'No changes to be pushed. The workspace has no modified code files.');
-  }
 
   // 1. Emit PR Creation Started & Terminal Log
   emitLiveEvent(params.sessionId, {
@@ -77,6 +106,8 @@ export const createOrUpdatePullRequest = async (
   );
 
   try {
+    const containerId = session.containerId;
+
     // Configure Git user in workspace container
     await containerService.executeCommand(
       containerId,
