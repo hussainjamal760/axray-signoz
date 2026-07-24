@@ -40,17 +40,17 @@ export function FeatCard({ title, description, children, className = "" }: FeatC
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "group relative flex flex-col gap-2 overflow-hidden rounded-none p-4",
-        "border-[3px] border-on-background shadow-block hover:shadow-block-hover transition-shadow",
-        "bg-surface-container hover:bg-surface-container-high",
+        "group relative flex flex-col gap-2 overflow-hidden rounded-3xl p-6",
+        "border border-outline-variant/30 shadow-sm hover:shadow-md transition-all duration-300",
+        "bg-surface-container-lowest/40 backdrop-blur-xl hover:bg-surface-container-lowest/60 hover:border-primary-fixed/40",
         className
       )}
     >
-      <div className="z-10 flex flex-col gap-1.5">
-        <h3 className="font-headline-lg-mobile text-on-background uppercase font-black">{title}</h3>
-        <p className="font-body-md text-on-background/80 leading-relaxed max-w-[90%]">{description}</p>
+      <div className="z-10 flex flex-col gap-1.5 mb-2">
+        <h3 className="text-xl text-white uppercase font-bold tracking-tight group-hover:text-primary-fixed transition-colors">{title}</h3>
+        <p className="text-sm text-on-surface-variant font-medium leading-relaxed max-w-[90%]">{description}</p>
       </div>
-      <div className="relative mt-2 flex-1 w-full overflow-hidden border-2 border-on-background bg-background shadow-inner">
+      <div className="relative mt-2 flex-1 w-full overflow-hidden rounded-2xl border border-outline-variant/20 bg-background/50 shadow-inner">
         {children}
       </div>
     </motion.div>
@@ -866,11 +866,12 @@ export interface AgentBentoGridProps {
 
 export function AgentBentoGrid({ className }: AgentBentoGridProps) {
   return (
-    <section className="px-margin py-24 bg-surface-container-lowest border-y-[3px] border-on-background">
-      <div className="text-center mb-16">
-        <h2 className="font-headline-lg text-headline-lg uppercase mb-4 text-on-background">Autonomous Trace Pipeline</h2>
-        <div className="w-24 h-1 bg-primary-fixed mx-auto mb-4 border border-on-background"></div>
-        <p className="font-mono-label text-on-surface-variant uppercase tracking-widest">End-to-End Visibility</p>
+    <section className="px-6 md:px-12 py-24 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-fixed/5 via-background to-background"></div>
+      <div className="text-center mb-16 relative z-10">
+        <h2 className="text-3xl sm:text-5xl font-bold text-white uppercase tracking-tight mb-4">Autonomous Trace Pipeline</h2>
+        <div className="w-24 h-1 rounded-full bg-primary-fixed mx-auto mb-4 shadow-[0_0_15px_rgba(220,238,0,0.5)]"></div>
+        <p className="text-sm text-on-surface-variant font-medium uppercase tracking-widest">End-to-End Visibility</p>
       </div>
 
       <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl mx-auto", className)}>

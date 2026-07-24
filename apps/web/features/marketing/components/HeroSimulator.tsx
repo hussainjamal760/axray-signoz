@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { Terminal as TerminalIcon, AlertTriangle, RotateCcw, Activity, CheckCircle2, ShieldAlert } from "lucide-react";
 
 type LogEntry = {
   id: string;
@@ -31,101 +32,98 @@ export default function HeroSimulator() {
   const [replayKey, setReplayKey] = useState(0);
 
   const sequenceWithDelays = SEQUENCE.map((step, i, arr) => {
-    // Multiply delay by 0.4 to significantly increase the speed
     const cumulativeDelay = arr.slice(0, i + 1).reduce((sum, s) => sum + (s.delay * 0.4), 0);
-    return { ...step, cumulativeDelay: cumulativeDelay + 500 }; // 500ms initial wait instead of 1000ms
+    return { ...step, cumulativeDelay: cumulativeDelay + 400 };
   });
 
   const totalDuration = sequenceWithDelays[sequenceWithDelays.length - 1].cumulativeDelay;
 
   return (
-    <div key={replayKey} className="w-full h-full bg-background flex flex-col font-mono-label relative">
+    <div key={replayKey} className="w-full h-full bg-[#0c0d0e] flex flex-col font-mono relative rounded-3xl overflow-hidden border border-outline-variant/30 shadow-2xl">
       {/* Terminal Header */}
-      <div className="bg-surface-container-high border-b-[3px] border-black p-3 flex items-center justify-between shrink-0">
-        <div className="flex gap-2">
-          <div className="w-3 h-3 bg-error rounded-none border-[1px] border-black shadow-[1px_1px_0px_0px_#000]"></div>
-          <div className="w-3 h-3 bg-primary-fixed rounded-none border-[1px] border-black shadow-[1px_1px_0px_0px_#000]"></div>
-          <div className="w-3 h-3 bg-secondary rounded-none border-[1px] border-black shadow-[1px_1px_0px_0px_#000]"></div>
+      <div className="bg-[#141618] border-b border-outline-variant/20 px-4 py-3 flex items-center justify-between shrink-0 z-10">
+        <div className="flex gap-2 items-center">
+          <div className="w-3 h-3 bg-red-500/80 rounded-full border border-red-400/40"></div>
+          <div className="w-3 h-3 bg-yellow-500/80 rounded-full border border-yellow-400/40"></div>
+          <div className="w-3 h-3 bg-emerald-500/80 rounded-full border border-emerald-400/40"></div>
         </div>
-        <div className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
-          <span className="w-2 h-2 bg-primary-fixed animate-pulse"></span>
-          session_axray_291.log
+        <div className="text-[11px] font-semibold tracking-wider text-on-surface-variant flex items-center gap-2">
+          <Activity size={13} className="text-primary-fixed animate-pulse" />
+          <span>session_axray_291.log</span>
         </div>
       </div>
 
       {/* Terminal Body */}
-      <div className="flex-1 p-5 overflow-y-auto space-y-4 scrollbar-hide flex flex-col justify-end">
+      <div className="flex-1 p-5 overflow-y-auto space-y-3 custom-scrollbar flex flex-col justify-end text-xs">
         {sequenceWithDelays.map((log, index) => (
           <div
             key={index}
-            className="text-xs sm:text-sm flex flex-col items-start gap-1 opacity-0"
+            className="flex items-start gap-3 opacity-0 font-mono"
             style={{
               animation: `fade-in-up 0.3s ease-out forwards`,
               animationDelay: `${log.cumulativeDelay}ms`
             }}
           >
-            <div className="flex items-start gap-3 w-full">
-              <span className="text-on-surface-variant opacity-50 shrink-0 select-none font-bold">
-                [00:00:{(index * 2).toString().padStart(2, '0')}]
-              </span>
-              <span className={`flex-1 font-medium leading-relaxed
-                ${log.type === 'error' ? 'text-error bg-error/10 px-2 py-1 font-black border-l-[3px] border-error shadow-[2px_2px_0px_0px_theme(colors.error)] uppercase' : ''}
-                ${log.type === 'warning' ? 'text-primary-fixed-dim' : ''}
-                ${log.type === 'action' ? 'text-secondary-fixed' : ''}
-                ${log.type === 'system' ? 'text-on-surface font-bold uppercase tracking-widest' : ''}
-                ${log.type === 'agent' ? 'text-white' : ''}
-                ${log.type === 'axray' ? 'text-primary-fixed font-bold' : ''}
-              `}>
-                {log.text}
-              </span>
-            </div>
+            <span className="text-on-surface-variant/40 shrink-0 select-none text-[10px]">
+              00:{(index * 2).toString().padStart(2, '0')}
+            </span>
+            <span className={`flex-1 leading-relaxed rounded-md px-2 py-0.5 text-xs ${
+              log.type === 'error' ? 'text-red-400 bg-red-500/10 font-bold border border-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.15)]' :
+              log.type === 'warning' ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20' :
+              log.type === 'action' ? 'text-cyan-300 font-medium' :
+              log.type === 'system' ? 'text-white/90 font-bold tracking-wide uppercase text-[10px] bg-white/5 border border-white/10 w-max px-2' :
+              log.type === 'agent' ? 'text-white' :
+              'text-primary-fixed font-semibold'
+            }`}>
+              {log.text}
+            </span>
           </div>
         ))}
       </div>
 
-      {/* Root Cause Overlay */}
+      {/* Fully Opaque Failure Report Overlay (No Overlapping Bleed) */}
       <div
-        className="absolute inset-0 z-20 bg-background/60 backdrop-blur-md border-[3px] border-black flex flex-col m-4 shadow-[8px_8px_0px_0px_#000] opacity-0 pointer-events-none"
+        className="absolute inset-0 z-30 bg-[#0c0d0e] flex flex-col shadow-2xl opacity-0 pointer-events-none overflow-hidden"
         style={{
-          animation: `fade-in-scale 0.5s ease-out forwards`,
-          animationDelay: `${totalDuration + 1000}ms`
+          animation: `fade-in-scale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+          animationDelay: `${totalDuration + 600}ms`
         }}
       >
-        <div className="bg-error text-black border-b-[3px] border-black px-4 py-3 font-cta-label uppercase flex justify-between items-center shrink-0 pointer-events-auto">
-          <div className="flex items-center gap-3 font-black tracking-widest">
-            <span className="material-symbols-outlined text-lg">warning</span>
-            Failure Analysis Report
+        {/* Modal Header */}
+        <div className="bg-[#181a1d] border-b border-red-500/30 px-5 py-3.5 flex justify-between items-center shrink-0 pointer-events-auto">
+          <div className="flex items-center gap-2.5 font-bold text-red-400 text-xs tracking-wider uppercase">
+            <ShieldAlert size={16} className="text-red-500" />
+            <span>Failure Analysis Report</span>
           </div>
           <button
             onClick={() => setReplayKey(k => k + 1)}
-            className="hover:text-white transition-colors flex items-center gap-2 font-black border-[2px] border-black px-2 py-1 bg-white hover:bg-black text-black text-[10px]"
+            className="hover:bg-primary-fixed hover:text-black text-primary-fixed transition-all duration-200 flex items-center gap-1.5 font-bold border border-primary-fixed/40 rounded-xl px-3 py-1 text-[11px] shadow-sm"
           >
-            <span className="material-symbols-outlined text-sm">replay</span> REPLAY
+            <RotateCcw size={13} /> Replay Session
           </button>
         </div>
-        <div className="flex-1 p-6 overflow-y-auto flex flex-col justify-center pointer-events-auto">
-          <div className="bg-surface-container border-[3px] border-black shadow-[4px_4px_0px_0px_#000] p-5 mb-6">
-            <div className="flex items-center gap-2 mb-3 border-b-[2px] border-outline-variant pb-2">
-              <span className="material-symbols-outlined text-primary-fixed">troubleshoot</span>
-              <span className="font-mono-label text-xs font-black uppercase text-white tracking-widest">SigNoz MCP Diagnosis</span>
+
+        {/* Modal Content Body */}
+        <div className="flex-1 p-6 overflow-y-auto flex flex-col justify-center pointer-events-auto space-y-4">
+          <div className="bg-[#141619] border border-outline-variant/30 rounded-2xl p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2.5 pb-2 border-b border-outline-variant/20">
+              <span className="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+              <span className="font-mono text-[11px] font-bold text-primary-fixed uppercase tracking-wider">SigNoz MCP Diagnosis</span>
             </div>
-            <p className="text-on-surface-variant text-sm font-medium leading-relaxed">
-              Agent became trapped in a repetitive action loop editing <span className="text-primary-fixed bg-black px-1 font-bold">tests/mocks.ts</span>.
-              The underlying failure is a missed export in <span className="text-white font-bold">src/lib/auth.ts</span> that caused the mock imports to fail.
+            <p className="text-on-surface-variant text-xs leading-relaxed">
+              Agent trapped in repetitive loop editing <span className="text-primary-fixed font-mono bg-primary-fixed/10 px-1.5 py-0.5 rounded border border-primary-fixed/20">tests/mocks.ts</span>.
+              Root cause: missing export in <span className="text-white font-semibold font-mono">src/lib/auth.ts</span> causing mock import failure.
             </p>
           </div>
 
-          <div className="bg-black border-[3px] border-outline-variant p-4 text-xs font-mono-label relative">
-            <div className="absolute -top-3 left-4 bg-primary-fixed text-black font-black uppercase px-2 text-[10px] border-[2px] border-black">
-              Diff Snapshot (span_id: 8f4a2b)
-            </div>
-            <div className="text-error bg-error/10 px-2 py-1 mt-2">{"- export const refreshToken = async () => {...}"}</div>
-            <div className="text-secondary-fixed bg-secondary-fixed/10 px-2 py-1 mt-1">{"+ const refreshToken = async () => {...} // Export missing"}</div>
+          <div className="bg-[#050606] rounded-2xl border border-outline-variant/20 p-3.5 text-[11px] font-mono space-y-1">
+            <div className="text-red-400 bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">- export const refreshToken = async () =&gt; &#123;...&#125;</div>
+            <div className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">+ const refreshToken = async () =&gt; &#123;...&#125; // Export missing</div>
           </div>
 
-          <div className="mt-6 flex items-center gap-3 text-xs text-primary-fixed font-black uppercase tracking-widest bg-primary-fixed/10 p-3 border-[2px] border-primary-fixed">
-            <span className="material-symbols-outlined text-lg animate-pulse">published_with_changes</span>
-            Action: Revert diff and append hint to agent prompt.
+          <div className="flex items-center gap-2.5 text-xs text-primary-fixed font-semibold bg-primary-fixed/10 p-3.5 rounded-2xl border border-primary-fixed/20 shadow-sm">
+            <CheckCircle2 size={16} className="text-primary-fixed shrink-0" />
+            <span>Automated Action: Reverted diff & appended hint to agent prompt.</span>
           </div>
         </div>
       </div>
