@@ -8,6 +8,7 @@ import { AgentRunSummary, TimelineEvent } from "@/features/agent-runs/types";
 import { AgentRunsList } from "@/features/agent-runs/components";
 import {
   SessionHeader,
+  TelemetryBar,
   InitializeContextPanel,
   TimelinePanel,
   TerminalPanel,
@@ -242,6 +243,13 @@ export default function SessionIdPage() {
     <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden">
       {/* Infrastructure Overview Header */}
       <SessionHeader session={session} />
+
+      {/* Real-Time Session Telemetry Bar */}
+      <TelemetryBar
+        events={liveEvents}
+        latestEvent={latestEvent}
+        isSessionActive={isSelectedRunExecuting}
+      />
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6 space-y-6 custom-scrollbar" data-lenis-prevent="true">

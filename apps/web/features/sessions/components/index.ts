@@ -18,3 +18,5 @@ export * from './CodeDiffCard';
 export * from './FileDiffCard';
 export * from './DiffLine';
 export * from './HunkHeader';
+export * from './TelemetryBar';
+
