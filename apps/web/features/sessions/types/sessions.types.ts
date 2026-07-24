@@ -1,5 +1,6 @@
 export type SessionStatus = 'active' | 'archived';
 export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
+export type PullRequestStatus = 'creating' | 'open' | 'merged' | 'closed' | 'failed';
 
 export interface IWorkspaceSpec {
   runtime: string;
@@ -10,6 +11,17 @@ export interface IWorkspaceSpec {
   runCommand?: string | null;
   testCommand?: string | null;
   reasoning: string;
+}
+
+export interface PullRequestSummary {
+  provider: 'github';
+  prNumber: number;
+  prUrl: string;
+  branchName: string;
+  baseBranch: string;
+  status: PullRequestStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SessionSummary {
@@ -23,6 +35,7 @@ export interface SessionSummary {
   workspaceInitialized: boolean;
   workspaceSpec?: IWorkspaceSpec;
   latestRunId?: string;
+  pullRequest?: PullRequestSummary;
   createdAt: string;
   updatedAt: string;
   // UI Mock fields

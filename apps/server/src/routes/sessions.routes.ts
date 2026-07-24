@@ -9,6 +9,8 @@ import {
   updateSession,
   deleteSession,
   getSessionTimeline,
+  createPullRequest,
+  getPullRequestStatus,
 } from '../controllers/sessions.controller';
 import { createRun, listRunsForSession } from '../controllers/agent-runs.controller';
 
@@ -20,6 +22,10 @@ router.get('/:id', requireAuth, getSessionById);
 router.get('/:sessionId/timeline', requireAuth, getSessionTimeline);
 router.patch('/:id', requireAuth, validate(updateSessionSchema), updateSession);
 router.delete('/:id', requireAuth, deleteSession);
+
+// Pull Request Creation & Lifecycle Routes
+router.post('/:id/pull-request', requireAuth, createPullRequest);
+router.get('/:id/pull-request', requireAuth, getPullRequestStatus);
 
 // Nested Agent Runs
 router.post('/:sessionId/runs', requireAuth, validate(createAgentRunSchema), createRun);

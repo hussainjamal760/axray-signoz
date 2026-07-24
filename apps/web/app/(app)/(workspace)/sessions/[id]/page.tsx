@@ -280,6 +280,8 @@ export default function SessionIdPage() {
           {/* Row 3: Dedicated Full-Width Git Diff Artifact Section */}
           <section className="col-span-12 mt-8">
             <CodeDiffCard
+              sessionId={id}
+              pullRequest={session.pullRequest}
               diff={activeOrSelectedRun?.diff}
               filesChanged={activeOrSelectedRun?.filesChanged}
               insertions={activeOrSelectedRun?.insertions}

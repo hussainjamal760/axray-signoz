@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api-client';
-import { SessionSummary, ContainerStatus, TimelineItem } from '../types/sessions.types';
+import { SessionSummary, ContainerStatus, TimelineItem, PullRequestSummary } from '../types/sessions.types';
 
 interface BackendSession {
   _id: string;
@@ -13,6 +13,7 @@ interface BackendSession {
   workspaceInitialized?: boolean;
   workspaceSpec?: SessionSummary['workspaceSpec'];
   latestRunId?: string;
+  pullRequest?: PullRequestSummary;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +30,7 @@ function mapSession(session: BackendSession): SessionSummary {
     workspaceInitialized: session.workspaceInitialized ?? session.workspaceReady ?? false,
     workspaceSpec: session.workspaceSpec,
     latestRunId: session.latestRunId,
+    pullRequest: session.pullRequest,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
   };
@@ -73,4 +75,14 @@ export const deleteSession = (id: string): Promise<void> => {
 export const getSessionTimeline = async (sessionId: string): Promise<TimelineItem[]> => {
   if (!sessionId) return [];
   return apiClient<TimelineItem[]>(`/api/sessions/${sessionId}/timeline`);
+};
+
+export const createPullRequest = async (
+  sessionId: string,
+  data?: { title?: string; body?: string }
+): Promise<PullRequestSummary> => {
+  return apiClient<PullRequestSummary>(`/api/sessions/${sessionId}/pull-request`, {
+    method: 'POST',
+    body: data || {},
+  });
 };

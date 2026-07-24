@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export type SessionStatus = 'active' | 'archived';
 export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
+export type PullRequestStatus = 'creating' | 'open' | 'merged' | 'closed' | 'failed';
 
 export interface IWorkspaceSpec {
   runtime: string;
@@ -12,6 +13,17 @@ export interface IWorkspaceSpec {
   runCommand?: string | null;
   testCommand?: string | null;
   reasoning: string;
+}
+
+export interface IPullRequest {
+  provider: 'github';
+  prNumber: number;
+  prUrl: string;
+  branchName: string;
+  baseBranch: string;
+  status: PullRequestStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ISession extends Document {
@@ -25,6 +37,7 @@ export interface ISession extends Document {
   workspaceInitialized: boolean;
   workspaceSpec?: IWorkspaceSpec;
   latestRunId?: mongoose.Types.ObjectId;
+  pullRequest?: IPullRequest;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +52,25 @@ const WorkspaceSpecSchema: Schema = new Schema(
     runCommand: { type: String },
     testCommand: { type: String },
     reasoning: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const PullRequestSchema: Schema = new Schema(
+  {
+    provider: { type: String, default: 'github', required: true },
+    prNumber: { type: Number, required: true },
+    prUrl: { type: String, required: true },
+    branchName: { type: String, required: true },
+    baseBranch: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ['creating', 'open', 'merged', 'closed', 'failed'],
+      default: 'open',
+      required: true,
+    },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
   { _id: false }
 );
@@ -63,6 +95,7 @@ const SessionSchema: Schema = new Schema(
     workspaceInitialized: { type: Boolean, default: false, required: true },
     workspaceSpec: { type: WorkspaceSpecSchema },
     latestRunId: { type: Schema.Types.ObjectId, ref: 'AgentRun' },
+    pullRequest: { type: PullRequestSchema },
   },
   {
     timestamps: true,

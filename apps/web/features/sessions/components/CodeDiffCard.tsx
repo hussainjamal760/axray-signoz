@@ -3,8 +3,12 @@
 import React, { useMemo, useState } from "react";
 import { parseUnifiedDiff } from "../lib/diff-parser";
 import { FileDiffCard } from "./FileDiffCard";
+import { PullRequestSummary } from "../types/sessions.types";
+import { useCreatePullRequest } from "../hooks/useCreatePullRequest";
 
 export interface CodeDiffCardProps {
+  sessionId?: string;
+  pullRequest?: PullRequestSummary;
   diff?: string;
   filesChanged?: string[];
   insertions?: number;
@@ -17,6 +21,8 @@ export interface CodeDiffCardProps {
 }
 
 export function CodeDiffCard({
+  sessionId,
+  pullRequest,
   diff,
   filesChanged = [],
   insertions = 0,
@@ -28,6 +34,8 @@ export function CodeDiffCard({
   isError = false,
 }: CodeDiffCardProps) {
   const [activeFileIndex, setActiveFileIndex] = useState<number | null>(null);
+
+  const { mutate: handleCreatePR, isPending: isCreatingPR } = useCreatePullRequest(sessionId || "");
 
   const parsedFiles = useMemo(() => {
     if (!diff) return [];
@@ -98,8 +106,8 @@ export function CodeDiffCard({
           )}
         </div>
 
-        {/* Summary Statistics */}
-        <div className="flex items-center gap-6 font-mono-label text-xs font-bold">
+        {/* Summary Statistics & PR Action */}
+        <div className="flex items-center gap-4 font-mono-label text-xs font-bold">
           <div className="flex items-center gap-2 text-on-surface bg-background px-3 py-1 border border-outline">
             <span className="material-symbols-outlined text-sm text-outline">folder</span>
             <span>{filesChanged.length || parsedFiles.length} {filesChanged.length === 1 ? "File" : "Files"} Changed</span>
@@ -109,6 +117,40 @@ export function CodeDiffCard({
             <span className="text-emerald-400 font-black">+{insertions}</span>
             <span className="text-error font-black">-{deletions}</span>
           </div>
+
+          {sessionId && (
+            pullRequest ? (
+              <a
+                href={pullRequest.prUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-3 py-1 hover:bg-emerald-500/30 transition-colors"
+              >
+                <span className="material-symbols-outlined text-xs">call_split</span>
+                <span>PR #{pullRequest.prNumber}</span>
+                <span className="material-symbols-outlined text-xs">open_in_new</span>
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleCreatePR(undefined)}
+                disabled={isCreatingPR}
+                className="flex items-center gap-1.5 bg-primary-fixed text-on-primary-fixed font-black uppercase px-3 py-1 border border-outline hover:bg-surface-variant transition-colors disabled:opacity-50 brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+              >
+                {isCreatingPR ? (
+                  <>
+                    <span className="material-symbols-outlined text-xs animate-spin">sync</span>
+                    <span>Creating PR...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-xs">call_split</span>
+                    <span>Create PR</span>
+                  </>
+                )}
+              </button>
+            )
+          )}
         </div>
       </div>
 
