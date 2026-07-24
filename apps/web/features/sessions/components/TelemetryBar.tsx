@@ -79,7 +79,7 @@ export function TelemetryBar({
   }, [inputTokens, outputTokens]);
 
   return (
-    <div className="w-full bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/20 flex flex-col font-sans">
+    <div className="w-full bg-surface-container-lowest/40 backdrop-blur-md border-b border-white/5 flex flex-col font-sans">
       {/* 1. Rate Limit / Error Live Alert Banner */}
       {(rateLimitWarning || latestEvent?.eventType === "rate_limit.retry") && (
         <div className="bg-rose-500/10 border-b border-rose-500/30 px-6 py-2 text-xs font-medium text-rose-300 flex items-center justify-between animate-pulse">
@@ -102,20 +102,20 @@ export function TelemetryBar({
         {/* Left side: Live Execution Phase & Turn counter */}
         <div className="flex items-center gap-4">
           {/* Status Indicator Pill */}
-          <div className="flex items-center gap-2 px-3 py-1 bg-surface-container border border-outline-variant/20 rounded-full">
-            <span className={`w-2 h-2 rounded-full ${isSessionActive ? "bg-emerald-400 animate-ping" : isError ? "bg-rose-500" : "bg-primary-fixed"}`} />
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-2xl">
+            <span className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(var(--color-primary-fixed),0.5)] ${isSessionActive ? "bg-emerald-400 animate-ping shadow-[0_0_8px_rgba(52,211,153,0.5)]" : isError ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" : "bg-primary-fixed"}`} />
             <span className="font-semibold uppercase tracking-wider text-on-surface text-[10px]">
               {isSessionActive ? "Live Telemetry" : "Telemetry History"}
             </span>
           </div>
 
-          <div className="h-4 w-px bg-outline-variant/20" />
+          <div className="h-4 w-px bg-white/10" />
 
           {/* Turn Indicator */}
           {currentTurn > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="text-on-surface-variant font-medium">Turn:</span>
-              <span className="font-semibold text-primary-fixed bg-primary-fixed/10 border border-primary-fixed/30 rounded-full px-2.5 py-0.5 text-[11px]">
+              <span className="font-semibold text-primary-fixed bg-primary-fixed/10 rounded-2xl px-2.5 py-0.5 text-[11px]">
                 {currentTurn} / 30
               </span>
             </div>
@@ -124,7 +124,7 @@ export function TelemetryBar({
           {/* Active Phase Pill */}
           <div className="flex items-center gap-1.5">
             <span className="text-on-surface-variant font-medium">Phase:</span>
-            <span className="font-medium text-on-surface bg-surface-container border border-outline-variant/30 rounded-full px-3 py-0.5 text-[11px] truncate max-w-[220px]">
+            <span className="font-medium text-on-surface bg-white/5 rounded-2xl px-3 py-1 text-[11px] truncate max-w-[220px]">
               {executionPhase}
             </span>
           </div>
@@ -133,12 +133,12 @@ export function TelemetryBar({
         {/* Right side: Live Token Usage & Cost Meter */}
         <div className="flex items-center gap-6">
           {/* Model Badge */}
-          <div className="hidden sm:flex items-center gap-2 text-on-surface-variant bg-surface-container/50 border border-outline-variant/20 rounded-full px-3 py-1">
+          <div className="hidden sm:flex items-center gap-2 text-on-surface-variant bg-white/5 rounded-2xl px-3 py-1.5">
             <span className="material-symbols-outlined text-[14px]">memory</span>
             <span className="font-medium text-on-surface text-[11px] truncate max-w-[180px]">{modelName}</span>
           </div>
 
-          <div className="h-4 w-px bg-outline-variant/20 hidden sm:block" />
+          <div className="h-4 w-px bg-white/10 hidden sm:block" />
 
           {/* Token Breakdown (Input / Output) */}
           <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export function TelemetryBar({
           <div className="h-4 w-px bg-outline-variant/20" />
 
           {/* Cost USD Counter */}
-          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3.5 py-1 text-emerald-400">
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 rounded-2xl px-3.5 py-1 text-emerald-400">
             <span className="material-symbols-outlined text-[14px]">attach_money</span>
             <span className="font-semibold text-xs font-mono">${estimatedCost}</span>
           </div>

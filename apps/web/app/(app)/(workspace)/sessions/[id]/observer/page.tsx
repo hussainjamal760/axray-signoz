@@ -12,7 +12,6 @@ import { ReplayHUD } from "@/features/sessions/components/ReplayHUD";
 import { RunStatusBadge } from "@/features/agent-runs/components/RunStatusBadge";
 import Link from "next/link";
 
-import { TelemetryBar } from "@/features/sessions/components/TelemetryBar";
 
 export default function ObserverDashboardPage() {
   const params = useParams();
@@ -56,31 +55,13 @@ export default function ObserverDashboardPage() {
   return (
     <div className="flex-1 flex flex-col overflow-y-auto min-h-0 bg-background custom-scrollbar" data-lenis-prevent="true">
       {/* Context Header */}
-      <section className="p-gutter border-b-[3px] border-primary-fixed bg-surface-container flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
-        <div className="space-y-2 max-w-3xl">
-          <div className="flex items-center gap-2 font-mono-label text-xs text-on-surface-variant">
-            <Link href={backToSessionLink} className="hover:text-primary-fixed cursor-pointer flex items-center gap-1 font-bold">
-              <span className="material-symbols-outlined text-sm">arrow_back</span>
-              SESSION #{id ? id.slice(-4).toUpperCase() : "1042"}
-            </Link>
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-primary-fixed font-bold">
-              {activeRun ? `RUN #${activeRun.id.slice(-6).toUpperCase()}` : 'OBSERVER'}
-            </span>
-          </div>
-
-          <h1 className="font-headline-lg text-2xl md:text-3xl text-primary-fixed uppercase font-black truncate">
+      <section className="px-6 py-4 border-b border-outline-variant/10 bg-surface-container-lowest/60 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 z-20">
+        <div className="space-y-1.5 max-w-3xl">
+          <h1 className="text-xl md:text-2xl text-on-surface font-bold tracking-tight truncate">
             {activeRun?.prompt || session?.repositoryFullName || "Observer Inspection"}
           </h1>
           
-          <div className="flex flex-wrap gap-4 items-center">
-            {session?.repositoryFullName && (
-              <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-xs font-bold">
-                <span className="material-symbols-outlined text-sm text-on-surface-variant">folder</span>
-                {session.repositoryFullName} ({session.branch || 'main'})
-              </div>
-            )}
-
+          <div className="flex flex-wrap gap-3 items-center pt-0.5">
             {activeRun && (
               <div className="flex items-center gap-2">
                 <RunStatusBadge status={activeRun.status} />
@@ -89,16 +70,16 @@ export default function ObserverDashboardPage() {
 
             {/* Run Selection Dropdown for Instant Switching */}
             {runs.length > 0 && (
-              <div className="flex items-center gap-2 bg-black border-2 border-outline px-3 py-1 font-mono-label text-xs font-bold text-primary-fixed">
+              <div className="flex items-center gap-2 bg-surface-container/50 border border-outline-variant/10 px-3 py-1 rounded-xl text-xs font-mono text-primary-fixed">
                 <span className="material-symbols-outlined text-sm">history</span>
                 <select
                   value={activeRun?.id || ""}
                   onChange={(e) => handleSelectRunChange(e.target.value)}
-                  className="bg-transparent text-primary-fixed font-mono-label text-xs font-black outline-none cursor-pointer"
+                  className="bg-transparent text-primary-fixed font-mono text-xs font-bold outline-none cursor-pointer"
                 >
                   {runs.map((r) => (
-                    <option key={r.id} value={r.id} className="bg-black text-on-surface">
-                      Run #{r.id.slice(-6).toUpperCase()} ({r.status}) - {r.prompt.substring(0, 30)}...
+                    <option key={r.id} value={r.id} className="bg-[#0a0c10] text-on-surface">
+                      Run #{r.id.slice(-6).toUpperCase()} ({r.status}) - {r.prompt.substring(0, 25)}...
                     </option>
                   ))}
                 </select>
@@ -107,42 +88,40 @@ export default function ObserverDashboardPage() {
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto items-center">
+        <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">
           <a
             href="http://localhost:8080"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-surface-container-highest text-white font-mono-label text-xs font-black uppercase border-2 border-outline px-3 py-2 hover:bg-surface-variant transition-colors brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+            className="group relative flex items-center gap-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 text-[#e6edf3] text-xs font-semibold rounded-2xl px-4 py-2 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
             title="Open Self-Hosted SigNoz Observability Portal"
           >
             <span className="material-symbols-outlined text-sm text-primary-fixed">monitoring</span>
             <span>Open SigNoz</span>
-            <span className="material-symbols-outlined text-xs text-on-surface-variant">open_in_new</span>
+            <span className="material-symbols-outlined text-xs text-white/40 group-hover:text-white/80 transition-colors">arrow_outward</span>
           </a>
 
           <Link
             href={analysisLink}
-            className="bg-primary-fixed text-on-primary-fixed font-black px-6 py-3 border-[3px] border-on-primary-fixed neo-shadow hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center uppercase text-sm"
+            className="group relative flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold px-5 py-2 rounded-2xl text-xs uppercase tracking-wider transition-all duration-300 hover:shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:-translate-y-0.5 active:translate-y-0"
           >
-            EXPLAIN FAILURE
+            <span className="material-symbols-outlined text-sm">analytics</span>
+            <span>EXPLAIN FAILURE</span>
           </Link>
         </div>
       </section>
 
-      {/* Telemetry Bar */}
-      <TelemetryBar />
-
       {/* Three-Pane Observer View */}
       <section className="flex flex-col xl:flex-row flex-1 z-10 relative">
         {/* Left Column: Timeline Panel */}
-        <div className="w-full xl:w-1/3 xl:min-w-[340px] xl:max-w-[440px] flex flex-col xl:h-full border-r-[3px] border-outline">
+        <div className="w-full xl:w-1/3 xl:min-w-[340px] xl:max-w-[440px] flex flex-col xl:h-full border-r border-outline-variant/10">
           <TimelinePanel
             selectedRunId={activeRun?.id}
             runStatus={activeRun?.status}
             sessionId={id}
             isLive={false}
             forcedEvents={events[activeStepIndex] ? [events[activeStepIndex]] : []}
-            className="h-full border-0 !shadow-none"
+            className="h-full border-0 !shadow-none !rounded-none"
           />
         </div>
 
@@ -152,7 +131,7 @@ export default function ObserverDashboardPage() {
         </div>
         
         {/* Right Column: Intelligence Panel */}
-        <IntelligencePanel activeRun={activeRun} />
+        <IntelligencePanel activeRun={activeRun} events={events} />
       </section>
 
       {/* Interactive Time-Travel Replay HUD */}

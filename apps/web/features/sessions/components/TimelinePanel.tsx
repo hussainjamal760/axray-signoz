@@ -69,7 +69,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
           nodeBg: "bg-emerald-500",
           nodeGlow: "shadow-[0_0_12px_rgba(16,185,129,0.5)]",
           border: "border-emerald-500/20",
-          badgeBg: "bg-emerald-500/10 border-emerald-500/20",
+          badgeBg: "bg-emerald-500/10",
           badgeText: "text-emerald-400",
           text: "text-emerald-400",
           iconBg: "bg-emerald-500/10",
@@ -81,7 +81,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
           nodeBg: "bg-primary-fixed",
           nodeGlow: "shadow-[0_0_12px_rgba(var(--color-primary-fixed),0.6)]",
           border: "border-primary-fixed/30",
-          badgeBg: "bg-primary-fixed/10 border-primary-fixed/30",
+          badgeBg: "bg-primary-fixed/10",
           badgeText: "text-primary-fixed",
           text: "text-primary-fixed",
           iconBg: "bg-primary-fixed/10",
@@ -93,7 +93,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
           nodeBg: "bg-rose-500",
           nodeGlow: "shadow-[0_0_12px_rgba(244,63,94,0.5)]",
           border: "border-rose-500/20",
-          badgeBg: "bg-rose-500/10 border-rose-500/20",
+          badgeBg: "bg-rose-500/10",
           badgeText: "text-rose-400",
           text: "text-rose-400",
           iconBg: "bg-rose-500/10",
@@ -104,7 +104,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
           nodeBg: "bg-on-surface-variant/50",
           nodeGlow: "",
           border: "border-outline-variant/10",
-          badgeBg: "bg-surface-container border-outline-variant/20",
+          badgeBg: "bg-surface-container/50",
           badgeText: "text-on-surface-variant",
           text: "text-on-surface-variant",
           iconBg: "bg-surface-container",
@@ -160,7 +160,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
               Live
             </span>
           ) : (
-            <span className="text-on-surface-variant text-[11px] font-mono bg-surface-container/50 border border-outline-variant/10 px-2.5 py-1 rounded-lg">
+            <span className="text-on-surface-variant text-[11px] font-mono bg-white/5 px-2.5 py-1 rounded-xl">
               {events.length} EVTS
             </span>
           )}
@@ -234,11 +234,11 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
 
                     <div className="flex items-center gap-2 shrink-0">
                       {item.durationMs !== undefined && (
-                        <span className="text-[10px] text-on-surface-variant bg-surface-container-high/50 border border-outline-variant/10 rounded-lg px-2 py-1 font-mono tracking-wider">
+                        <span className="text-[10px] text-on-surface-variant bg-white/5 rounded-xl px-2 py-1 font-mono tracking-wider">
                           {formatDuration(item.durationMs)}
                         </span>
                       )}
-                      <span className={`text-[9px] font-bold uppercase tracking-widest rounded-lg px-2.5 py-1 border ${statusStyle.badgeBg} ${statusStyle.badgeText}`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest rounded-xl px-2.5 py-1 ${statusStyle.badgeBg} ${statusStyle.badgeText}`}>
                         {item.status}
                       </span>
                     </div>
@@ -250,7 +250,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
                   >
                     <div className="overflow-hidden">
                       <div className="pt-3 border-t border-outline-variant/10 font-mono text-[11px] space-y-2 text-on-surface-variant bg-surface-container-lowest/30 p-3 rounded-xl shadow-inner">
-                        {Object.entries(item.metadata!).map(([key, val]) => {
+                        {item.metadata && Object.entries(item.metadata).map(([key, val]) => {
                           if (val === undefined || val === null || val === '') return null;
                           return (
                             <div key={key} className="flex flex-col sm:flex-row sm:justify-between gap-1 border-b border-outline-variant/5 pb-1.5 last:border-0 last:pb-0">

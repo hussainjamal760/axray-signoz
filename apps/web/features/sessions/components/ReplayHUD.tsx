@@ -67,7 +67,7 @@ export function ReplayHUD({
   const progressPercent = totalSteps > 1 ? (activeStepIndex / (totalSteps - 1)) * 100 : totalSteps === 1 ? 100 : 0;
 
   return (
-    <footer className="bg-surface-container-high border-t-[3px] border-primary-fixed px-6 py-4 flex flex-col md:flex-row items-center gap-4 md:gap-6 shrink-0 relative z-20 font-mono-label">
+    <footer className="bg-surface-container-lowest/80 backdrop-blur-2xl border-t border-outline-variant/10 px-6 py-4 flex flex-col md:flex-row items-center gap-4 md:gap-6 shrink-0 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
       {/* 1. Playback Controls */}
       <div className="flex items-center gap-2">
         <button
@@ -77,17 +77,17 @@ export function ReplayHUD({
             onStepChange?.(0);
           }}
           disabled={totalSteps === 0}
-          className="w-9 h-9 flex items-center justify-center border-2 border-outline text-on-surface hover:bg-surface-variant hover:text-white disabled:opacity-40 transition-all brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-on-surface-variant hover:text-white disabled:opacity-30 transition-all duration-300 active:scale-95 flex items-center justify-center"
           title="Reset to Step 1"
         >
-          <span className="material-symbols-outlined text-sm">restart_alt</span>
+          <span className="material-symbols-outlined text-base">restart_alt</span>
         </button>
 
         <button
           type="button"
           onClick={handlePrevStep}
           disabled={totalSteps === 0 || activeStepIndex === 0}
-          className="w-9 h-9 flex items-center justify-center border-2 border-primary-fixed text-primary-fixed hover:bg-primary-fixed hover:text-on-primary-fixed disabled:opacity-40 transition-all brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-primary-fixed disabled:opacity-30 transition-all duration-300 active:scale-95 flex items-center justify-center"
           title="Previous Step"
         >
           <span className="material-symbols-outlined text-base">skip_previous</span>
@@ -97,7 +97,7 @@ export function ReplayHUD({
           type="button"
           onClick={handleTogglePlay}
           disabled={totalSteps === 0}
-          className="w-10 h-10 flex items-center justify-center border-2 border-primary-fixed bg-primary-fixed text-on-primary-fixed hover:bg-surface-variant hover:text-primary-fixed disabled:opacity-40 transition-all brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+          className="w-10 h-10 rounded-xl bg-primary-fixed text-[#0a0c10] font-bold hover:brightness-110 disabled:opacity-30 transition-all duration-300 active:scale-95 flex items-center justify-center shadow-[0_0_15px_rgba(var(--color-primary-fixed),0.3)]"
           title={isPlaying ? "Pause Playback" : "Play Trajectory Replay"}
         >
           <span className="material-symbols-outlined text-xl">
@@ -109,7 +109,7 @@ export function ReplayHUD({
           type="button"
           onClick={handleNextStep}
           disabled={totalSteps === 0 || activeStepIndex >= totalSteps - 1}
-          className="w-9 h-9 flex items-center justify-center border-2 border-primary-fixed text-primary-fixed hover:bg-primary-fixed hover:text-on-primary-fixed disabled:opacity-40 transition-all brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-primary-fixed disabled:opacity-30 transition-all duration-300 active:scale-95 flex items-center justify-center"
           title="Next Step"
         >
           <span className="material-symbols-outlined text-base">skip_next</span>
@@ -118,7 +118,7 @@ export function ReplayHUD({
         <button
           type="button"
           onClick={handleSpeedToggle}
-          className="px-2 py-1 text-[11px] font-black border-2 border-outline text-primary-fixed bg-surface hover:bg-surface-variant transition-colors"
+          className="px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold border border-white/10 text-primary-fixed bg-white/5 hover:bg-white/10 transition-colors"
           title="Toggle Playback Speed"
         >
           {playbackSpeed}x
@@ -127,19 +127,19 @@ export function ReplayHUD({
 
       {/* 2. Interactive Time-Travel Scrubber */}
       <div className="flex-1 w-full flex flex-col gap-1.5">
-        <div className="flex justify-between text-xs font-bold text-on-surface">
+        <div className="flex justify-between text-xs font-semibold text-on-surface">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-sm text-primary-fixed">history_toggle_off</span>
-            <span className="text-white font-black">
+            <span className="text-on-surface font-bold tracking-tight">
               {currentEvent ? `STEP ${activeStepIndex + 1}/${totalSteps}: ${currentEvent.title}` : activeRun ? `RUN #${activeRun.id.slice(-6).toUpperCase()}` : 'NO RUN SELECTED'}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-on-surface-variant font-bold">
+          <div className="flex items-center gap-3 text-[11px] text-on-surface-variant font-medium">
             {currentEvent?.durationMs !== undefined && (
-              <span>Duration: {currentEvent.durationMs}ms</span>
+              <span className="font-mono">{currentEvent.durationMs}ms</span>
             )}
-            <span className="text-primary-fixed font-black">{progressPercent.toFixed(0)}%</span>
+            <span className="text-primary-fixed font-mono font-bold">{progressPercent.toFixed(0)}%</span>
           </div>
         </div>
 
@@ -155,12 +155,12 @@ export function ReplayHUD({
               onStepChange?.(Number(e.target.value));
             }}
             disabled={totalSteps === 0}
-            className="w-full accent-primary-fixed bg-background cursor-pointer h-2 border-2 border-outline rounded-none z-20"
+            className="w-full accent-primary-fixed bg-surface-container-high cursor-pointer h-2 border border-outline-variant/20 rounded-full z-20 opacity-90 hover:opacity-100 transition-opacity"
           />
 
           {/* Progress Overlay Track */}
           <div
-            className="absolute top-1.5 left-0 h-2 bg-primary-fixed pointer-events-none z-10"
+            className="absolute top-[6px] left-0 h-2 bg-gradient-to-r from-primary-fixed to-primary-fixed/80 rounded-full pointer-events-none z-10 shadow-[0_0_10px_rgba(var(--color-primary-fixed),0.5)]"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -168,11 +168,11 @@ export function ReplayHUD({
 
       {/* 3. Trajectory Step Card */}
       <div className="hidden lg:flex flex-col items-end gap-1 text-right min-w-[200px]">
-        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5">
-          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-          <span>SIGNOZ TRAJECTORY REPLAY</span>
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full shadow-sm">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          <span className="tracking-wide">SIGNOZ REPLAY</span>
         </div>
-        <span className="text-[11px] text-on-surface-variant font-bold truncate max-w-[220px]">
+        <span className="text-[11px] text-on-surface-variant font-medium truncate max-w-[220px]">
           {currentEvent?.description || currentEvent?.eventType || "Ready for Time-Travel"}
         </span>
       </div>

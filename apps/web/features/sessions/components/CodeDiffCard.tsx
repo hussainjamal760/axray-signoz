@@ -75,12 +75,12 @@ export function CodeDiffCard({
   // Empty State (no diff & no files changed)
   if (!diff && filesChanged.length === 0) {
     return (
-      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-8 shadow-sm text-center font-sans">
-        <div className="flex items-center justify-center gap-2 text-on-surface-variant text-sm font-medium mb-1">
-          <span className="material-symbols-outlined text-lg text-emerald-400">check_circle</span>
+      <div className="bg-surface-container-lowest/40 backdrop-blur-md rounded-[32px] p-12 text-center font-sans flex flex-col items-center justify-center h-full border border-white/5 shadow-inner">
+        <div className="flex items-center justify-center gap-2.5 text-on-surface text-base font-semibold mb-2">
+          <span className="material-symbols-outlined text-xl text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">check_circle</span>
           No code changes were made during this run.
         </div>
-        <p className="text-on-surface-variant text-xs font-light mt-1">
+        <p className="text-on-surface-variant text-sm font-medium">
           The agent completed without modifying any files in the workspace repository.
         </p>
       </div>
@@ -92,9 +92,9 @@ export function CodeDiffCard({
     : parsedFiles;
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl shadow-sm overflow-hidden w-full transition-all hover:border-primary-fixed/30">
+    <div className="bg-surface-container-lowest/30 backdrop-blur-xl rounded-3xl overflow-hidden w-full transition-all border border-white/5 hover:border-white/10 flex flex-col h-full">
       {/* Header Bar */}
-      <div className="bg-surface-container-lowest/50 border-b border-outline-variant/30 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+      <div className="bg-surface-container-lowest/60 px-6 py-4 flex flex-wrap justify-between items-center gap-4 shrink-0 border-b border-white/5">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary-fixed text-xl">schema</span>
           <h3 className="text-base font-semibold text-on-surface">Git Diff</h3>
@@ -198,13 +198,13 @@ export function CodeDiffCard({
       )}
 
       {/* Body: GitHub-Style Unified File Diffs */}
-      <div className="p-6 bg-surface-container-lowest max-h-[650px] overflow-y-auto custom-scrollbar space-y-6">
+      <div className="p-6 max-h-[650px] overflow-y-auto custom-scrollbar space-y-6 flex-1">
         {filesToDisplay.length > 0 ? (
           filesToDisplay.map((fileDiff, idx) => (
             <FileDiffCard key={idx} fileDiff={fileDiff} />
           ))
         ) : (
-          <div className="bg-surface-container border border-outline-variant/20 rounded-2xl p-5 text-xs text-on-surface flex items-center justify-between font-sans">
+          <div className="bg-white/5 rounded-2xl p-5 text-xs text-on-surface flex items-center justify-between font-sans">
             <span className="font-medium">Modified Files: {filesChanged.join(", ")}</span>
             <span className="text-on-surface-variant italic">Full unified diff payload pending</span>
           </div>
