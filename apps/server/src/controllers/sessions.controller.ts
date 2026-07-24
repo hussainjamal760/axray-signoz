@@ -128,12 +128,13 @@ export const createPullRequest = async (req: Request, res: Response, next: NextF
 export const getPullRequestStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.session?.userId;
+    const token = req.session?.githubAccessToken;
     if (!userId) {
       throw new AppError(401, 'Unauthorized');
     }
 
     const { id } = req.params;
-    const pr = await githubPrService.getPullRequestStatus(id);
+    const pr = await githubPrService.getPullRequestStatus(id, token);
     res.json(pr);
   } catch (error) {
     next(error);

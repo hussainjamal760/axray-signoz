@@ -18,10 +18,14 @@ export interface IWorkspaceSpec {
 export interface IPullRequest {
   provider: 'github';
   prNumber: number;
+  number?: number;
   prUrl: string;
   branchName: string;
+  sourceBranch?: string;
   baseBranch: string;
+  targetBranch?: string;
   status: PullRequestStatus;
+  lastSyncedCommit?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,15 +64,19 @@ const PullRequestSchema: Schema = new Schema(
   {
     provider: { type: String, default: 'github', required: true },
     prNumber: { type: Number, required: true },
+    number: { type: Number },
     prUrl: { type: String, required: true },
     branchName: { type: String, required: true },
+    sourceBranch: { type: String },
     baseBranch: { type: String, required: true },
+    targetBranch: { type: String },
     status: {
       type: String,
       enum: ['creating', 'open', 'merged', 'closed', 'failed'],
       default: 'open',
       required: true,
     },
+    lastSyncedCommit: { type: String },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },

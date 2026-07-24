@@ -16,6 +16,17 @@ export function SessionHeader({ session }: { session: SessionSummary }) {
 
   const pr = session.pullRequest;
 
+  const getPrBadgeStyle = (status: string) => {
+    switch (status) {
+      case "merged":
+        return "bg-purple-500/20 border-purple-500/50 text-purple-300 hover:bg-purple-500/30";
+      case "closed":
+        return "bg-rose-500/20 border-rose-500/50 text-rose-300 hover:bg-rose-500/30";
+      default:
+        return "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/30";
+    }
+  };
+
   return (
     <section className="p-gutter border-b-[3px] border-primary-fixed bg-surface-container flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
       <div className="flex flex-wrap gap-4 items-center">
@@ -54,31 +65,37 @@ export function SessionHeader({ session }: { session: SessionSummary }) {
               href={pr.prUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 font-black px-3 py-1 hover:bg-emerald-500/30 transition-colors"
+              className={`flex items-center gap-1.5 border font-black px-3 py-1 transition-colors ${getPrBadgeStyle(
+                pr.status
+              )}`}
             >
               <span className="material-symbols-outlined text-sm">call_split</span>
-              <span>PR #{pr.prNumber} {pr.status.toUpperCase()}</span>
+              <span>
+                PR #{pr.prNumber || pr.number} {pr.status.toUpperCase()}
+              </span>
               <span className="material-symbols-outlined text-xs">open_in_new</span>
             </a>
 
-            <button
-              type="button"
-              onClick={() => handleCreatePR(undefined)}
-              disabled={isCreatingPR}
-              className="flex items-center gap-1.5 bg-primary-fixed text-on-primary-fixed font-black uppercase border border-outline px-3 py-1 hover:bg-surface-variant transition-colors disabled:opacity-50 brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
-            >
-              {isCreatingPR ? (
-                <>
-                  <span className="material-symbols-outlined text-xs animate-spin">sync</span>
-                  <span>Pushing Changes...</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-xs">upload</span>
-                  <span>Update PR #{pr.prNumber}</span>
-                </>
-              )}
-            </button>
+            {pr.status === "open" && (
+              <button
+                type="button"
+                onClick={() => handleCreatePR(undefined)}
+                disabled={isCreatingPR}
+                className="flex items-center gap-1.5 bg-primary-fixed text-on-primary-fixed font-black uppercase border border-outline px-3 py-1 hover:bg-surface-variant transition-colors disabled:opacity-50 brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+              >
+                {isCreatingPR ? (
+                  <>
+                    <span className="material-symbols-outlined text-xs animate-spin">sync</span>
+                    <span>Pushing Changes...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-xs">upload</span>
+                    <span>Push New Changes</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         ) : (
           <button

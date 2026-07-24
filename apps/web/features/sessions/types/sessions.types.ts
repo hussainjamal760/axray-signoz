@@ -16,10 +16,14 @@ export interface IWorkspaceSpec {
 export interface PullRequestSummary {
   provider: 'github';
   prNumber: number;
+  number?: number;
   prUrl: string;
   branchName: string;
+  sourceBranch?: string;
   baseBranch: string;
+  targetBranch?: string;
   status: PullRequestStatus;
+  lastSyncedCommit?: string;
   createdAt: string;
   updatedAt: string;
 }

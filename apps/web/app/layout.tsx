@@ -3,6 +3,7 @@ import "./globals.css";
 import LenisProvider from "@/providers/LenisProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { Preloader } from "@/components/ui/Preloader";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
   title: "AXRAY - The Flight Recorder for AI Coding Agents",
@@ -23,7 +24,9 @@ export default function RootLayout({
         <QueryProvider>
           <Preloader>
             <LenisProvider>
-              {children}
+              <ToastProvider>
+                {children}
+              </ToastProvider>
             </LenisProvider>
           </Preloader>
         </QueryProvider>

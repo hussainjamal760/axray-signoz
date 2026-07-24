@@ -1,4 +1,4 @@
-import { Session, IPullRequest } from '../models/session.model';
+import { Session, IPullRequest, PullRequestStatus } from '../models/session.model';
 import * as containerService from './container.service';
 import { createGithubClient, parseRepository } from '../lib/github';
 import { AppError } from '../errors/AppError';
@@ -10,6 +10,14 @@ export interface CreatePRParams {
   accessToken: string;
   title?: string;
   body?: string;
+}
+
+function getTimeHeader(): string {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `[${hours}:${minutes}:${seconds}]`;
 }
 
 export const createOrUpdatePullRequest = async (
@@ -29,7 +37,26 @@ export const createOrUpdatePullRequest = async (
   const baseBranch = session.branch || 'main';
   const { owner, repo } = parseRepository(session.repositoryFullName);
 
-  // 1. Emit PR Creation Started
+  const containerId = session.containerId;
+
+  // Pre-flight check: Verify if workspace has uncommitted edits or new local commits
+  const statusCheck = await containerService.executeCommand(containerId, 'cd /workspace && git status --porcelain');
+  const hasUncommittedChanges = statusCheck.exitCode === 0 && statusCheck.output.trim().length > 0;
+
+  const cherryCheck = await containerService.executeCommand(containerId, `cd /workspace && (git cherry origin/${baseBranch} || true)`);
+  const hasUnpushedCommits = cherryCheck.output.trim().length > 0;
+
+  if (!hasUncommittedChanges && !hasUnpushedCommits && !session.pullRequest) {
+    appendTerminalLine(
+      params.sessionId,
+      runIdStr,
+      'agent',
+      `${getTimeHeader()} Workspace clean. No code changes to push for Pull Request.`
+    );
+    throw new AppError(400, 'No changes to be pushed. The workspace has no modified code files.');
+  }
+
+  // 1. Emit PR Creation Started & Terminal Log
   emitLiveEvent(params.sessionId, {
     sessionId: params.sessionId,
     runId: runIdStr,
@@ -46,12 +73,10 @@ export const createOrUpdatePullRequest = async (
     params.sessionId,
     runIdStr,
     'agent',
-    `Initializing GitHub Pull Request workflow for ${session.repositoryFullName}...`
+    `${getTimeHeader()} Creating pull request for ${session.repositoryFullName}...`
   );
 
   try {
-    const containerId = session.containerId;
-
     // Configure Git user in workspace container
     await containerService.executeCommand(
       containerId,
@@ -59,7 +84,13 @@ export const createOrUpdatePullRequest = async (
     );
 
     // 2. Checkout or Create PR Branch
-    appendTerminalLine(params.sessionId, runIdStr, 'command', `git checkout -b ${branchName}`);
+    appendTerminalLine(
+      params.sessionId,
+      runIdStr,
+      'command',
+      `${getTimeHeader()} Creating branch:\n${branchName}`
+    );
+
     const checkoutRes = await containerService.executeCommand(
       containerId,
       `cd /workspace && (git checkout ${branchName} || git checkout -b ${branchName})`
@@ -84,20 +115,23 @@ export const createOrUpdatePullRequest = async (
     });
 
     // 3. Git Add & Commit Workspace Changes
-    appendTerminalLine(params.sessionId, runIdStr, 'command', 'git add .');
+    appendTerminalLine(params.sessionId, runIdStr, 'command', `${getTimeHeader()} Committing changes:\nfeat: agent generated changes`);
     await containerService.executeCommand(containerId, 'cd /workspace && git add .');
 
-    appendTerminalLine(params.sessionId, runIdStr, 'command', 'git commit -m "AXRAY Agent Execution Changes"');
     const commitRes = await containerService.executeCommand(
       containerId,
-      'cd /workspace && git commit -m "AXRAY Agent Execution Changes" || true'
+      'cd /workspace && git commit -m "feat: agent generated changes" || true'
     );
 
     if (commitRes.output.includes('nothing to commit')) {
-      appendTerminalLine(params.sessionId, runIdStr, 'stdout', 'No uncommitted changes found. Using existing commits.');
+      appendTerminalLine(params.sessionId, runIdStr, 'stdout', 'No new uncommitted changes found. Using existing commits.');
     } else {
       appendTerminalLine(params.sessionId, runIdStr, 'stdout', commitRes.output);
     }
+
+    // Get current commit SHA
+    const revParseRes = await containerService.executeCommand(containerId, 'cd /workspace && git rev-parse HEAD');
+    const commitHash = revParseRes.exitCode === 0 ? revParseRes.output.trim() : undefined;
 
     emitLiveEvent(params.sessionId, {
       sessionId: params.sessionId,
@@ -107,7 +141,8 @@ export const createOrUpdatePullRequest = async (
       phase: 'git',
       status: 'completed',
       title: 'Changes Committed',
-      description: 'Committed workspace edits',
+      description: commitHash ? `Commit ${commitHash.substring(0, 7)}` : 'Committed workspace edits',
+      metadata: { commitHash },
     });
 
     // 4. Push Branch to GitHub Remote
@@ -126,7 +161,7 @@ export const createOrUpdatePullRequest = async (
       params.sessionId,
       runIdStr,
       'command',
-      `git push origin ${branchName}`
+      `${getTimeHeader()} Pushing branch...`
     );
 
     const pushRes = await containerService.executeCommand(
@@ -154,12 +189,20 @@ export const createOrUpdatePullRequest = async (
     });
 
     // 5. Create or Update GitHub Pull Request via Octokit API
+    appendTerminalLine(
+      params.sessionId,
+      runIdStr,
+      'command',
+      `${getTimeHeader()} Creating GitHub pull request...`
+    );
+
     const octokit = createGithubClient(params.accessToken);
 
     if (session.pullRequest && session.pullRequest.prNumber) {
-      // Existing PR: verify / update status
+      // Existing PR: verify / update status on GitHub
       const existingPr = session.pullRequest;
       existingPr.status = 'open';
+      existingPr.lastSyncedCommit = commitHash || existingPr.lastSyncedCommit;
       existingPr.updatedAt = new Date();
       session.pullRequest = existingPr;
       await session.save();
@@ -168,7 +211,7 @@ export const createOrUpdatePullRequest = async (
         params.sessionId,
         runIdStr,
         'success',
-        `Updated existing Pull Request #${existingPr.prNumber}: ${existingPr.prUrl}`
+        `${getTimeHeader()}\nPR updated successfully\n\n#${existingPr.prNumber}\n${existingPr.prUrl}`
       );
 
       emitLiveEvent(params.sessionId, {
@@ -202,10 +245,14 @@ export const createOrUpdatePullRequest = async (
     const newPr: IPullRequest = {
       provider: 'github',
       prNumber: prResponse.data.number,
+      number: prResponse.data.number,
       prUrl: prResponse.data.html_url,
       branchName,
+      sourceBranch: branchName,
       baseBranch,
+      targetBranch: baseBranch,
       status: 'open',
+      lastSyncedCommit: commitHash,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -217,7 +264,7 @@ export const createOrUpdatePullRequest = async (
       params.sessionId,
       runIdStr,
       'success',
-      `Created Pull Request #${newPr.prNumber}: ${newPr.prUrl}`
+      `${getTimeHeader()}\nPR created successfully\n\n#${newPr.prNumber}\n${newPr.prUrl}`
     );
 
     emitLiveEvent(params.sessionId, {
@@ -260,10 +307,52 @@ export const createOrUpdatePullRequest = async (
   }
 };
 
-export const getPullRequestStatus = async (sessionId: string): Promise<IPullRequest | null> => {
+/**
+ * PR Status Synchronization Endpoint
+ * Queries GitHub API to ensure local state reflects external merges / closures.
+ */
+export const getPullRequestStatus = async (
+  sessionId: string,
+  accessToken?: string
+): Promise<IPullRequest | null> => {
   const session = await Session.findById(sessionId);
   if (!session) {
     throw new AppError(404, `Session ${sessionId} not found`);
   }
-  return session.pullRequest || null;
+
+  if (!session.pullRequest) {
+    return null;
+  }
+
+  // If user token is available, query GitHub API for authoritative status
+  if (accessToken && session.pullRequest.prNumber) {
+    try {
+      const { owner, repo } = parseRepository(session.repositoryFullName);
+      const octokit = createGithubClient(accessToken);
+      const { data } = await octokit.pulls.get({
+        owner,
+        repo,
+        pull_number: session.pullRequest.prNumber,
+      });
+
+      let updatedStatus: PullRequestStatus = 'open';
+      if (data.merged) {
+        updatedStatus = 'merged';
+      } else if (data.state === 'closed') {
+        updatedStatus = 'closed';
+      } else if (data.state === 'open') {
+        updatedStatus = 'open';
+      }
+
+      if (session.pullRequest.status !== updatedStatus) {
+        session.pullRequest.status = updatedStatus;
+        session.pullRequest.updatedAt = new Date();
+        await session.save();
+      }
+    } catch (err) {
+      console.warn(`[GitHub PR Service] Failed to sync PR status from GitHub API:`, err);
+    }
+  }
+
+  return session.pullRequest;
 };
