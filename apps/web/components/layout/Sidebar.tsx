@@ -51,15 +51,15 @@ export function Sidebar({ isOpen }: SidebarProps) {
     >
       <div className="group/sidebar w-full h-full flex flex-col">
         <div className="px-3 pt-5 pb-2 shrink-0">
-          <div className="flex items-center gap-3 p-2 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 overflow-hidden shadow-sm">
-            <div className="w-8 h-8 shrink-0 rounded-xl bg-primary-fixed/20 text-primary-fixed flex items-center justify-center">
-              <span className="material-symbols-outlined text-sm">terminal</span>
+          <Link href="/" className="flex items-center gap-3 p-2 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 overflow-hidden shadow-sm hover:border-primary-fixed/50 transition-colors">
+            <div className="w-8 h-8 shrink-0 rounded-xl flex items-center justify-center overflow-hidden bg-black/50 p-0.5">
+              <img src="/logo/axray-logo.png" alt="AXRAY" className="w-full h-full object-contain" />
             </div>
             <div className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-              <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider">Core Engine</p>
+              <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider">Home</p>
               <p className="font-semibold text-sm text-on-surface">AXRAY <span className="text-[10px] text-on-surface-variant font-normal ml-1">v1.0.0</span></p>
             </div>
-          </div>
+          </Link>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
