@@ -103,7 +103,7 @@ export function TerminalPanel({
   };
 
   return (
-    <div className="w-full bg-surface border-[3px] border-outline flex flex-col h-[480px] brutalist-shadow font-mono-label selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <div className="w-full bg-surface border-[3px] border-outline flex flex-col h-[380px] brutalist-shadow font-mono-label selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* Brutalist Header Bar matching website theme */}
       <div className="p-4 border-b-[3px] border-outline flex items-center justify-between bg-surface-container-high shrink-0 select-none">
         <div className="flex items-center gap-4">

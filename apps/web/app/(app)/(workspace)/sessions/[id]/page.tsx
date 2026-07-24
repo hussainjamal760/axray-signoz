@@ -244,8 +244,8 @@ export default function SessionIdPage() {
       <SessionHeader session={session} />
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-8 space-y-8 custom-scrollbar" data-lenis-prevent="true">
-        <div className="grid grid-cols-12 gap-8 items-stretch">
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6 space-y-6 custom-scrollbar" data-lenis-prevent="true">
+        <div className="grid grid-cols-12 gap-6 items-start">
 
           {/* Row 1: Initialize Context & Timeline */}
           <div className="col-span-12 lg:col-span-7 flex flex-col">
@@ -305,17 +305,6 @@ export default function SessionIdPage() {
 
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="h-[56px] border-t-[3px] border-outline-variant bg-background flex items-center justify-between px-8 flex-shrink-0">
-        <p className="font-mono-label text-[10px] font-bold uppercase text-outline-variant">© 2024 AGENT_BLACK_BOX // RADICAL_SYNTAX_MODE</p>
-        <div className="hidden sm:flex items-center gap-8">
-          <a className="font-mono-label text-[10px] font-bold uppercase text-outline-variant hover:text-primary-fixed" href="#">Privacy</a>
-          <a className="font-mono-label text-[10px] font-bold uppercase text-outline-variant hover:text-primary-fixed" href="#">Terms</a>
-          <a className="font-mono-label text-[10px] font-bold uppercase text-outline-variant hover:text-primary-fixed" href="#">Sec_Policy</a>
-          <a className="font-mono-label text-[10px] font-bold uppercase text-primary-fixed border border-primary-fixed px-2 py-0.5" href="#">Github_Link</a>
-        </div>
-      </footer>
     </div>
   );
 }
