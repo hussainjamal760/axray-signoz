@@ -131,24 +131,15 @@ export class SpanStoreProcessor implements SpanProcessor {
 
 export const spanStoreProcessor = new SpanStoreProcessor();
 
-function getTraceIngestUrl(): string {
-  if (process.env.OTLP_ENDPOINT) {
-    return `${process.env.OTLP_ENDPOINT}/v1/traces`;
+function getOtlpTraceUrl(): string {
+  const endpoint = process.env.OTLP_ENDPOINT || 'http://localhost:4318/v1/traces';
+  if (endpoint.endsWith('/v1/traces')) {
+    return endpoint;
   }
-  const region = process.env.SIGNOZ_REGION;
-  if (region) {
-    return `https://ingest.${region}.signoz.cloud:443/v1/traces`;
-  }
-  return 'http://localhost:4318/v1/traces';
+  return `${endpoint.replace(/\/+$/, '')}/v1/traces`;
 }
 
-const traceUrl = getTraceIngestUrl();
-
-const exporterHeaders: Record<string, string> = {};
-const ingestionKey = process.env.SIGNOZ_INGESTION_KEY || process.env.SIGNOZ_API_KEY;
-if (ingestionKey) {
-  exporterHeaders['signoz-ingestion-key'] = ingestionKey;
-}
+const traceUrl = getOtlpTraceUrl();
 
 let sdk: NodeSDK | null = null;
 
@@ -164,14 +155,13 @@ export function startTelemetry(): void {
       new SimpleSpanProcessor(
         new OTLPTraceExporter({
           url: traceUrl,
-          headers: exporterHeaders,
         })
       ),
     ],
   });
 
   sdk.start();
-  console.log(`[Telemetry] OpenTelemetry SDK initialized (ingest: ${traceUrl})`);
+  console.log(`[Telemetry] OpenTelemetry SDK initialized (OTLP endpoint: ${traceUrl})`);
 }
 
 export async function shutdownTelemetry(): Promise<void> {
