@@ -4,7 +4,7 @@ import * as containerService from './container.service';
 import * as workspaceService from './workspace.service';
 import * as agentService from './agent.service';
 import * as gitService from './git.service';
-import { tracer } from '../lib/telemetry';
+import { tracer, emitAgentLog } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { emitLiveEvent } from '../sockets/socket.emitter';
@@ -216,6 +216,12 @@ export const executeRun = async (runId: string): Promise<void> => {
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : String(error);
     console.error(`[Runner] Execution failed for run ${runId}:`, errMessage);
+
+    emitAgentLog('error', `Agent Run Failed (RunID: ${runId}): ${errMessage}`, {
+      runId,
+      sessionId: sessionIdStr,
+      errorMessage: errMessage,
+    });
 
     appendTerminalLine(sessionIdStr, runId, 'error', `Run failed: ${errMessage}`);
     const finalTerminalOutput = await flushAndPersistTerminalOutput(runId);

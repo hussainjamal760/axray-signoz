@@ -1,8 +1,15 @@
 import { Groq } from 'groq-sdk';
 import * as containerService from './container.service';
-import { tracer } from '../lib/telemetry';
+import {
+  tracer,
+  emitAgentLog,
+  agentRunsCounter,
+  agentErrorsCounter,
+  agentTokensInputCounter,
+  agentTokensOutputCounter,
+} from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
-import { SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatusCode, trace, context } from '@opentelemetry/api';
 import { emitLiveEvent } from '../sockets/socket.emitter';
 import { appendTerminalLine } from './terminal-logger.service';
 
@@ -113,13 +120,12 @@ const TOOL_DECLARATIONS: any[] = [
 const SYSTEM_PROMPT = `You are AXRAY, an expert AI coding agent operating inside an isolated Docker environment.
 
 STRICT WORKSPACE RULES:
-0. You must always respond with exactly one tool call. Never respond with plain text, explanations, or reasoning outside of a tool call. If you need to think before acting, use the tool call itself (e.g. read_file or search_files) as your next action.
-1. All commands execute strictly within /workspace.
-2. ALWAYS inspect the workspace first using run_command (e.g. "ls -la") or read_file.
-3. When searching for code patterns or symbols, ALWAYS prefer the dedicated tool "search_files(pattern, path)" instead of running shell grep.
-4. Use read_file to view file contents (bounded to 500 lines) and write_file to edit files safely. Do NOT write shell heredoc patches.
-5. Use run_command to run test suites, build commands, or shell utilities.
-6. When finished or satisfied with results, respond directly with a concise text response summarizing your actions. Do not invoke tools after completing your objective.`;
+0. All commands execute strictly within /workspace.
+1. ALWAYS inspect the workspace first using run_command (e.g. "ls -la") or read_file.
+2. When searching for code patterns or symbols, ALWAYS prefer the dedicated tool "search_files(pattern, path)" instead of running shell grep.
+3. Use read_file to view file contents (bounded to 500 lines) and write_file to edit files safely. Do NOT write shell heredoc patches.
+4. Use run_command to run test suites, build commands, or shell utilities.
+5. Decide what tool to call next to investigate or modify code. When your task is complete or you are satisfied with the results, respond directly with a concise text response summarizing your actions. Do not invoke tools after completing your objective.`;
 
 export const executePrompt = async (
   options: AgentExecutionOptions
@@ -185,18 +191,35 @@ export const executePrompt = async (
         });
       }
 
-      const llmSpan = tracer.startSpan('llm.request', {
-        attributes: {
-          [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
-          [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
-          [AXRAY_ATTRIBUTES.PHASE]: 'llm',
-          [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'llm.request',
-          [AXRAY_ATTRIBUTES.AGENT_TURN]: turn,
-          [AXRAY_ATTRIBUTES.AGENT_MODEL]: DEFAULT_GROQ_MODEL,
-          [AXRAY_ATTRIBUTES.GEN_AI_SYSTEM]: 'groq',
-          [AXRAY_ATTRIBUTES.GEN_AI_MODEL]: DEFAULT_GROQ_MODEL,
+      const turnSpan = tracer.startSpan(
+        'agent.turn',
+        {
+          attributes: {
+            'turn.number': turn,
+            [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
+            [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
+          },
         },
-      });
+        trace.setSpan(context.active(), span)
+      );
+
+      const llmStartTime = Date.now();
+      const llmSpan = tracer.startSpan(
+        'llm.call',
+        {
+          attributes: {
+            [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
+            [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
+            [AXRAY_ATTRIBUTES.PHASE]: 'llm',
+            [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'llm.request',
+            [AXRAY_ATTRIBUTES.AGENT_TURN]: turn,
+            [AXRAY_ATTRIBUTES.AGENT_MODEL]: DEFAULT_GROQ_MODEL,
+            [AXRAY_ATTRIBUTES.GEN_AI_SYSTEM]: 'groq',
+            [AXRAY_ATTRIBUTES.GEN_AI_MODEL]: DEFAULT_GROQ_MODEL,
+          },
+        },
+        trace.setSpan(context.active(), turnSpan)
+      );
 
       let completion: any;
       let pTokens = 0;
@@ -209,34 +232,63 @@ export const executePrompt = async (
             model: DEFAULT_GROQ_MODEL,
             messages,
             tools: TOOL_DECLARATIONS,
-            tool_choice: overrideToolChoice || 'required',
+            tool_choice: overrideToolChoice || 'auto',
             temperature: 0.2,
           });
         };
 
         try {
-          completion = await fetchCompletion('required');
+          completion = await fetchCompletion('auto');
         } catch (initialErr: any) {
-          const isParseError =
+          let failedGen: string | undefined;
+
+          // 1. Try extracting direct property
+          if (initialErr?.error?.failed_generation && typeof initialErr.error.failed_generation === 'string') {
+            failedGen = initialErr.error.failed_generation;
+          } else if (initialErr?.failed_generation && typeof initialErr.failed_generation === 'string') {
+            failedGen = initialErr.failed_generation;
+          }
+
+          // 2. Parse JSON payload from SDK error message
+          if (!failedGen && typeof initialErr?.message === 'string') {
+            try {
+              const jsonMatch = initialErr.message.match(/\{[\s\S]*\}/);
+              if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                const extracted = parsed?.error?.failed_generation || parsed?.failed_generation;
+                if (typeof extracted === 'string' && extracted.trim().length > 0) {
+                  failedGen = extracted;
+                }
+              }
+            } catch {}
+          }
+
+          const isToolUseOrParseFailed =
+            initialErr?.error?.code === 'tool_use_failed' ||
             initialErr?.error?.code === 'output_parse_failed' ||
+            initialErr?.code === 'tool_use_failed' ||
             initialErr?.code === 'output_parse_failed' ||
-            (typeof initialErr?.message === 'string' && initialErr.message.includes('output_parse_failed'));
+            (typeof initialErr?.message === 'string' &&
+              (initialErr.message.includes('tool_use_failed') ||
+                initialErr.message.includes('output_parse_failed') ||
+                initialErr.message.includes('Tool choice is required') ||
+                initialErr.message.includes('failed_generation')));
 
-          if (isParseError) {
-            console.warn(`[Agent Turn ${turn}/${maxTurns}] output_parse_failed detected, retrying with correction...`);
+          if (isToolUseOrParseFailed && failedGen && failedGen.trim().length > 0) {
+            console.log(`[Agent Turn ${turn}/${maxTurns}] Captured Groq text completion: "${failedGen.trim()}"`);
             if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'agent', `[Turn ${turn}] output_parse_failed detected. Retrying with correction...`);
+              appendTerminalLine(sessionId, runId, 'agent', `Task Completion: ${failedGen.trim().substring(0, 120)}...`);
             }
-            const failedGen = initialErr?.error?.failed_generation || initialErr?.failed_generation || '';
-            const feedback = `Your previous response was not a valid tool call${failedGen ? ` (failed generation: "${failedGen}")` : ''}. You must respond with exactly one tool call and nothing else. Try again.`;
-
-            messages.push({
-              role: 'user',
-              content: feedback,
-            });
-
-            // Retry once with tool_choice forced to 'required'
-            completion = await fetchCompletion('required');
+            completion = {
+              choices: [
+                {
+                  message: {
+                    role: 'assistant',
+                    content: failedGen.trim(),
+                  },
+                },
+              ],
+            };
           } else {
             throw initialErr;
           }
@@ -248,18 +300,53 @@ export const executePrompt = async (
           tTokens = completion.usage.total_tokens || (pTokens + cTokens);
           totalTokens += tTokens;
 
+          const costUsd = ((pTokens * 0.59) + (cTokens * 0.79)) / 1_000_000;
+          const latencyMs = Date.now() - llmStartTime;
+
           llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_INPUT_TOKENS, pTokens);
           llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_OUTPUT_TOKENS, cTokens);
           llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_TOTAL_TOKENS, tTokens);
+          llmSpan.setAttribute('gen_ai.usage.input_tokens', pTokens);
+          llmSpan.setAttribute('gen_ai.usage.output_tokens', cTokens);
+          llmSpan.setAttribute('gen_ai.usage.total_tokens', tTokens);
+          llmSpan.setAttribute('llm.cost_usd', costUsd);
+          llmSpan.setAttribute('llm.latency_ms', latencyMs);
+
+          // Add metrics to OTEL counters
+          agentTokensInputCounter.add(pTokens);
+          agentTokensOutputCounter.add(cTokens);
         }
 
         llmSpan.setStatus({ code: SpanStatusCode.OK });
       } catch (llmErr: any) {
+        agentErrorsCounter.add(1);
+        const errMessage = llmErr?.message || String(llmErr);
+        const isRateLimit =
+          errMessage.includes('429') ||
+          errMessage.toLowerCase().includes('rate limit') ||
+          errMessage.toLowerCase().includes('rate_limit') ||
+          llmErr?.status === 429;
+
+        if (isRateLimit) {
+          llmSpan.setAttribute('error.type', 'rate_limit');
+          llmSpan.setAttribute('http.status_code', 429);
+        }
+
+        emitAgentLog('error', `Groq LLM Call Failed (Turn ${turn}${isRateLimit ? ' RATE LIMITED' : ''}): ${errMessage}`, {
+          runId,
+          sessionId,
+          turn,
+          isRateLimit,
+          errorMessage: errMessage,
+        });
+
         llmSpan.setStatus({
           code: SpanStatusCode.ERROR,
-          message: llmErr?.message || String(llmErr),
+          message: errMessage,
         });
         llmSpan.end();
+        turnSpan.setStatus({ code: SpanStatusCode.ERROR, message: errMessage });
+        turnSpan.end();
         throw llmErr;
       }
       llmSpan.end();
@@ -340,16 +427,22 @@ export const executePrompt = async (
             });
           }
 
-          const toolSpan = tracer.startSpan('tool.execute', {
-            attributes: {
-              [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
-              [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
-              [AXRAY_ATTRIBUTES.PHASE]: 'tool',
-              [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'tool.execute',
-              [AXRAY_ATTRIBUTES.TOOL_NAME]: fnName,
-              [AXRAY_ATTRIBUTES.CONTAINER_ID]: options.containerId,
+          const toolSpan = tracer.startSpan(
+            'tool.call',
+            {
+              attributes: {
+                'tool.name': fnName,
+                'tool.args': JSON.stringify(fnArgs),
+                [AXRAY_ATTRIBUTES.RUN_ID]: options.runId || '',
+                [AXRAY_ATTRIBUTES.SESSION_ID]: options.sessionId || '',
+                [AXRAY_ATTRIBUTES.PHASE]: 'tool',
+                [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'tool.execute',
+                [AXRAY_ATTRIBUTES.TOOL_NAME]: fnName,
+                [AXRAY_ATTRIBUTES.CONTAINER_ID]: options.containerId,
+              },
             },
-          });
+            trace.setSpan(context.active(), turnSpan)
+          );
 
           let toolOutput = '';
           let exitCode = 0;
@@ -357,125 +450,154 @@ export const executePrompt = async (
           const cacheKey = `${fnName}:${JSON.stringify(fnArgs)}`;
           let isCached = false;
 
-          if (executedToolsCache.has(cacheKey)) {
-            const cached = executedToolsCache.get(cacheKey)!;
-            isCached = true;
-            exitCode = cached.exitCode;
-            toolOutput = `[Cached result - identical call already executed this run]\n${cached.output}`;
-            console.log(`[Agent Tool Cache Hit] Function: "${fnName}", Args:`, fnArgs);
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'agent', `[Cached Result] ${fnName}(${fnArgs.path || fnArgs.command || fnArgs.pattern || ''})`);
-            }
-          } else if (fnName === 'read_file') {
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'agent', `Reading file ${fnArgs.path}...`);
-            }
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
-            const readRes = await containerService.executeCommand(
-              options.containerId,
-              `head -n 100 ${WORKSPACE_DIR}/${fnArgs.path}`,
-              { timeoutMs: 15000, maxBufferBytes: 100000 }
-            );
-            exitCode = readRes.exitCode;
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
-            if (exitCode === 0) {
-              toolOutput = readRes.output;
+          await context.with(trace.setSpan(context.active(), toolSpan), async () => {
+            if (executedToolsCache.has(cacheKey)) {
+              const cached = executedToolsCache.get(cacheKey)!;
+              isCached = true;
+              exitCode = cached.exitCode;
+              toolOutput = `[Cached result - identical call already executed this run]\n${cached.output}`;
+              console.log(`[Agent Tool Cache Hit] Function: "${fnName}", Args:`, fnArgs);
               if (sessionId && runId) {
-                appendTerminalLine(sessionId, runId, 'stdout', readRes.output);
+                appendTerminalLine(sessionId, runId, 'agent', `[Cached Result] ${fnName}(${fnArgs.path || fnArgs.command || fnArgs.pattern || ''})`);
               }
-            } else {
-              toolOutput = `Error reading file ${fnArgs.path}: ${readRes.output}`;
+            } else if (fnName === 'read_file') {
               if (sessionId && runId) {
-                appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
-                appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
+                appendTerminalLine(sessionId, runId, 'agent', `Reading file ${fnArgs.path}...`);
               }
-            }
-          } else if (fnName === 'write_file') {
-            const filePath = fnArgs.path || '';
-            const content = fnArgs.content || '';
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'agent', `Writing file ${filePath}...`);
-            }
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, filePath);
-            const base64Content = Buffer.from(content, 'utf8').toString('base64');
-            const mkdirRes = await containerService.executeCommand(
-              options.containerId,
-              `mkdir -p $(dirname ${WORKSPACE_DIR}/${filePath})`
-            );
-            if (mkdirRes.exitCode !== 0) {
-              toolOutput = `Error creating directory for ${filePath}: ${mkdirRes.output}`;
-              exitCode = mkdirRes.exitCode;
-              if (sessionId && runId) {
-                appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
-                appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
-              }
-            } else {
-              const writeRes = await containerService.executeCommand(
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, fnArgs.path || '');
+              toolSpan.setAttribute('tool.path', fnArgs.path || '');
+              const readRes = await containerService.executeCommand(
                 options.containerId,
-                `echo '${base64Content}' | base64 -d > ${WORKSPACE_DIR}/${filePath}`,
-                { timeoutMs: 15000 }
+                `head -n 100 ${WORKSPACE_DIR}/${fnArgs.path}`,
+                { timeoutMs: 15000, maxBufferBytes: 100000 }
               );
-              exitCode = writeRes.exitCode;
+              exitCode = readRes.exitCode;
               toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+              toolSpan.setAttribute('tool.exit_code', exitCode);
               if (exitCode === 0) {
-                toolOutput = `Successfully wrote file ${filePath}`;
+                toolOutput = readRes.output;
                 if (sessionId && runId) {
-                  appendTerminalLine(sessionId, runId, 'success', toolOutput);
+                  appendTerminalLine(sessionId, runId, 'stdout', readRes.output);
                 }
               } else {
-                toolOutput = `Error writing file ${filePath}: ${writeRes.output}`;
+                toolOutput = `Error reading file ${fnArgs.path}: ${readRes.output}`;
                 if (sessionId && runId) {
                   appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
                   appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
                 }
               }
-            }
-          } else if (fnName === 'search_files') {
-            const pattern = fnArgs.pattern || '';
-            const targetSubPath = fnArgs.path ? `${WORKSPACE_DIR}/${fnArgs.path}` : WORKSPACE_DIR;
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'agent', `Searching files for pattern "${pattern}"...`);
-            }
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, `search_files ${pattern}`);
-            const searchRes = await containerService.executeCommand(
-              options.containerId,
-              `cd ${WORKSPACE_DIR} && grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next "${pattern}" ${targetSubPath}`,
-              { timeoutMs: 25000, maxBufferBytes: 100000 }
-            );
-            exitCode = searchRes.exitCode;
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
-            toolOutput = searchRes.output || `No occurrences of "${pattern}" found.`;
+            } else if (fnName === 'write_file') {
+              const filePath = fnArgs.path || '';
+              const content = fnArgs.content || '';
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'agent', `Writing file ${filePath}...`);
+              }
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_PATH, filePath);
+              toolSpan.setAttribute('tool.path', filePath);
+              const base64Content = Buffer.from(content, 'utf8').toString('base64');
+              const mkdirRes = await containerService.executeCommand(
+                options.containerId,
+                `mkdir -p $(dirname ${WORKSPACE_DIR}/${filePath})`
+              );
+              if (mkdirRes.exitCode !== 0) {
+                toolOutput = `Error creating directory for ${filePath}: ${mkdirRes.output}`;
+                exitCode = mkdirRes.exitCode;
+                if (sessionId && runId) {
+                  appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
+                  appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
+                }
+              } else {
+                const writeRes = await containerService.executeCommand(
+                  options.containerId,
+                  `echo '${base64Content}' | base64 -d > ${WORKSPACE_DIR}/${filePath}`,
+                  { timeoutMs: 15000 }
+                );
+                exitCode = writeRes.exitCode;
+                toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+                toolSpan.setAttribute('tool.exit_code', exitCode);
+                if (exitCode === 0) {
+                  toolOutput = `Successfully wrote file ${filePath}`;
+                  if (sessionId && runId) {
+                    appendTerminalLine(sessionId, runId, 'success', toolOutput);
+                  }
+                } else {
+                  toolOutput = `Error writing file ${filePath}: ${writeRes.output}`;
+                  if (sessionId && runId) {
+                    appendTerminalLine(sessionId, runId, 'stderr', toolOutput);
+                    appendTerminalLine(sessionId, runId, 'error', `Exit Code: ${exitCode}`);
+                  }
+                }
+              }
+            } else if (fnName === 'search_files') {
+              const pattern = fnArgs.pattern || '';
+              const targetSubPath = fnArgs.path ? `${WORKSPACE_DIR}/${fnArgs.path}` : WORKSPACE_DIR;
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'agent', `Searching files for pattern "${pattern}"...`);
+              }
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, `search_files ${pattern}`);
+              toolSpan.setAttribute('tool.command', `search_files ${pattern}`);
+              const searchRes = await containerService.executeCommand(
+                options.containerId,
+                `cd ${WORKSPACE_DIR} && grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=.next "${pattern}" ${targetSubPath}`,
+                { timeoutMs: 25000, maxBufferBytes: 100000 }
+              );
+              exitCode = searchRes.exitCode;
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+              toolSpan.setAttribute('tool.exit_code', exitCode);
+              toolOutput = searchRes.output || `No occurrences of "${pattern}" found.`;
 
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, exitCode === 0 ? 'stdout' : 'stderr', toolOutput);
-            }
-          } else if (fnName === 'run_command') {
-            const command = fnArgs.command || '';
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'command', command);
-            }
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, command);
-            const cmdRes = await containerService.executeCommand(
-              options.containerId,
-              `cd ${WORKSPACE_DIR} && ${command}`
-            );
-            exitCode = cmdRes.exitCode;
-            toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
-            toolOutput = `Exit Code: ${exitCode}\nOutput:\n${cmdRes.output}`;
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, exitCode === 0 ? 'stdout' : 'stderr', toolOutput);
+              }
+            } else if (fnName === 'run_command') {
+              const command = fnArgs.command || '';
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'command', command);
+              }
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_COMMAND, command);
+              toolSpan.setAttribute('tool.command', command);
+              const cmdRes = await containerService.executeCommand(
+                options.containerId,
+                `cd ${WORKSPACE_DIR} && ${command}`
+              );
+              exitCode = cmdRes.exitCode;
+              toolSpan.setAttribute(AXRAY_ATTRIBUTES.TOOL_EXIT_CODE, exitCode);
+              toolSpan.setAttribute('tool.exit_code', exitCode);
+              toolOutput = `Exit Code: ${exitCode}\nOutput:\n${cmdRes.output}`;
 
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, exitCode === 0 ? 'stdout' : 'stderr', cmdRes.output);
-              appendTerminalLine(sessionId, runId, exitCode === 0 ? 'success' : 'error', `Exit Code: ${exitCode}`);
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, exitCode === 0 ? 'stdout' : 'stderr', cmdRes.output);
+                appendTerminalLine(sessionId, runId, exitCode === 0 ? 'success' : 'error', `Exit Code: ${exitCode}`);
+              }
+            } else {
+              toolOutput = `Unknown tool "${fnName}"`;
+              exitCode = 1;
+              if (sessionId && runId) {
+                appendTerminalLine(sessionId, runId, 'error', toolOutput);
+              }
             }
+          });
+
+          const resultStatus = exitCode === 0 ? 'success' : 'error';
+          toolSpan.setAttribute('tool.result_status', resultStatus);
+
+          if (exitCode !== 0) {
+            toolSpan.setStatus({ code: SpanStatusCode.ERROR, message: toolOutput });
+            emitAgentLog('error', `Tool execution "${fnName}" failed (ExitCode: ${exitCode}): ${toolOutput}`, {
+              runId,
+              sessionId,
+              toolName: fnName,
+              exitCode,
+            });
           } else {
-            toolOutput = `Unknown tool "${fnName}"`;
-            exitCode = 1;
-            if (sessionId && runId) {
-              appendTerminalLine(sessionId, runId, 'error', toolOutput);
-            }
+            toolSpan.setStatus({ code: SpanStatusCode.OK });
+            emitAgentLog('info', `Tool execution "${fnName}" completed successfully`, {
+              runId,
+              sessionId,
+              toolName: fnName,
+              exitCode: 0,
+            });
           }
-
-          toolSpan.setStatus({ code: SpanStatusCode.OK });
           toolSpan.end();
 
           if (sessionId) {
@@ -527,6 +649,9 @@ export const executePrompt = async (
           appendTerminalLine(sessionId, runId, 'agent', `Finished task execution in ${turn} turns.`);
         }
 
+        turnSpan.setStatus({ code: SpanStatusCode.OK });
+        turnSpan.end();
+
         span.setAttribute('agent.turns_used', turn);
         span.setAttribute('agent.total_tokens', totalTokens);
         span.setStatus({ code: SpanStatusCode.OK });
@@ -537,6 +662,9 @@ export const executePrompt = async (
           tokensUsed: totalTokens,
         };
       }
+
+      turnSpan.setStatus({ code: SpanStatusCode.OK });
+      turnSpan.end();
     }
 
     span.setAttribute('agent.turns_used', maxTurns);

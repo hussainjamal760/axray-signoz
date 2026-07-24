@@ -7,6 +7,8 @@
 import { docker, DOCKER_RUNTIME_IMAGE } from '../lib/docker';
 import { AppError } from '../errors/AppError';
 import { ContainerStatus } from '../models/session.model';
+import { tracer } from '../lib/telemetry';
+import { SpanStatusCode } from '@opentelemetry/api';
 
 export interface ContainerInfo {
   containerId: string;
@@ -87,20 +89,45 @@ export const createContainer = async (params: {
   console.log(`[Docker] Creating container "${containerName}" for repo=${params.repositoryFullName || 'N/A'}`);
 
   try {
-    const container = await docker.createContainer({
-      Image: DOCKER_RUNTIME_IMAGE,
-      Cmd: ['sleep', 'infinity'],
-      name: containerName,
-      Tty: true,
-      OpenStdin: true,
-      Labels: {
-        'com.axray.session': params.sessionId || '',
-        'com.axray.type': 'session',
-      },
-      HostConfig: {
-        RestartPolicy: { Name: 'no' },
-      },
-    });
+    const targetImage = DOCKER_RUNTIME_IMAGE;
+    let container;
+
+    try {
+      container = await docker.createContainer({
+        Image: targetImage,
+        Cmd: ['sleep', 'infinity'],
+        name: containerName,
+        Tty: true,
+        OpenStdin: true,
+        Labels: {
+          'com.axray.session': params.sessionId || '',
+          'com.axray.type': 'session',
+        },
+        HostConfig: {
+          RestartPolicy: { Name: 'no' },
+        },
+      });
+    } catch (createErr: any) {
+      if (createErr?.statusCode === 404 || (typeof createErr?.message === 'string' && createErr.message.includes('No such image'))) {
+        console.warn(`[Docker Warning] Image "${targetImage}" missing locally. Falling back to "node:22"...`);
+        container = await docker.createContainer({
+          Image: 'node:22',
+          Cmd: ['sleep', 'infinity'],
+          name: containerName,
+          Tty: true,
+          OpenStdin: true,
+          Labels: {
+            'com.axray.session': params.sessionId || '',
+            'com.axray.type': 'session',
+          },
+          HostConfig: {
+            RestartPolicy: { Name: 'no' },
+          },
+        });
+      } else {
+        throw createErr;
+      }
+    }
 
     console.log(`[Docker] Container created: ${container.id}`);
     return { containerId: container.id };
@@ -210,6 +237,17 @@ export const executeCommand = async (
 
   console.log(`[Docker] Executing command in ${containerId} (timeout=${timeoutMs}ms): "${command}"`);
 
+  const span = tracer.startSpan('container.exec', {
+    attributes: {
+      'container.id': containerId,
+      'command.raw': rawCommand,
+      'command.sanitized': command,
+      'command.timeout_ms': timeoutMs,
+    },
+  });
+
+  const startTime = Date.now();
+
   try {
     const container = docker.getContainer(containerId);
     const exec = await container.exec({
@@ -255,18 +293,44 @@ export const executeCommand = async (
     });
 
     const inspectData = await exec.inspect();
+    const exitCode = inspectData.ExitCode ?? 0;
+    const durationMs = Date.now() - startTime;
+
+    span.setAttribute('command.exit_code', exitCode);
+    span.setAttribute('command.duration_ms', durationMs);
+    span.setAttribute('command.output_length', output.length);
+
+    if (exitCode !== 0) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: `Command exited with code ${exitCode}` });
+    } else {
+      span.setStatus({ code: SpanStatusCode.OK });
+    }
+    span.end();
+
     return {
-      exitCode: inspectData.ExitCode ?? 0,
+      exitCode,
       output: output.trim(),
     };
   } catch (error: any) {
+    const durationMs = Date.now() - startTime;
+    span.setAttribute('command.duration_ms', durationMs);
+
     if (error?.message === 'TIMEOUT') {
       const sec = (timeoutMs / 1000).toFixed(0);
+      const timeoutOutput = `Command timed out after ${sec}s. Possible cause: recursive search or scanning large directories (e.g., node_modules, .git). Try a more specific search path or use search_files().`;
+      span.setAttribute('command.exit_code', 124);
+      span.setAttribute('command.timed_out', true);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: `Command timed out after ${sec}s` });
+      span.end();
+
       return {
         exitCode: 124,
-        output: `Command timed out after ${sec}s. Possible cause: recursive search or scanning large directories (e.g., node_modules, .git). Try a more specific search path or use search_files().`,
+        output: timeoutOutput,
       };
     }
+
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message || String(error) });
+    span.end();
     return handleDockerError(error, 'Execute command');
   }
 };
