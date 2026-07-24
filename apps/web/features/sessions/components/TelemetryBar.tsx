@@ -79,10 +79,10 @@ export function TelemetryBar({
   }, [inputTokens, outputTokens]);
 
   return (
-    <div className="w-full bg-surface border-b-2 border-outline flex flex-col font-mono-label">
+    <div className="w-full bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/20 flex flex-col font-sans">
       {/* 1. Rate Limit / Error Live Alert Banner */}
       {(rateLimitWarning || latestEvent?.eventType === "rate_limit.retry") && (
-        <div className="bg-rose-500/20 border-b border-rose-500/40 px-6 py-2 text-xs font-bold text-rose-300 flex items-center justify-between animate-pulse">
+        <div className="bg-rose-500/10 border-b border-rose-500/30 px-6 py-2 text-xs font-medium text-rose-300 flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-base text-rose-400">warning</span>
             <span>
@@ -91,77 +91,76 @@ export function TelemetryBar({
                 : "GROQ API RATE LIMIT HIT — Retrying with exponential backoff..."}
             </span>
           </div>
-          <span className="bg-rose-500 text-white text-[10px] uppercase font-black px-2 py-0.5">HTTP 429</span>
+          <span className="bg-rose-500/20 text-rose-300 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-rose-500/30">
+            HTTP 429
+          </span>
         </div>
       )}
 
       {/* 2. Primary Telemetry Bar */}
-      <div className="px-6 py-3 bg-surface-container-highest/60 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 text-xs">
         {/* Left side: Live Execution Phase & Turn counter */}
         <div className="flex items-center gap-4">
-          {/* Status Indicator */}
-          <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${isSessionActive ? "bg-emerald-400 animate-ping" : isError ? "bg-rose-500" : "bg-primary-fixed"}`} />
-            <span className="text-xs font-black uppercase text-white tracking-wider">
+          {/* Status Indicator Pill */}
+          <div className="flex items-center gap-2 px-3 py-1 bg-surface-container border border-outline-variant/20 rounded-full">
+            <span className={`w-2 h-2 rounded-full ${isSessionActive ? "bg-emerald-400 animate-ping" : isError ? "bg-rose-500" : "bg-primary-fixed"}`} />
+            <span className="font-semibold uppercase tracking-wider text-on-surface text-[10px]">
               {isSessionActive ? "Live Telemetry" : "Telemetry History"}
             </span>
           </div>
 
-          <div className="h-4 w-px bg-outline-variant" />
+          <div className="h-4 w-px bg-outline-variant/20" />
 
           {/* Turn Indicator */}
           {currentTurn > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-on-surface">
+            <div className="flex items-center gap-1.5">
               <span className="text-on-surface-variant font-medium">Turn:</span>
-              <span className="font-black text-primary-fixed bg-surface-container border border-outline px-2 py-0.5">
+              <span className="font-semibold text-primary-fixed bg-primary-fixed/10 border border-primary-fixed/30 rounded-full px-2.5 py-0.5 text-[11px]">
                 {currentTurn} / 30
               </span>
             </div>
           )}
 
           {/* Active Phase Pill */}
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5">
             <span className="text-on-surface-variant font-medium">Phase:</span>
-            <span className="font-bold text-on-surface bg-surface border border-outline px-2 py-0.5 truncate max-w-[220px]">
+            <span className="font-medium text-on-surface bg-surface-container border border-outline-variant/30 rounded-full px-3 py-0.5 text-[11px] truncate max-w-[220px]">
               {executionPhase}
             </span>
           </div>
         </div>
 
         {/* Right side: Live Token Usage & Cost Meter */}
-        <div className="flex items-center gap-6 text-xs">
+        <div className="flex items-center gap-6">
           {/* Model Badge */}
-          <div className="hidden sm:flex items-center gap-1.5 text-on-surface-variant">
+          <div className="hidden sm:flex items-center gap-2 text-on-surface-variant bg-surface-container/50 border border-outline-variant/20 rounded-full px-3 py-1">
             <span className="material-symbols-outlined text-[14px]">memory</span>
-            <span className="font-bold text-white truncate max-w-[180px]">{modelName}</span>
+            <span className="font-medium text-on-surface text-[11px] truncate max-w-[180px]">{modelName}</span>
           </div>
 
-          <div className="h-4 w-px bg-outline-variant hidden sm:block" />
+          <div className="h-4 w-px bg-outline-variant/20 hidden sm:block" />
 
           {/* Token Breakdown (Input / Output) */}
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px] text-primary-fixed">token</span>
-            <div className="flex flex-col">
-              <span className="font-black text-white leading-none">
-                {totalTokens.toLocaleString()} <span className="text-[10px] text-on-surface-variant font-normal">tokens</span>
+            <span className="material-symbols-outlined text-[16px] text-primary-fixed">token</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-on-surface text-xs">
+                {totalTokens.toLocaleString()} <span className="text-[11px] text-on-surface-variant font-normal">tokens</span>
               </span>
               {totalTokens > 0 && (
-                <span className="text-[9px] text-on-surface-variant leading-none mt-0.5">
-                  In: {inputTokens.toLocaleString()} • Out: {outputTokens.toLocaleString()}
+                <span className="text-[10px] text-on-surface-variant font-mono">
+                  ({inputTokens.toLocaleString()} in / {outputTokens.toLocaleString()} out)
                 </span>
               )}
             </div>
           </div>
 
-          <div className="h-4 w-px bg-outline-variant" />
+          <div className="h-4 w-px bg-outline-variant/20" />
 
           {/* Cost USD Counter */}
-          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-emerald-400">
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3.5 py-1 text-emerald-400">
             <span className="material-symbols-outlined text-[14px]">attach_money</span>
-            <div className="flex flex-col">
-              <span className="font-black text-xs leading-none">${estimatedCost}</span>
-              <span className="text-[8px] text-emerald-500/80 uppercase font-semibold leading-none mt-0.5">Est. Cost</span>
-            </div>
+            <span className="font-semibold text-xs font-mono">${estimatedCost}</span>
           </div>
         </div>
       </div>

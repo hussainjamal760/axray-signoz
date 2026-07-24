@@ -45,12 +45,12 @@ export function CodeDiffCard({
   // Loading State
   if (isLoading) {
     return (
-      <div className="bg-surface border-[3px] border-outline p-8 brutalist-shadow text-center font-mono-label">
-        <div className="flex items-center justify-center gap-3 text-primary-fixed font-black text-sm uppercase animate-pulse">
-          <span className="material-symbols-outlined animate-spin text-lg">sync</span>
+      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-8 shadow-sm text-center font-sans">
+        <div className="flex items-center justify-center gap-3 text-primary-fixed font-semibold text-sm animate-pulse">
+          <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
           Generating Git Diff...
         </div>
-        <p className="text-outline-variant text-xs mt-2">
+        <p className="text-on-surface-variant text-xs mt-2 font-light">
           Inspecting workspace repository changes for current run...
         </p>
       </div>
@@ -60,12 +60,12 @@ export function CodeDiffCard({
   // Error State
   if (isError) {
     return (
-      <div className="bg-surface border-[3px] border-outline p-8 brutalist-shadow text-center font-mono-label">
-        <div className="flex items-center justify-center gap-3 text-error text-sm font-black uppercase mb-1">
+      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-8 shadow-sm text-center font-sans">
+        <div className="flex items-center justify-center gap-2 text-rose-400 text-sm font-semibold mb-1">
           <span className="material-symbols-outlined text-lg">error</span>
           Unable to generate Git diff.
         </div>
-        <p className="text-outline-variant text-xs">
+        <p className="text-on-surface-variant text-xs font-light">
           An error occurred while inspecting repository changes for this run.
         </p>
       </div>
@@ -75,12 +75,12 @@ export function CodeDiffCard({
   // Empty State (no diff & no files changed)
   if (!diff && filesChanged.length === 0) {
     return (
-      <div className="bg-surface border-[3px] border-outline p-8 brutalist-shadow text-center font-mono-label">
-        <div className="flex items-center justify-center gap-3 text-outline text-sm font-black uppercase mb-1">
-          <span className="material-symbols-outlined text-lg">check_circle</span>
+      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-8 shadow-sm text-center font-sans">
+        <div className="flex items-center justify-center gap-2 text-on-surface-variant text-sm font-medium mb-1">
+          <span className="material-symbols-outlined text-lg text-emerald-400">check_circle</span>
           No code changes were made during this run.
         </div>
-        <p className="text-outline-variant text-xs">
+        <p className="text-on-surface-variant text-xs font-light mt-1">
           The agent completed without modifying any files in the workspace repository.
         </p>
       </div>
@@ -92,14 +92,14 @@ export function CodeDiffCard({
     : parsedFiles;
 
   return (
-    <div className="bg-surface border-[3px] border-outline brutalist-shadow overflow-hidden w-full">
+    <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl shadow-sm overflow-hidden w-full transition-all hover:border-primary-fixed/30">
       {/* Header Bar */}
-      <div className="bg-surface-container-high border-b-[3px] border-outline p-5 flex flex-wrap justify-between items-center gap-4">
+      <div className="bg-surface-container-lowest/50 border-b border-outline-variant/30 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
         <div className="flex items-center gap-3">
           <span className="material-symbols-outlined text-primary-fixed text-xl">schema</span>
-          <h3 className="text-lg font-black uppercase text-on-surface">Git Diff</h3>
+          <h3 className="text-base font-semibold text-on-surface">Git Diff</h3>
           {diffTruncated && (
-            <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 font-mono-label text-[11px] font-bold uppercase flex items-center gap-1">
+            <span className="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
               <span className="material-symbols-outlined text-xs">warning</span>
               Preview truncated
             </span>
@@ -107,15 +107,15 @@ export function CodeDiffCard({
         </div>
 
         {/* Summary Statistics & PR Action */}
-        <div className="flex items-center gap-4 font-mono-label text-xs font-bold">
-          <div className="flex items-center gap-2 text-on-surface bg-background px-3 py-1 border border-outline">
-            <span className="material-symbols-outlined text-sm text-outline">folder</span>
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-2 text-on-surface bg-surface-container border border-outline-variant/20 rounded-xl px-3 py-1.5 font-medium">
+            <span className="material-symbols-outlined text-sm text-on-surface-variant">folder</span>
             <span>{filesChanged.length || parsedFiles.length} {filesChanged.length === 1 ? "File" : "Files"} Changed</span>
           </div>
 
-          <div className="flex items-center gap-3 bg-background px-3 py-1 border border-outline">
-            <span className="text-emerald-400 font-black">+{insertions}</span>
-            <span className="text-error font-black">-{deletions}</span>
+          <div className="flex items-center gap-2 bg-surface-container border border-outline-variant/20 rounded-xl px-3 py-1.5 font-mono text-xs">
+            <span className="text-emerald-400 font-semibold">+{insertions}</span>
+            <span className="text-rose-400 font-semibold">-{deletions}</span>
           </div>
 
           {sessionId && (
@@ -124,9 +124,9 @@ export function CodeDiffCard({
                 href={pullRequest.prUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 px-3 py-1 hover:bg-emerald-500/30 transition-colors font-black text-xs"
+                className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3.5 py-1.5 rounded-xl hover:bg-emerald-500/20 transition-all font-medium text-xs"
               >
-                <span>VIEW PR</span>
+                <span>View PR</span>
                 <span className="material-symbols-outlined text-xs">open_in_new</span>
               </a>
             ) : (
@@ -134,11 +134,11 @@ export function CodeDiffCard({
                 type="button"
                 onClick={() => handleCreatePR(undefined)}
                 disabled={isCreatingPR}
-                className="flex items-center gap-1.5 bg-primary-fixed text-on-primary-fixed font-black uppercase px-3 py-1 border border-outline hover:bg-surface-variant transition-colors disabled:opacity-50 brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+                className="flex items-center gap-2 bg-primary-fixed text-black font-semibold px-4 py-1.5 rounded-xl hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 text-xs"
               >
                 {isCreatingPR ? (
                   <>
-                    <span className="material-symbols-outlined text-xs animate-spin">sync</span>
+                    <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
                     <span>Creating PR...</span>
                   </>
                 ) : (
@@ -155,24 +155,24 @@ export function CodeDiffCard({
 
       {/* Truncation Detail Notice */}
       {diffTruncated && (
-        <div className="bg-amber-500/10 border-b border-amber-500/30 px-6 py-2 text-amber-300 font-mono-label text-xs flex items-center justify-between">
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 text-amber-200 text-xs flex items-center justify-between font-sans">
           <span>
             Large git diff payload ({diffSize ? `${(diffSize / 1024).toFixed(1)} KB` : 'Over size limit'}). Displaying 500KB preview.
           </span>
-          {changeSummary && <span className="font-bold text-outline">{changeSummary}</span>}
+          {changeSummary && <span className="font-medium text-on-surface-variant">{changeSummary}</span>}
         </div>
       )}
 
-      {/* Multiple Files Tab Selector (if > 1 file) */}
+      {/* Multiple Files Tab Selector */}
       {parsedFiles.length > 1 && (
-        <div className="bg-surface-container/60 border-b border-outline p-3 flex flex-wrap gap-2 font-mono-label text-xs">
+        <div className="bg-surface-container/30 border-b border-outline-variant/20 p-3 flex flex-wrap gap-2 text-xs font-sans">
           <button
             type="button"
             onClick={() => setActiveFileIndex(null)}
-            className={`px-3 py-1 font-bold border uppercase transition-colors ${
+            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
               activeFileIndex === null
-                ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
-                : "bg-surface text-on-surface-variant border-outline hover:bg-surface-container-high"
+                ? "bg-primary-fixed text-black"
+                : "bg-surface-container text-on-surface-variant hover:text-on-surface"
             }`}
           >
             All Files ({parsedFiles.length})
@@ -182,14 +182,14 @@ export function CodeDiffCard({
               key={idx}
               type="button"
               onClick={() => setActiveFileIndex(idx)}
-              className={`px-3 py-1 font-bold border transition-colors flex items-center gap-2 ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 activeFileIndex === idx
-                  ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed"
-                  : "bg-surface text-on-surface-variant border-outline hover:bg-surface-container-high"
+                  ? "bg-primary-fixed text-black"
+                  : "bg-surface-container text-on-surface-variant hover:text-on-surface"
               }`}
             >
-              <span>{file.filename}</span>
-              <span className="text-[10px] opacity-75">
+              <span className="font-mono">{file.filename}</span>
+              <span className="text-[10px] opacity-75 font-mono">
                 (+{file.insertions}/-{file.deletions})
               </span>
             </button>
@@ -198,15 +198,15 @@ export function CodeDiffCard({
       )}
 
       {/* Body: GitHub-Style Unified File Diffs */}
-      <div className="p-6 bg-background max-h-[650px] overflow-y-auto custom-scrollbar space-y-6">
+      <div className="p-6 bg-surface-container-lowest max-h-[650px] overflow-y-auto custom-scrollbar space-y-6">
         {filesToDisplay.length > 0 ? (
           filesToDisplay.map((fileDiff, idx) => (
             <FileDiffCard key={idx} fileDiff={fileDiff} />
           ))
         ) : (
-          <div className="bg-surface border border-outline p-6 font-mono-label text-xs text-on-surface flex items-center justify-between">
-            <span className="font-bold">Modified Files: {filesChanged.join(", ")}</span>
-            <span className="text-outline-variant italic">Full unified diff payload pending</span>
+          <div className="bg-surface-container border border-outline-variant/20 rounded-2xl p-5 text-xs text-on-surface flex items-center justify-between font-sans">
+            <span className="font-medium">Modified Files: {filesChanged.join(", ")}</span>
+            <span className="text-on-surface-variant italic">Full unified diff payload pending</span>
           </div>
         )}
       </div>

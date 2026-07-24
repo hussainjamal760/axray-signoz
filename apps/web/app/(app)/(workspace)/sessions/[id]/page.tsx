@@ -27,32 +27,26 @@ export default function SessionIdPage() {
   const [manuallySelectedRun, setManuallySelectedRun] = useState<AgentRunSummary | null>(null);
   const [runErrorBanner, setRunErrorBanner] = useState<string | null>(null);
 
-  // Hydrate initial REST data from backend API on every page mount (staleTime: 0, refetchOnMount: true)
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval: false });
   const { data: fetchedRuns = [], isLoading: runsLoading, refetch: refetchRuns } = useRuns(id, { refetchInterval: false });
   const { mutate: createRun, isPending: isCreatingRun } = useCreateRun(id);
   const { mutate: cancelRun } = useCancelRun(id);
 
-  // Maintain local runs list for instant Socket.IO real-time updates
   const [runsState, setRunsState] = useState<AgentRunSummary[]>([]);
 
-  // Synchronize runsState with fresh backend fetchedRuns on mount and API refetches
   useEffect(() => {
     if (fetchedRuns.length > 0) {
       setRunsState(fetchedRuns);
     }
   }, [fetchedRuns]);
 
-  // Evaluate active run status from backend state
   const activeOrSelectedRun = manuallySelectedRun || runsState[0] || fetchedRuns[0] || null;
   const isSelectedRunExecuting = activeOrSelectedRun?.status === 'running' || activeOrSelectedRun?.status === 'pending';
 
-  // Sockets connect and listen ONLY while an agent run is actively executing (status === 'running' | 'pending')
   const { liveEvents, liveTerminalLines, latestEvent, clearLiveEvents } = useSessionSocket(isValidId ? id : undefined, {
     enabled: isSelectedRunExecuting,
   });
 
-  // Handle incoming Socket.IO events to update live run state and history
   useEffect(() => {
     if (!latestEvent) return;
 
@@ -84,7 +78,6 @@ export default function SessionIdPage() {
           return prev;
         });
 
-        // Synchronize manuallySelectedRun if it matches targetId
         setManuallySelectedRun((prev) => {
           if (prev && prev.id === targetId) {
             return {
@@ -104,7 +97,6 @@ export default function SessionIdPage() {
           return prev;
         });
 
-        // Refetch fresh authoritative data from MongoDB API to ensure React Query cache is fully synchronized
         void refetchRuns();
       }
     } else if (latestEvent.eventType === 'git.diff.completed') {
@@ -150,11 +142,9 @@ export default function SessionIdPage() {
     }
   }, [latestEvent, refetchRuns]);
 
-  // Loading state for Git diff terminates as soon as run completes/fails OR diff arrives
   const isDiffLoading = isSelectedRunExecuting && activeOrSelectedRun?.diff === undefined;
   const isDiffError = (activeOrSelectedRun?.status === 'failed' && !activeOrSelectedRun?.diff) || false;
 
-  // Map Socket.IO liveEvents into TimelineEvent[] format
   const liveTimelineEvents: TimelineEvent[] = useMemo(() => {
     return liveEvents.map((evt, idx) => ({
       id: `${evt.eventType}-${idx}-${evt.timestamp}`,
@@ -169,7 +159,6 @@ export default function SessionIdPage() {
     }));
   }, [liveEvents]);
 
-  // Derive human-readable live status text for prompt box
   const liveStatusText = useMemo(() => {
     if (!latestEvent) return isCreatingRun ? "Initializing Run..." : undefined;
     switch (latestEvent.eventType) {
@@ -204,8 +193,9 @@ export default function SessionIdPage() {
 
   if (sessionLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-screen">
-        <div className="font-mono-label text-sm uppercase animate-pulse text-primary-fixed font-black">
+      <div className="flex-1 flex items-center justify-center min-h-screen bg-background">
+        <div className="text-sm font-semibold animate-pulse text-primary-fixed flex items-center gap-3">
+          <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
           Loading Workspace Details...
         </div>
       </div>
@@ -214,14 +204,14 @@ export default function SessionIdPage() {
 
   if (sessionError || !session || !isValidId) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-2xl font-black uppercase text-error mb-4">Workspace Error</h2>
-        <p className="font-mono-label text-sm text-on-surface-variant mb-6">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-background min-h-screen">
+        <h2 className="text-2xl font-semibold text-rose-400 mb-2">Workspace Error</h2>
+        <p className="text-sm text-on-surface-variant mb-6 font-light max-w-md">
           The requested session is either invalid or could not be loaded.
         </p>
         <button
           onClick={() => router.push("/sessions")}
-          className="bg-primary-fixed text-on-primary px-6 py-3 border-2 border-on-background font-black uppercase brutalist-shadow-sm hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+          className="bg-primary-fixed text-black px-6 py-3 rounded-2xl font-semibold text-sm hover:brightness-110 active:scale-[0.98] transition-all shadow-sm"
         >
           Back to Sessions
         </button>
@@ -240,13 +230,12 @@ export default function SessionIdPage() {
       { prompt: promptText },
       {
         onSuccess: (newRun) => {
-          setManuallySelectedRun(null); // Clear manual selection so activeOrSelectedRun tracks latest runsState[0]
+          setManuallySelectedRun(null);
           setRunsState((prev) => [newRun, ...prev]);
         },
         onError: (err: any) => {
           const msg = err.message || "Failed to start agent run.";
           setRunErrorBanner(msg);
-          // Instantly refresh session query cache in-place
           queryClient.invalidateQueries({ queryKey: ['session', id] });
           queryClient.invalidateQueries({ queryKey: ['sessions'] });
         },
@@ -263,32 +252,31 @@ export default function SessionIdPage() {
     session.pullRequest?.status === 'closed';
 
   return (
-    <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden">
-      {/* Infrastructure Overview Header */}
-      <SessionHeader session={session} />
-
-      {/* Real-Time Session Telemetry Bar */}
-      <TelemetryBar
+    <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden font-sans">
+      {/* Infrastructure Overview Header with Integrated Telemetry */}
+      <SessionHeader
+        session={session}
         events={liveEvents}
         latestEvent={latestEvent}
         isSessionActive={isSelectedRunExecuting}
+        selectedRun={activeOrSelectedRun}
       />
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6 space-y-6 custom-scrollbar" data-lenis-prevent="true">
-        <div className="grid grid-cols-12 gap-6 items-start">
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-8 space-y-8 custom-scrollbar max-w-[1600px] w-full mx-auto" data-lenis-prevent="true">
+        <div className="grid grid-cols-12 gap-8 items-start">
 
           {/* Rejection / Error Notification Banner */}
           {runErrorBanner && (
-            <div className="col-span-12 bg-rose-500/20 border-2 border-rose-500/50 p-4 font-mono-label text-xs font-bold text-rose-300 flex items-center justify-between brutalist-shadow-sm animate-fadeIn">
-              <div className="flex items-center gap-2">
+            <div className="col-span-12 bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4 text-xs font-medium text-rose-300 flex items-center justify-between shadow-sm animate-fadeIn">
+              <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-base text-rose-400">warning</span>
                 <span>{runErrorBanner}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setRunErrorBanner(null)}
-                className="text-rose-400 hover:text-white font-black uppercase text-[10px]"
+                className="text-rose-400 hover:text-white font-semibold uppercase text-[10px] tracking-wider transition-colors"
               >
                 DISMISS
               </button>
@@ -306,8 +294,8 @@ export default function SessionIdPage() {
             </div>
           )}
 
-          {/* Row 1: Initialize Context & Timeline */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col">
+          {/* Left Column (5 Cols / 40%): Controls, Live Progress Timeline & Execution History */}
+          <div className="col-span-12 lg:col-span-5 flex flex-col gap-6">
             <InitializeContextPanel
               onSubmit={handlePromptSubmit}
               onCancel={() => activeOrSelectedRun?.id && cancelRun(activeOrSelectedRun.id)}
@@ -316,29 +304,33 @@ export default function SessionIdPage() {
               liveStatusText={liveStatusText}
               disabled={isSessionClosedOrCompleted}
             />
-          </div>
 
-          <div className="col-span-12 lg:col-span-5 flex flex-col">
             <TimelinePanel
               selectedRunId={activeOrSelectedRun?.id}
               runStatus={activeOrSelectedRun?.status}
               sessionId={id}
               liveSocketEvents={liveTimelineEvents}
               isLive={isSelectedRunExecuting}
+              className="h-[360px] max-h-[360px]"
             />
+
+            <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-6 shadow-sm space-y-4 transition-all hover:border-primary-fixed/30">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-primary-fixed text-lg">history</span>
+                <h3 className="text-sm font-semibold text-on-surface">Execution History</h3>
+              </div>
+              <AgentRunsList runs={runsState.length > 0 ? runsState : fetchedRuns} onSelectRun={handleSelectRun} loading={runsLoading} />
+            </div>
           </div>
 
-          {/* Row 2: Terminal Window */}
-          <section className="col-span-12 mt-4">
+          {/* Right Column (7 Cols / 60%): Live Terminal Output & Git Diff Code Artifacts */}
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
             <TerminalPanel
               session={session}
               selectedRun={activeOrSelectedRun}
               liveTerminalLines={liveTerminalLines}
             />
-          </section>
 
-          {/* Row 3: Dedicated Full-Width Git Diff Artifact Section */}
-          <section className="col-span-12 mt-8">
             <CodeDiffCard
               sessionId={id}
               pullRequest={session.pullRequest}
@@ -352,18 +344,7 @@ export default function SessionIdPage() {
               isLoading={isDiffLoading}
               isError={isDiffError}
             />
-          </section>
-
-          {/* Row 4: Full-Width Execution History Section */}
-          <section className="col-span-12 mt-8">
-            <div className="bg-surface border-[3px] border-outline p-6 brutalist-shadow">
-              <h3 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary-fixed">history</span>
-                Execution History
-              </h3>
-              <AgentRunsList runs={runsState.length > 0 ? runsState : fetchedRuns} onSelectRun={handleSelectRun} loading={runsLoading} />
-            </div>
-          </section>
+          </div>
 
         </div>
       </div>

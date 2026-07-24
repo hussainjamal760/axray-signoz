@@ -46,57 +46,57 @@ export function FailureVisualization({
   const signozUrl = "http://localhost:8080/logs/logs-explorer";
 
   return (
-    <div className="w-full bg-surface border-[3px] border-rose-500 brutalist-shadow p-6 flex flex-col gap-6 font-mono-label animate-fadeIn">
+    <div className="w-full bg-surface-container-lowest border border-rose-500/30 rounded-3xl p-6 flex flex-col gap-5 font-sans shadow-sm animate-fadeIn">
       {/* 1. Header & Status Pill */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-rose-500/30 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-rose-500/20 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-rose-500 text-white flex items-center justify-center font-black">
-            <span className="material-symbols-outlined text-2xl">error</span>
+          <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center font-semibold">
+            <span className="material-symbols-outlined text-xl">error</span>
           </div>
           <div>
-            <h3 className="text-xl font-black uppercase text-white tracking-wider">
+            <h3 className="text-lg font-semibold text-on-surface">
               {isRateLimit ? "Groq Rate Limit (HTTP 429)" : "Run Execution Failed"}
             </h3>
-            <p className="text-xs text-rose-400 font-bold uppercase">
+            <p className="text-xs text-rose-400 font-medium">
               SigNoz OTLP Error Captured • Service: axray-agent
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="bg-rose-500/20 text-rose-300 border border-rose-500/50 px-3 py-1 font-bold text-xs uppercase">
+          <span className="bg-rose-500/10 text-rose-400 border border-rose-500/30 px-3 py-1 rounded-full text-xs font-semibold">
             {isRateLimit ? "API QUOTA EXCEEDED" : "EXIT_CODE_ERROR"}
           </span>
         </div>
       </div>
 
       {/* 2. Error Message Output */}
-      <div className="bg-black border-2 border-rose-500/50 p-4 text-xs font-mono text-rose-300 leading-relaxed overflow-x-auto max-h-40 custom-scrollbar">
-        <div className="flex items-center justify-between mb-2 text-[10px] text-rose-400 uppercase font-black border-b border-rose-500/30 pb-1">
+      <div className="bg-[#0d1117] border border-rose-500/20 rounded-2xl p-4 text-xs font-mono text-rose-300 leading-relaxed overflow-x-auto max-h-40 custom-scrollbar">
+        <div className="flex items-center justify-between mb-2 text-[10px] text-rose-400 font-semibold border-b border-rose-500/20 pb-1">
           <span>Captured Exception Payload</span>
           <span>Span Status: ERROR</span>
         </div>
-        <pre className="whitespace-pre-wrap break-all">{errorMessage}</pre>
+        <pre className="whitespace-pre-wrap break-all text-xs">{errorMessage}</pre>
       </div>
 
       {/* 3. AI Recovery & Suggested Solution */}
-      <div className="bg-emerald-500/10 border-2 border-emerald-500/40 p-4 flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-emerald-400 font-black text-xs uppercase">
+      <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
           <span className="material-symbols-outlined text-base">psychology</span>
           <span>AI Self-Healing Recommendation</span>
         </div>
-        <p className="text-xs text-emerald-300 leading-normal font-semibold">
+        <p className="text-xs text-emerald-300 leading-relaxed font-normal">
           {suggestedFix}
         </p>
       </div>
 
       {/* 4. Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
         <a
           href={signozUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-surface-container-highest border-2 border-outline px-4 py-2 text-xs font-black uppercase text-white hover:bg-surface-variant transition-all brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+          className="flex items-center gap-2 bg-surface-container border border-outline-variant/30 px-4 py-2.5 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container-high transition-all active:scale-[0.98]"
         >
           <span className="material-symbols-outlined text-sm text-primary-fixed">monitoring</span>
           <span>View Traces in SigNoz</span>
@@ -107,7 +107,7 @@ export function FailureVisualization({
           <button
             type="button"
             onClick={onRetry}
-            className="flex items-center gap-2 bg-rose-500 text-white border-2 border-outline px-6 py-2 text-xs font-black uppercase hover:bg-rose-600 transition-all brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+            className="flex items-center gap-2 bg-rose-500 text-white px-6 py-2.5 rounded-xl text-xs font-semibold hover:bg-rose-600 active:scale-[0.98] transition-all shadow-sm"
           >
             <span className="material-symbols-outlined text-sm">refresh</span>
             <span>Retry Run Execution</span>

@@ -30,9 +30,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const getLinkClasses = (path: string) => {
     const isActive = pathname === path;
     if (isActive) {
-      return "flex items-center gap-4 px-4 py-3 bg-primary-fixed text-on-primary-fixed font-black uppercase border-2 border-background brutalist-shadow-sm whitespace-nowrap overflow-hidden";
+      return "flex items-center gap-3.5 px-3.5 py-3 bg-primary-fixed text-black rounded-2xl font-semibold text-sm transition-all shadow-sm whitespace-nowrap overflow-hidden";
     }
-    return "flex items-center gap-4 px-4 py-3 text-on-surface hover:bg-surface-container border border-transparent font-bold uppercase transition-colors whitespace-nowrap overflow-hidden";
+    return "flex items-center gap-3.5 px-3.5 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-2xl font-medium text-sm transition-all whitespace-nowrap overflow-hidden";
   };
 
   const agentLink = activeSessionId ? `/sessions/${activeSessionId}` : "/sessions";
@@ -43,49 +43,48 @@ export function Sidebar({ isOpen }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "group h-full border-r-[3px] border-primary-fixed bg-background transition-all duration-300 ease-in-out z-40 overflow-hidden shrink-0",
+        "group h-full border-r border-outline-variant/20 bg-background transition-all duration-300 ease-in-out z-40 overflow-hidden shrink-0 font-sans",
         isOpen
           ? "w-64 absolute lg:relative translate-x-0 lg:w-[72px] lg:hover:w-64"
-          : "w-64 absolute lg:relative -translate-x-full lg:translate-x-0 border-r-0 lg:border-r-[3px] lg:w-[72px] lg:hover:w-64"
+          : "w-64 absolute lg:relative -translate-x-full lg:translate-x-0 border-r-0 lg:border-r lg:w-[72px] lg:hover:w-64"
       )}
     >
-      <div className="group/sidebar w-64 h-full flex flex-col">
-        <div className="px-4 pt-6 pb-2 shrink-0">
-          <div className="flex items-center gap-3 p-2 border-2 border-outline-variant bg-surface-container-high overflow-hidden">
-            <div className="w-8 h-8 shrink-0 bg-primary-fixed flex items-center justify-center">
-              <span className="material-symbols-outlined text-background text-sm">terminal</span>
+      <div className="group/sidebar w-full h-full flex flex-col">
+        <div className="px-3 pt-5 pb-2 shrink-0">
+          <div className="flex items-center gap-3 p-2 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 overflow-hidden shadow-sm">
+            <div className="w-8 h-8 shrink-0 rounded-xl bg-primary-fixed/20 text-primary-fixed flex items-center justify-center">
+              <span className="material-symbols-outlined text-sm">terminal</span>
             </div>
             <div className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-              <p className="font-mono-label text-[10px] leading-tight text-on-surface-variant uppercase">Core Engine</p>
-              <p className="font-bold text-sm text-white">AXRAY <span className="text-[10px] opacity-50 ml-1">v1.0.0</span></p>
+              <p className="text-[10px] font-medium text-on-surface-variant uppercase tracking-wider">Core Engine</p>
+              <p className="font-semibold text-sm text-on-surface">AXRAY <span className="text-[10px] text-on-surface-variant font-normal ml-1">v1.0.0</span></p>
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
 
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
           <Link href={agentLink} className={getLinkClasses(agentLink)}>
-            <span className="material-symbols-outlined">smart_toy</span>
-            Agent
+            <span className="material-symbols-outlined text-[20px]">smart_toy</span>
+            <span>Agent</span>
           </Link>
           <Link href={observerLink} className={getLinkClasses(observerLink)}>
-            <span className="material-symbols-outlined">play_circle</span>
-            Observer
+            <span className="material-symbols-outlined text-[20px]">play_circle</span>
+            <span>Observer</span>
           </Link>
           <Link href={tracesLink} className={getLinkClasses(tracesLink)}>
-            <span className="material-symbols-outlined">rebase_edit</span>
-            Traces
+            <span className="material-symbols-outlined text-[20px]">rebase_edit</span>
+            <span>Traces</span>
           </Link>
           <Link href={analyticsLink} className={getLinkClasses(analyticsLink)}>
-            <span className="material-symbols-outlined">monitoring</span>
-            Analytics
+            <span className="material-symbols-outlined text-[20px]">monitoring</span>
+            <span>Analytics</span>
           </Link>
-
         </nav>
 
-        <div className="p-4 border-t-[3px] border-outline-variant bg-surface shrink-0 flex flex-col gap-4">
+        <div className="p-3 border-t border-outline-variant/20 shrink-0 flex flex-col gap-4">
           <div className="flex items-center gap-3 px-2 overflow-hidden">
-            <div className="w-3 h-3 bg-primary-fixed shrink-0 animate-pulse ml-1.5"></div>
-            <span className="font-mono-label text-[10px] font-bold uppercase tracking-widest text-primary-fixed whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">SYSTEM_READY</span>
+            <div className="w-2 h-2 rounded-full bg-primary-fixed shrink-0 animate-pulse ml-1"></div>
+            <span className="text-[10px] font-semibold tracking-wider text-primary-fixed uppercase whitespace-nowrap lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">System Ready</span>
           </div>
         </div>
       </div>

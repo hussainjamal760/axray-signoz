@@ -20,13 +20,11 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
 
   const isRunning = runStatus === "running" || runStatus === "pending";
 
-  // Fetch historical timeline from SigNoz only when NOT relying on live socket stream for an active run
   const { data: timelineData, isLoading } = useRunTimeline(selectedRunId, {
     enabled: Boolean(selectedRunId) && !isLive && !isRunning,
-    refetchInterval: false, // NO REST polling on Session Dashboard!
+    refetchInterval: false,
   });
 
-  // Combine live socket stream for active runs, or historical fetched events for finished runs
   const events: TimelineEvent[] = forcedEvents
     ? forcedEvents
     : (isLive || isRunning) && liveSocketEvents.length > 0
@@ -36,7 +34,6 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
   const summary = timelineData?.summary;
   const telemetryStatus = timelineData?.telemetryStatus;
 
-  // Automatically scroll to bottom as new timeline events arrive
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
@@ -69,45 +66,49 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
       case "completed":
       case "success":
         return {
-          nodeBg: "bg-emerald-400",
-          border: "border-emerald-400",
-          badgeBg: "bg-emerald-400",
-          badgeText: "text-black border-[2px] border-black",
+          nodeBg: "bg-emerald-500",
+          nodeGlow: "shadow-[0_0_12px_rgba(16,185,129,0.5)]",
+          border: "border-emerald-500/20",
+          badgeBg: "bg-emerald-500/10 border-emerald-500/20",
+          badgeText: "text-emerald-400",
           text: "text-emerald-400",
-          cardBg: "bg-black",
-          shadow: "shadow-[4px_4px_0px_0px_#34d399]",
+          iconBg: "bg-emerald-500/10",
+          cardBg: "bg-surface-container-lowest/60 hover:bg-surface-container-lowest",
         };
       case "running":
       case "pending":
         return {
           nodeBg: "bg-primary-fixed",
-          border: "border-primary-fixed",
-          badgeBg: "bg-primary-fixed",
-          badgeText: "text-black border-[2px] border-black",
+          nodeGlow: "shadow-[0_0_12px_rgba(var(--color-primary-fixed),0.6)]",
+          border: "border-primary-fixed/30",
+          badgeBg: "bg-primary-fixed/10 border-primary-fixed/30",
+          badgeText: "text-primary-fixed",
           text: "text-primary-fixed",
-          cardBg: "bg-[#111]", // Slightly lighter black to pop
-          shadow: "shadow-[4px_4px_0px_0px_var(--color-primary-fixed)]",
+          iconBg: "bg-primary-fixed/10",
+          cardBg: "bg-surface-container-lowest/60 hover:bg-surface-container-lowest",
         };
       case "failed":
       case "error":
         return {
-          nodeBg: "bg-error",
-          border: "border-error",
-          badgeBg: "bg-error",
-          badgeText: "text-black border-[2px] border-black",
-          text: "text-error",
-          cardBg: "bg-black",
-          shadow: "shadow-[4px_4px_0px_0px_#ef4444]",
+          nodeBg: "bg-rose-500",
+          nodeGlow: "shadow-[0_0_12px_rgba(244,63,94,0.5)]",
+          border: "border-rose-500/20",
+          badgeBg: "bg-rose-500/10 border-rose-500/20",
+          badgeText: "text-rose-400",
+          text: "text-rose-400",
+          iconBg: "bg-rose-500/10",
+          cardBg: "bg-surface-container-lowest/60 hover:bg-surface-container-lowest",
         };
       default:
         return {
-          nodeBg: "bg-outline",
-          border: "border-outline",
-          badgeBg: "bg-outline",
-          badgeText: "text-black border-[2px] border-black",
-          text: "text-on-surface",
-          cardBg: "bg-black",
-          shadow: "shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]",
+          nodeBg: "bg-on-surface-variant/50",
+          nodeGlow: "",
+          border: "border-outline-variant/10",
+          badgeBg: "bg-surface-container border-outline-variant/20",
+          badgeText: "text-on-surface-variant",
+          text: "text-on-surface-variant",
+          iconBg: "bg-surface-container",
+          cardBg: "bg-surface-container-lowest/40 hover:bg-surface-container-lowest",
         };
     }
   };
@@ -128,37 +129,39 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
   };
 
   return (
-    <div className={`bg-surface border-[3px] border-outline flex flex-col brutalist-shadow w-full overflow-hidden ${className || 'h-[220px] max-h-[220px]'}`}>
+    <div className={`relative bg-surface-container-lowest/40 backdrop-blur-2xl border border-outline-variant/20 rounded-[24px] flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden transition-all duration-500 hover:shadow-[0_8px_30px_rgb(0,0,0,0.16)] hover:border-outline-variant/30 ${className || 'h-[280px] max-h-[280px]'}`}>
       {/* Header */}
-      <div className="p-4 border-b-[3px] border-outline flex justify-between items-center bg-black shrink-0">
+      <div className="px-6 py-4 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-lowest/60 shrink-0 relative z-20">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary-fixed text-xl">timeline</span>
+          <div className="w-8 h-8 rounded-xl bg-primary-fixed/10 flex items-center justify-center border border-primary-fixed/20 shadow-inner">
+             <span className="material-symbols-outlined text-primary-fixed text-[18px]">route</span>
+          </div>
           <div>
-            <h3 className="text-base font-black uppercase text-on-surface">Execution Timeline</h3>
+            <h3 className="text-sm font-bold text-on-surface tracking-tight">Execution Timeline</h3>
             {summary?.totalTokens !== undefined && summary.totalTokens > 0 && (
-              <p className="font-mono-label text-[10px] text-primary-fixed font-bold uppercase">
-                Tokens: {summary.totalTokens.toLocaleString()}
+              <p className="text-[10px] text-on-surface-variant font-mono font-medium mt-0.5 flex items-center gap-1">
+                <span className="text-primary-fixed text-[8px]">⟡</span> {summary.totalTokens.toLocaleString()} tokens
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 font-mono-label text-xs font-bold">
+        <div className="flex items-center gap-3 text-xs font-medium">
           {telemetryStatus === 'authoritative_signoz' && (
-            <span className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase px-2 py-0.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
-              SigNoz ClickHouse
+            <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-sm font-semibold tracking-wide">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
+              SigNoz
             </span>
           )}
 
           {isRunning || isLive ? (
-            <span className="flex items-center gap-2 text-primary-fixed uppercase italic font-black animate-pulse">
-              <span className="w-2.5 h-2.5 bg-primary-fixed"></span>
-              Live Stream
+            <span className="flex items-center gap-2 text-primary-fixed text-[11px] font-bold tracking-wider uppercase animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-primary-fixed shadow-[0_0_8px_rgba(var(--color-primary-fixed),0.8)]"></span>
+              Live
             </span>
           ) : (
-            <span className="text-outline uppercase text-[11px]">
-              {events.length} Events
+            <span className="text-on-surface-variant text-[11px] font-mono bg-surface-container/50 border border-outline-variant/10 px-2.5 py-1 rounded-lg">
+              {events.length} EVTS
             </span>
           )}
         </div>
@@ -167,17 +170,18 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
       {/* Timeline Stream Body */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 relative bg-background"
+        className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-2 relative z-10"
         data-lenis-prevent="true"
       >
         {isLoading && events.length === 0 && !isLive && !isRunning ? (
-          <div className="font-mono-label text-xs text-outline-variant text-center py-8 animate-pulse font-black uppercase">
+          <div className="text-xs text-on-surface-variant text-center py-8 animate-pulse font-medium tracking-wide">
             Querying Traces...
           </div>
         ) : (!selectedRunId && events.length === 0) || (events.length === 0 && !isLive && !isRunning) ? (
-          <div className="font-mono-label text-xs text-outline-variant text-center py-8 space-y-2">
-            <span className="material-symbols-outlined text-primary-fixed !text-3xl block">rocket_launch</span>
-            <p className="font-black text-on-surface uppercase text-sm">Start your first run!</p>
+          <div className="text-xs text-on-surface-variant text-center py-8 space-y-3">
+            <span className="material-symbols-outlined text-primary-fixed text-3xl block drop-shadow-[0_0_12px_rgba(var(--color-primary-fixed),0.4)]">rocket_launch</span>
+            <p className="font-bold text-on-surface text-sm tracking-tight">Ready to Launch</p>
+            <p className="text-on-surface-variant/70 text-[11px]">Start your first run to see the timeline</p>
           </div>
         ) : (
           events.map((item, idx) => {
@@ -191,76 +195,75 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
               <div
                 key={itemId}
                 onClick={() => setExpandedId(isExpanded ? null : itemId)}
-                className="relative pl-12 group cursor-pointer mb-6 last:mb-0"
+                className="relative pl-10 group cursor-pointer mb-5 last:mb-0"
               >
                 {/* Vertical Connecting Line */}
                 {idx !== events.length - 1 && (
-                  <div className={`absolute left-[3px] top-8 bottom-[-32px] w-[3px] ${isRunningEvt ? 'bg-primary-fixed animate-pulse' : 'bg-outline-variant'}`} />
+                  <div className={`absolute left-[11px] top-8 bottom-[-24px] w-[2px] rounded-full ${isRunningEvt ? 'bg-gradient-to-b from-primary-fixed via-primary-fixed/50 to-transparent animate-pulse' : 'bg-gradient-to-b from-outline-variant/30 to-outline-variant/5'}`} />
                 )}
 
-                {/* Timeline Node */}
+                {/* Timeline Node (Apple style ring) */}
                 <div
-                  className={`absolute left-[-2px] top-1.5 w-3.5 h-3.5 border-[3px] border-background ${statusStyle.nodeBg} ${isRunningEvt ? 'animate-ping' : ''} z-10`}
-                />
-                {isRunningEvt && (
-                  <div
-                    className={`absolute left-[-2px] top-1.5 w-3.5 h-3.5 border-[3px] border-background ${statusStyle.nodeBg} z-20`}
-                  />
-                )}
-
-                {/* Header Title & Duration */}
-                <div className="flex justify-between items-start mb-2 font-mono-label">
-                  <div className="flex items-center gap-2">
-                    <span className={`material-symbols-outlined text-base ${statusStyle.text} ${isRunningEvt ? 'animate-spin' : ''}`}>
-                      {getEventIcon(item)}
-                    </span>
-                    <span className={`font-black uppercase text-[13px] tracking-wide ${statusStyle.text}`}>
-                      {item.title}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs font-bold text-outline">
-                    <span className="opacity-70">{formatTime(item.timestamp)}</span>
-                    {item.durationMs !== undefined && (
-                      <span className="text-on-surface bg-surface border-[2px] border-outline-variant px-2 py-0.5">{formatDuration(item.durationMs)}</span>
-                    )}
-                  </div>
+                  className={`absolute left-[5px] top-4 w-3.5 h-3.5 rounded-full border-[2px] bg-background flex items-center justify-center z-10 transition-transform duration-500 ease-out group-hover:scale-125 ${statusStyle.border}`}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full ${statusStyle.nodeBg} ${statusStyle.nodeGlow} ${isRunningEvt ? 'animate-ping' : ''}`} />
                 </div>
 
-                {/* Brutalist Event Sub-Card */}
-                <div className={`${statusStyle.cardBg} border-[3px] ${statusStyle.border} p-4 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-1 hover:-translate-x-1 hover:${statusStyle.shadow} ${isExpanded ? statusStyle.shadow : ''}`}>
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="font-mono-label text-[13px] text-on-surface font-black truncate">
-                      {item.description || item.title}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {item.metadata?.isCached === true && (
-                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-mono-label text-[10px] font-black uppercase px-2 py-0.5 animate-pulse">
-                          ⚡ CACHED
+                {/* Event Card */}
+                <div className={`relative ${statusStyle.cardBg} backdrop-blur-md border ${statusStyle.border} rounded-2xl p-3.5 flex flex-col gap-3 transition-all duration-500 ease-out group-hover:translate-x-1 hover:shadow-lg overflow-hidden group-hover:border-opacity-50`}>
+                  
+                  {/* Subtle Background Glow */}
+                  <div className={`absolute -right-10 -top-10 w-24 h-24 rounded-full blur-3xl opacity-[0.15] ${statusStyle.nodeBg} pointer-events-none transition-opacity duration-700 group-hover:opacity-30`} />
+
+                  <div className="flex items-center justify-between gap-3 relative z-10">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className={`w-9 h-9 rounded-[10px] ${statusStyle.iconBg} flex items-center justify-center shrink-0 border border-white/5`}>
+                        <span className={`material-symbols-outlined text-[18px] ${statusStyle.text} ${isRunningEvt ? 'animate-spin' : ''}`}>
+                          {getEventIcon(item)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[13px] font-bold text-on-surface truncate tracking-tight">
+                          {item.description || item.title}
+                        </span>
+                        <span className="text-[10px] font-medium text-on-surface-variant/70 font-mono">
+                          {formatTime(item.timestamp)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {item.durationMs !== undefined && (
+                        <span className="text-[10px] text-on-surface-variant bg-surface-container-high/50 border border-outline-variant/10 rounded-lg px-2 py-1 font-mono tracking-wider">
+                          {formatDuration(item.durationMs)}
                         </span>
                       )}
-                      <span className={`font-mono-label text-[11px] font-black uppercase px-3 py-1 ${statusStyle.badgeBg} ${statusStyle.badgeText} whitespace-nowrap ${isRunningEvt ? 'animate-pulse' : ''}`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest rounded-lg px-2.5 py-1 border ${statusStyle.badgeBg} ${statusStyle.badgeText}`}>
                         {item.status}
                       </span>
                     </div>
                   </div>
 
-                  {/* Expandable attributes */}
-                  {isExpanded && hasMeta && (
-                    <div className="mt-3 pt-3 border-t-[3px] border-dashed border-outline-variant/50 font-mono-label text-xs space-y-2 text-on-surface-variant bg-background p-3 border-2">
-                      {Object.entries(item.metadata!).map(([key, val]) => {
-                        if (val === undefined || val === null || val === '') return null;
-                        return (
-                          <div key={key} className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4 border-b-2 border-outline-variant/30 pb-1 last:border-0 last:pb-0">
-                            <span className="text-on-surface font-black uppercase">{key}</span>
-                            <span className="text-primary-fixed font-mono whitespace-pre-wrap break-all">
-                              {typeof val === "object" ? JSON.stringify(val) : String(val)}
-                            </span>
-                          </div>
-                        );
-                      })}
+                  {/* Expandable attributes with CSS Grid Animation */}
+                  <div 
+                    className={`grid transition-[grid-template-rows,opacity,margin] duration-500 ease-in-out ${isExpanded && hasMeta ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0 mt-0"}`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="pt-3 border-t border-outline-variant/10 font-mono text-[11px] space-y-2 text-on-surface-variant bg-surface-container-lowest/30 p-3 rounded-xl shadow-inner">
+                        {Object.entries(item.metadata!).map(([key, val]) => {
+                          if (val === undefined || val === null || val === '') return null;
+                          return (
+                            <div key={key} className="flex flex-col sm:flex-row sm:justify-between gap-1 border-b border-outline-variant/5 pb-1.5 last:border-0 last:pb-0">
+                              <span className="text-on-surface/80 font-bold text-[10px] uppercase tracking-wider">{key}</span>
+                              <span className="text-primary-fixed whitespace-pre-wrap break-all text-[10px] max-w-[75%] sm:text-right">
+                                {typeof val === "object" ? JSON.stringify(val) : String(val)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             );
