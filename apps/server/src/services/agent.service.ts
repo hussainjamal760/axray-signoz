@@ -127,6 +127,25 @@ STRICT WORKSPACE RULES:
 4. Use run_command to run test suites, build commands, or shell utilities.
 5. Decide what tool to call next to investigate or modify code. When your task is complete or you are satisfied with the results, respond directly with a concise text response summarizing your actions. Do not invoke tools after completing your objective.`;
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Truncates old intermediate tool outputs in message history when total tokens grow large.
+ * Preserves system prompt (index 0), original user prompt (index 1), and latest 4 messages.
+ */
+function pruneMessageHistory(messages: any[]): any[] {
+  if (messages.length <= 8) return messages;
+
+  const pruned = [...messages];
+  for (let i = 2; i < pruned.length - 4; i++) {
+    const msg = pruned[i];
+    if (msg.role === 'tool' && typeof msg.content === 'string' && msg.content.length > 400) {
+      msg.content = msg.content.substring(0, 400) + '\n[...older tool output truncated for token optimization]';
+    }
+  }
+  return pruned;
+}
+
 export const executePrompt = async (
   options: AgentExecutionOptions
 ): Promise<AgentExecutionResult> => {
@@ -162,7 +181,7 @@ export const executePrompt = async (
   }
 
   const groq = new Groq({ apiKey: groqApiKey });
-  const messages: any[] = [
+  let messages: any[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: options.prompt },
   ];
@@ -221,24 +240,75 @@ export const executePrompt = async (
         trace.setSpan(context.active(), turnSpan)
       );
 
+      // 1. Context Token Optimization: Prune older intermediate tool outputs if history is long
+      messages = pruneMessageHistory(messages);
+
+      // 2. Turn Limit Safeguard Nudge: Prompt agent to wrap up if near maxTurns
+      if (turn >= maxTurns - 2) {
+        messages.push({
+          role: 'system',
+          content: `[SYSTEM NUDGE]: You are on Turn ${turn} of ${maxTurns}. You are approaching the turn limit. Do NOT execute any more tool commands. Formulate and return your final task completion summary now.`,
+        });
+      }
+
       let completion: any;
       let pTokens = 0;
       let cTokens = 0;
       let tTokens = 0;
 
       try {
-        const fetchCompletion = async (overrideToolChoice?: any) => {
-          return await groq.chat.completions.create({
-            model: DEFAULT_GROQ_MODEL,
-            messages,
-            tools: TOOL_DECLARATIONS,
-            tool_choice: overrideToolChoice || 'auto',
-            temperature: 0.2,
-          });
+        const fetchCompletion = async () => {
+          const maxRetries = 3;
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              return await groq.chat.completions.create({
+                model: DEFAULT_GROQ_MODEL,
+                messages,
+                tools: TOOL_DECLARATIONS,
+                tool_choice: 'auto',
+                temperature: 0.2,
+              });
+            } catch (err: any) {
+              const errMsg = err?.message || String(err);
+              const is429 =
+                errMsg.includes('429') ||
+                errMsg.toLowerCase().includes('rate limit') ||
+                errMsg.toLowerCase().includes('rate_limit') ||
+                err?.status === 429;
+
+              if (is429 && attempt < maxRetries) {
+                let waitSec = 5;
+                const timeMatch = errMsg.match(/try again in ([\d\.]+)s/i);
+                if (timeMatch) {
+                  waitSec = Math.min(Math.ceil(parseFloat(timeMatch[1])), 15);
+                }
+                console.warn(`[Agent Rate Limit] Attempt ${attempt}/${maxRetries} rate limited. Sleeping ${waitSec}s...`);
+                if (sessionId) {
+                  emitLiveEvent(sessionId, {
+                    sessionId,
+                    runId,
+                    timestamp: new Date().toISOString(),
+                    eventType: 'rate_limit.retry',
+                    phase: 'llm',
+                    status: 'running',
+                    title: `Rate Limited (${attempt}/${maxRetries})`,
+                    description: `Retrying in ${waitSec}s...`,
+                    metadata: { attempt, maxRetries, waitSec, isRateLimit: true },
+                  });
+                }
+                if (sessionId && runId) {
+                  appendTerminalLine(sessionId, runId, 'agent', `Rate limited by Groq API. Retrying in ${waitSec}s (Attempt ${attempt}/${maxRetries})...`);
+                }
+                await sleep(waitSec * 1000);
+              } else {
+                throw err;
+              }
+            }
+          }
         };
 
         try {
-          completion = await fetchCompletion('auto');
+          completion = await fetchCompletion();
         } catch (initialErr: any) {
           let failedGen: string | undefined;
 

@@ -81,11 +81,15 @@ export function TelemetryBar({
   return (
     <div className="w-full bg-surface border-b-2 border-outline flex flex-col font-mono-label">
       {/* 1. Rate Limit / Error Live Alert Banner */}
-      {rateLimitWarning && (
+      {(rateLimitWarning || latestEvent?.eventType === "rate_limit.retry") && (
         <div className="bg-rose-500/20 border-b border-rose-500/40 px-6 py-2 text-xs font-bold text-rose-300 flex items-center justify-between animate-pulse">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-base text-rose-400">warning</span>
-            <span>GROQ API RATE LIMIT HIT — Retrying with exponential backoff...</span>
+            <span>
+              {latestEvent?.eventType === "rate_limit.retry"
+                ? `GROQ API RATE LIMITED — ${latestEvent.title}: ${latestEvent.description}`
+                : "GROQ API RATE LIMIT HIT — Retrying with exponential backoff..."}
+            </span>
           </div>
           <span className="bg-rose-500 text-white text-[10px] uppercase font-black px-2 py-0.5">HTTP 429</span>
         </div>
