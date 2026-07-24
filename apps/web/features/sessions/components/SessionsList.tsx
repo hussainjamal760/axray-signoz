@@ -1,16 +1,20 @@
-import { SessionSummary, SessionStatus } from '../types/sessions.types';
-import { 
-  GitBranch, 
-  Clock, 
-  Terminal, 
-  Activity, 
-  DollarSign, 
-  Cpu, 
+"use client";
+
+import { useState, useMemo } from "react";
+import { SessionSummary, SessionStatus } from "../types/sessions.types";
+import {
+  GitBranch,
+  Terminal,
+  Activity,
+  DollarSign,
   ArrowRight,
   CheckCircle2,
   AlertCircle,
   Loader2,
   FolderGit2,
+  Search,
+  Plus,
+  Layers
 } from "lucide-react";
 
 export interface SessionsListProps {
@@ -19,9 +23,9 @@ export interface SessionsListProps {
 }
 
 const statusColors: Record<SessionStatus, { bg: string; text: string; border: string }> = {
-  active: { bg: 'bg-green-500/10', text: 'text-green-500', border: 'border-green-500/30' },
-  completed: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
-  archived: { bg: 'bg-surface-container-high', text: 'text-on-surface-variant', border: 'border-outline/50' }
+  active: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
+  completed: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
+  archived: { bg: 'bg-surface-container/50', text: 'text-on-surface-variant', border: 'border-outline-variant/30' }
 };
 
 export function SessionsList({ sessions, onSelect }: SessionsListProps) {
@@ -40,44 +44,58 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
     }
   };
 
-  const getAgentStatusUI = (status: string) => {
-    switch(status) {
-      case 'running':
-        return <div className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20"><Loader2 size={14} className="animate-spin" /><span className="text-xs font-semibold tracking-wide">Running</span></div>;
-      case 'failed':
-        return <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2.5 py-1 rounded-md border border-red-500/20"><AlertCircle size={14} /><span className="text-xs font-semibold tracking-wide">Failed</span></div>;
-      default:
-        return <div className="flex items-center gap-1.5 text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-md border border-outline/50"><CheckCircle2 size={14} /><span className="text-xs font-semibold tracking-wide">Idle</span></div>;
-    }
-  };
+  // Filtered Sessions
+
+
+  // Aggregate stats
+  const activeCount = useMemo(() => sessions.filter(s => s.status === 'active').length, [sessions]);
+  const totalTokens = useMemo(() => sessions.reduce((acc, s) => acc + (s.metrics?.tokens || 1420), 0), [sessions]);
+  const totalCost = useMemo(() => sessions.reduce((acc, s) => acc + (Number(s.metrics?.cost) || 0.14), 0), [sessions]);
 
   const mockStatuses = ['running', 'idle', 'failed', 'idle'];
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b-[3px] border-black pb-6">
+      {/* Title & Top Action Bar */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-outline-variant/20 pb-6">
         <div>
-          <h2 className="font-headline-xl text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic flex items-center gap-3">
-            <span className="bg-primary-fixed text-black px-2 not-italic">LIVE</span>
-            SESSIONS
-          </h2>
-          <p className="font-mono-label text-[10px] text-on-surface-variant mt-2 flex items-center gap-2 uppercase tracking-widest font-bold">
-            <Activity size={14} className="text-primary-fixed" /> Total Monitored Workspaces: {sessions.length}
-          </p>
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_currentColor]"></span>
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              Monitored Workspaces
+            </h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant">
+              <Activity size={14} className="text-primary-fixed" />
+              {sessions.length} Workspaces
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              {activeCount} Active
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant">
+              <Terminal size={14} className="text-primary-fixed" />
+              {totalTokens.toLocaleString()} Tokens
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant">
+              <DollarSign size={14} className="text-primary-fixed" />
+              ${totalCost.toFixed(2)}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <button
-            onClick={() => onSelect('new')}
-            className="bg-primary-fixed text-black font-mono-label font-black text-xs uppercase tracking-wider px-6 py-3 border-[3px] border-black shadow-[4px_4px_0px_0px_#000] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-[0px_0px_0px_0px_#000] transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
-          >
-            <span className="material-symbols-outlined text-[18px] font-black">add</span>
-            INITIALIZE_NEW
-          </button>
-        </div>
+
+        <button
+          onClick={() => onSelect('new')}
+          className="bg-primary-fixed hover:bg-primary-fixed/90 text-black font-semibold text-sm px-5 py-3 rounded-2xl shadow-[0_0_20px_rgba(220,238,0,0.3)] hover:shadow-[0_0_25px_rgba(220,238,0,0.5)] transition-all duration-300 flex items-center justify-center gap-2.5 w-full sm:w-auto hover:-translate-y-0.5 active:translate-y-0"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+          Create Workspace
+        </button>
       </div>
 
-      {/* Awwwards-Level Interactive List */}
-      <div className="space-y-4 relative">
+
+      {/* Glassmorphic Workspace List */}
+      <div className="space-y-4">
         {sessions.map((session, index) => {
           const agentStatus = session.agentStatus || mockStatuses[index % mockStatuses.length];
           const cost = session.metrics?.cost || ((index + 1) * 0.14).toFixed(4);
@@ -85,64 +103,63 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
           const colors = statusColors[session.status] || statusColors.active;
 
           return (
-            <div 
+            <div
               key={session.id}
               onClick={() => onSelect(session.id)}
-              className="group relative flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 bg-surface-container-lowest border-[3px] border-black cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-2 hover:-translate-x-2 hover:shadow-[10px_10px_0px_0px_theme(colors.primary-fixed)] hover:border-primary-fixed z-10 hover:z-20 overflow-hidden"
+              className="group relative flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:border-primary-fixed/40 hover:shadow-[0_12px_40px_rgba(0,0,0,0.25)] overflow-hidden"
             >
-              {/* Awwards Slide-up Background Reveal */}
-              <div className="absolute inset-0 bg-primary-fixed translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] -z-10" />
+              {/* Subtle background glow */}
+              <div className="absolute w-48 h-48 rounded-full blur-3xl -top-10 -right-10 pointer-events-none transition-all duration-500 bg-primary-fixed/0 group-hover:bg-primary-fixed/5"></div>
 
               {/* Left: Repo & Branch */}
-              <div className="flex items-center gap-4 lg:w-[30%]">
-                <div className="p-2.5 border-[3px] border-black bg-surface-container-highest group-hover:bg-black group-hover:scale-110 transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)]">
-                  <FolderGit2 size={20} className="text-primary-fixed" />
+              <div className="flex items-center gap-4 lg:w-[32%]">
+                <div className="p-3.5 rounded-2xl border border-outline-variant/20 bg-surface-container-high/60 group-hover:bg-primary-fixed/10 group-hover:border-primary-fixed/30 group-hover:scale-105 transition-all duration-300">
+                  <FolderGit2 size={22} className="text-primary-fixed transition-colors" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-black text-white group-hover:text-black text-base truncate transition-colors duration-300">
+                  <h3 className="font-bold text-white text-base truncate group-hover:text-primary-fixed transition-colors">
                     {session.repositoryFullName}
                   </h3>
-                  <div className="flex items-center gap-2 text-on-surface-variant group-hover:text-black/70 text-xs mt-1 transition-colors duration-300 font-bold">
-                    <GitBranch size={14} />
+                  <div className="flex items-center gap-2 text-on-surface-variant/80 text-xs mt-1 font-medium">
+                    <GitBranch size={13} className="text-primary-fixed/70" />
                     <span className="truncate">{session.branch}</span>
                   </div>
                 </div>
               </div>
 
               {/* Middle: Status Badges */}
-              <div className="flex items-center gap-4 lg:w-[25%]">
-                <div className={`px-3 py-1.5 border-[3px] text-[10px] font-black uppercase tracking-widest ${colors.bg} ${colors.text} ${colors.border} group-hover:bg-black group-hover:text-primary-fixed group-hover:border-black transition-colors duration-300`}>
+              <div className="flex items-center gap-3 lg:w-[24%]">
+                <div className={`px-3 py-1.5 rounded-full border text-[11px] font-semibold capitalize tracking-wide ${colors.bg} ${colors.text} ${colors.border} shadow-sm`}>
                   {session.status}
                 </div>
-                
-                {/* Agent State (Dynamic overriding colors for hover) */}
-                <div className={`flex items-center gap-2 border-[3px] px-3 py-1.5 transition-colors duration-300 group-hover:bg-black group-hover:border-black ${
-                  agentStatus === 'running' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                  agentStatus === 'failed' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                  'bg-surface-container border-outline-variant text-on-surface-variant'
-                }`}>
-                  {agentStatus === 'running' && <Loader2 size={14} className="animate-spin group-hover:text-primary-fixed transition-colors" />}
-                  {agentStatus === 'failed' && <AlertCircle size={14} className="group-hover:text-primary-fixed transition-colors" />}
-                  {agentStatus !== 'running' && agentStatus !== 'failed' && <CheckCircle2 size={14} className="group-hover:text-primary-fixed transition-colors" />}
-                  <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-primary-fixed transition-colors duration-300">
+
+                {/* Agent State */}
+                <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm ${agentStatus === 'running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+                  agentStatus === 'failed' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+                    'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant'
+                  }`}>
+                  {agentStatus === 'running' && <Loader2 size={13} className="animate-spin" />}
+                  {agentStatus === 'failed' && <AlertCircle size={13} />}
+                  {agentStatus !== 'running' && agentStatus !== 'failed' && <CheckCircle2 size={13} />}
+                  <span className="text-[11px] font-semibold capitalize">
                     {agentStatus === 'running' ? 'Running' : agentStatus === 'failed' ? 'Failed' : 'Idle'}
                   </span>
                 </div>
               </div>
 
               {/* Right: Metrics */}
-              <div className="flex items-center gap-8 lg:w-[25%] lg:justify-end">
+              <div className="flex items-center gap-8 lg:w-[24%] lg:justify-end">
                 <div className="flex flex-col items-start lg:items-end">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-black/60 transition-colors duration-300">Tokens</span>
-                  <span className="font-black text-white group-hover:text-black text-lg transition-colors duration-300 font-mono-label flex items-center gap-1.5">
-                    <Terminal size={14} className="opacity-50" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-on-surface-variant/70">Tokens</span>
+                  <span className="font-semibold text-white text-sm font-mono mt-0.5 flex items-center gap-1.5">
+                    <Terminal size={13} className="text-primary-fixed/60" />
                     {tokens.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex flex-col items-start lg:items-end">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-black/60 transition-colors duration-300">Cost</span>
-                  <span className="font-black text-white group-hover:text-black text-lg transition-colors duration-300 font-mono-label flex items-center gap-1.5">
-                    <DollarSign size={14} className="opacity-50" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-on-surface-variant/70">Cost</span>
+                  <span className="font-semibold text-white text-sm font-mono mt-0.5 flex items-center gap-1.5">
+                    <DollarSign size={13} className="text-emerald-400/80" />
                     {cost}
                   </span>
                 </div>
@@ -151,22 +168,23 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
               {/* Far Right: Arrow & Time */}
               <div className="flex items-center gap-4 lg:w-[20%] justify-end">
                 <div className="text-right hidden sm:flex flex-col items-end">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-black/60 transition-colors duration-300">Updated</span>
-                  <span className="text-xs font-bold text-white group-hover:text-black transition-colors duration-300 whitespace-nowrap">{getFormattedDate(session.updatedAt)}</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-on-surface-variant/70">Updated</span>
+                  <span className="text-xs font-medium text-on-surface-variant mt-0.5 whitespace-nowrap">{getFormattedDate(session.updatedAt)}</span>
                 </div>
-                <div className="w-12 h-12 shrink-0 border-[3px] border-black bg-surface-container-highest group-hover:bg-black text-white group-hover:text-primary-fixed flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] group-hover:rotate-[-45deg] group-hover:scale-110 shadow-[4px_4px_0px_0px_#000] group-hover:shadow-[0px_0px_0px_0px_#000]">
-                  <ArrowRight size={24} className="transition-transform duration-500 group-hover:translate-x-1" />
+                <div className="w-10 h-10 rounded-2xl border border-outline-variant/30 bg-surface-container-high/60 group-hover:bg-primary-fixed group-hover:border-primary-fixed text-on-surface-variant group-hover:text-black flex items-center justify-center transition-all duration-300 shadow-sm group-hover:shadow-[0_0_15px_rgba(220,238,0,0.4)]">
+                  <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-0.5" />
                 </div>
               </div>
             </div>
           );
         })}
-        
+
         {sessions.length === 0 && (
-          <div className="p-12 border-[3px] border-black bg-surface-container-lowest text-center">
-            <span className="text-on-surface-variant font-mono-label text-sm uppercase font-bold tracking-widest">
-              No sessions found. Initialize a new session to begin.
-            </span>
+          <div className="p-12 bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 text-center">
+            <Layers className="mx-auto h-10 w-10 text-on-surface-variant/40 mb-3" />
+            <p className="text-on-surface-variant font-medium text-sm">
+              No workspaces found matching your search.
+            </p>
           </div>
         )}
       </div>
