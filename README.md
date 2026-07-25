@@ -14,7 +14,7 @@
 [![Docker Sandbox](https://img.shields.io/badge/Sandbox-Docker-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[Architecture](#-system-architecture) • [SigNoz Alerts & Dashboards](#-signoz-alerts--embedded-dashboard-architecture) • [Hero Feature: Time-in-Brain](#-the-hero-feature-time-in-brain-vs-time-in-environment) • [ClickHouse Engine](#-signoz-deep-integration--clickhouse-engine) • [Guided Code Tour](#-guided-architecture--code-tour) • [Quickstart](#-quickstart)
+[Autonomous Workflow](#-the-autonomous-ai-developer-workflow) • [Architecture](#-system-architecture) • [SigNoz Alerts & Dashboards](#-signoz-alerts--embedded-dashboard-architecture) • [Time-in-Brain](#-the-hero-feature-time-in-brain-vs-time-in-environment) • [ClickHouse Engine](#-signoz-deep-integration--clickhouse-engine) • [Quickstart](#-quickstart)
 
 ---
 
@@ -24,7 +24,7 @@
 
 Autonomous AI coding agents operate as non-deterministic state machines: they parse prompts, generate reasoning tokens, execute shell commands inside containers, inspect repository diffs, and self-correct. When an agent turns slow, costs explode, or it gets trapped in an infinite retry loop, standard logging fails.
 
-**AXRAY** solves this by turning every agent turn into a structured **OpenTelemetry Trace Tree**, storing telemetry in **SigNoz ClickHouse**, fetching live alert rules via the **SigNoz Model Context Protocol (MCP)**, and providing an embedded SigNoz dashboard with real-time financial, latency, and system execution observability.
+**AXRAY** functions like an autonomous CLI developer that connects to **GitHub**, executes code securely inside an isolated **Docker Sandbox**, solves issues in real-time, traces every execution turn via **OpenTelemetry**, dispatches proactive alerts to **Slack & Webhooks** via **SigNoz MCP**, and automatically opens **GitHub Pull Requests (PRs)**.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -32,20 +32,65 @@ Autonomous AI coding agents operate as non-deterministic state machines: they pa
 ├──────────────────────────────────────────────────────────────────────────────────────────────────┤
 |  Session: #sess_9f82  │ Model: Llama-3.3-70b  │ Container: docker://axray-ws-42  │ Status: ACTIVE |
 ├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+|  🤖 AUTONOMOUS AGENT WORKFLOW                                                                    |
+|  [GitHub Issue] ➔ [Docker Sandbox] ➔ [Real-Time Fix] ➔ [OTel Trace] ➔ [Slack Alert] ➔ [GitHub PR] |
+|  ─────────────────────────────────────────────────────────────────────────────────────────────── |
 |  ⏱️ LATENCY PROFILE                                                                               |
 |  ├── 🧠 Time-in-Brain (LLM Reasoning):         2,450ms (78%) [Tokens: 14,200 | Cost: $0.0083]     |
 |  └── ⚡ Time-in-Environment (Docker System):     680ms (22%) [Commands: 4  | ExitCode: 0]      |
 |  ─────────────────────────────────────────────────────────────────────────────────────────────── |
-|  🚨 SIGNOZ MCP ALERTS: 1 Critical Alert Active (Cost Spike > $0.05 / Agent Loop Flagged)          |
+|  🚨 SIGNOZ MCP ALERTS: 1 Critical Alert Active (Slack & Webhook Dispatched)                      |
 |  🎯 Efficiency Score: 88/100  │  Primary Bottleneck: LLM Context Window & Token Overhead         |
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
+## 🤖 The Autonomous AI Developer Workflow
+
+AXRAY combines the power of a headless **CLI developer** with enterprise-grade **telemetry & security isolation**:
+
+```mermaid
+flowchart LR
+    GH_ISSUE["1. GitHub Issue / Prompt Ingestion"] --> DOCKER_CONTAINER["2. Secure Docker Execution Sandbox"]
+    DOCKER_CONTAINER --> REALTIME_FIX["3. Real-Time Autonomous Code Resolution"]
+    REALTIME_FIX --> OTEL_TRACING["4. Full OpenTelemetry Span & Metric Tracing"]
+    OTEL_TRACING --> SIGNOZ_SLACK["5. SigNoz MCP Alerts (Slack / Webhooks)"]
+    SIGNOZ_SLACK --> AUTO_PR["6. Automatic GitHub Pull Request Creation"]
+
+    style GH_ISSUE fill:#24292e,color:#fff
+    style DOCKER_CONTAINER fill:#2496ED,color:#fff
+    style OTEL_TRACING fill:#7c5cff,color:#fff
+    style SIGNOZ_SLACK fill:#ECB22E,color:#000
+    style AUTO_PR fill:#2ea44f,color:#fff
+```
+
+### 1. 🐙 GitHub Integration
+- Connects directly to GitHub repositories using Octokit.
+- Fetches repository structure, branch trees, and issue descriptions to initialize workspace contexts.
+
+### 2. 🔒 Secure Docker Sandbox Execution
+- Executes bash commands, code edits, and dependency installations inside isolated, non-root **Docker containers**.
+- Protects host environments while providing agents full CLI execution freedom (`read_file`, `write_file`, `search_files`, `run_command`, `git_diff`).
+
+### 3. ⚡ Real-Time Issue Resolution & CLI Autonomy
+- Acts like a senior staff engineer: parses error tracebacks, runs unit tests, refactors code, and verifies execution iteratively.
+- Streamed in real-time to the AXRAY terminal dashboard via WebSockets.
+
+### 4. 🛰️ 100% OpenTelemetry Span Tracing
+- Captures every LLM thought turn, tool invocation, token count, USD cost, and container process exit code into OpenTelemetry spans exported to **SigNoz**.
+
+### 5. 🔔 Multi-Channel Alerts (Slack / Webhooks / Email)
+- Leverages SigNoz's Notification Channels & MCP Server to dispatch real-time alerts to **Slack channels**, Webhooks, or PagerDuty when cost spikes, memory limits, or agent infinite loops are detected.
+
+### 6. 🚀 Automatic Pull Request (PR) Creation
+- Validates git status inside the container, pushes a new topic branch to GitHub, generates descriptive titles and Markdown pull request bodies, and opens the PR automatically.
+
+---
+
 ## 🚨 SigNoz Alerts & Embedded Dashboard Architecture
 
-AXRAY integrates directly with SigNoz to surface live alert rules, monitor system anomalies, and render custom metrics panels seamlessly inside the UI without context-switching.
+AXRAY integrates directly with SigNoz to surface live alert rules, monitor system anomalies, dispatch notifications to Slack/Webhooks, and render custom metrics panels seamlessly inside the UI.
 
 ```mermaid
 sequenceDiagram
@@ -55,7 +100,7 @@ sequenceDiagram
     participant API as ⚙️ Express Backend API (/api/signoz/alerts)
     participant MCP as 🔌 SigNoz MCP Client (SigNozService)
     participant Cloud as 🛰️ SigNoz Cloud / Local MCP Server (:8080)
-    participant Dash as 📊 Embedded SigNoz Portal (Iframe)
+    participant Slack as 💬 Slack / Notification Channels
 
     Note over UI, Cloud: 1. Fetching & Monitoring Live SigNoz Alerts
     UI->>Hook: Mount SmartAlertsTab component
@@ -67,9 +112,8 @@ sequenceDiagram
     API-->>Hook: { success: true, data: [...] }
     Hook-->>UI: Renders Proactive Alarms with "SIGNOZ API" Provenance Badge
 
-    Note over UI, Dash: 2. Embedded SigNoz Dashboard Panel
-    UI->>Dash: Render Glassmorphic Iframe (http://localhost:8080/dashboards)
-    Dash-->>UI: Interactive SigNoz Query Builder & Custom Metric Panels
+    Note over Cloud, Slack: 2. Real-Time Alert Dispatch
+    Cloud->>Slack: Trigger Alert Notification (Slack / Webhooks / PagerDuty)
 ```
 
 ---
@@ -147,6 +191,7 @@ export const useSigNozAlerts = () => {
 #### Proactive Alerts Component (`apps/web/features/sessions/components/SmartAlertsTab.tsx`)
 Merges real SigNoz alerts with local agent execution heuristics:
 - 🚨 **SigNoz MCP Custom Alerts:** Active monitor rules from SigNoz (e.g. *Agent Retry Loop*, *System Memory Threshold*).
+- 💬 **Slack & Notification Channels:** Instant alert routing to Slack webhooks when rules trigger.
 - 💰 **Cost Spike Anomaly:** Triggers when total session LLM cost exceeds `$0.01`.
 - 🔢 **Token Spike Anomaly:** Triggers when total token consumption exceeds `10,000 tokens`.
 
