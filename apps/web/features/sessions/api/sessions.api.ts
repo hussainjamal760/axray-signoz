@@ -12,13 +12,29 @@ interface BackendSession {
   workspaceReady?: boolean;
   workspaceInitialized?: boolean;
   workspaceSpec?: SessionSummary['workspaceSpec'];
-  latestRunId?: string;
+  latestRunId?: {
+    status?: 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'incomplete';
+    tokensUsed?: number;
+    cost?: number;
+  } | string;
   pullRequest?: PullRequestSummary;
   createdAt: string;
   updatedAt: string;
 }
 
 function mapSession(session: BackendSession): SessionSummary {
+  const latestRun = typeof session.latestRunId === 'object' ? session.latestRunId : undefined;
+  
+  let agentStatus: 'running' | 'idle' | 'failed' = 'idle';
+  if (latestRun?.status === 'running' || latestRun?.status === 'queued' || latestRun?.status === 'pending') {
+    agentStatus = 'running';
+  } else if (latestRun?.status === 'failed' || latestRun?.status === 'incomplete') {
+    agentStatus = 'failed';
+  }
+
+  const tokens = latestRun?.tokensUsed || 0;
+  const cost = latestRun?.cost || 0;
+
   return {
     id: session._id,
     repositoryId: session.repositoryId,
@@ -29,10 +45,15 @@ function mapSession(session: BackendSession): SessionSummary {
     containerStatus: session.containerStatus,
     workspaceInitialized: session.workspaceInitialized ?? session.workspaceReady ?? false,
     workspaceSpec: session.workspaceSpec,
-    latestRunId: session.latestRunId,
+    latestRunId: typeof session.latestRunId === 'string' ? session.latestRunId : undefined,
     pullRequest: session.pullRequest,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
+    agentStatus,
+    metrics: {
+      tokens,
+      cost,
+    },
   };
 }
 

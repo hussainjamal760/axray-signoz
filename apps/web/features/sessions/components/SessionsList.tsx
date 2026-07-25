@@ -49,10 +49,8 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
 
   // Aggregate stats
   const activeCount = useMemo(() => sessions.filter(s => s.status === 'active').length, [sessions]);
-  const totalTokens = useMemo(() => sessions.reduce((acc, s) => acc + (s.metrics?.tokens || 1420), 0), [sessions]);
-  const totalCost = useMemo(() => sessions.reduce((acc, s) => acc + (Number(s.metrics?.cost) || 0.14), 0), [sessions]);
-
-  const mockStatuses = ['running', 'idle', 'failed', 'idle'];
+  const totalTokens = useMemo(() => sessions.reduce((acc, s) => acc + (s.metrics?.tokens || 0), 0), [sessions]);
+  const totalCost = useMemo(() => sessions.reduce((acc, s) => acc + (Number(s.metrics?.cost) || 0), 0), [sessions]);
 
   return (
     <div className="space-y-8 pb-10">
@@ -79,7 +77,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant">
               <DollarSign size={14} className="text-primary-fixed" />
-              ${totalCost.toFixed(2)}
+              ${totalCost.toFixed(4)}
             </span>
           </div>
         </div>
@@ -96,10 +94,10 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
 
       {/* Glassmorphic Workspace List */}
       <div className="space-y-4">
-        {sessions.map((session, index) => {
-          const agentStatus = session.agentStatus || mockStatuses[index % mockStatuses.length];
-          const cost = session.metrics?.cost || ((index + 1) * 0.14).toFixed(4);
-          const tokens = session.metrics?.tokens || ((index + 1) * 1420);
+        {sessions.map((session) => {
+          const agentStatus = session.agentStatus || 'idle';
+          const cost = session.metrics?.cost ? Number(session.metrics.cost).toFixed(4) : '$0.0000';
+          const tokens = session.metrics?.tokens || 0;
           const colors = statusColors[session.status] || statusColors.active;
 
           return (
