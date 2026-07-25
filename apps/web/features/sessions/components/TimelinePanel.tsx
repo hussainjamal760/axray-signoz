@@ -139,11 +139,18 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
           </div>
         </div>
 
-        <div className="flex items-center gap-2 font-mono-label text-xs font-bold">
+        <div className="flex items-center gap-3 font-mono-label text-xs font-bold">
+          {telemetryStatus === 'authoritative_signoz' && (
+            <span className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase px-2 py-0.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+              SigNoz ClickHouse
+            </span>
+          )}
+
           {isRunning || isLive ? (
             <span className="flex items-center gap-2 text-primary-fixed uppercase italic font-black animate-pulse">
               <span className="w-2.5 h-2.5 bg-primary-fixed"></span>
-              Live Stream (Socket.IO)
+              Live Stream
             </span>
           ) : (
             <span className="text-outline uppercase text-[11px]">

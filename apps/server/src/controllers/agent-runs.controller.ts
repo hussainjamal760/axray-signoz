@@ -76,3 +76,14 @@ export const getRunTimeline = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 };
+
+export const getRunLogs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { runId } = req.params;
+    const logs = await signozTimelineService.fetchSigNozLogsFromClickHouse(runId);
+    res.json({ success: true, count: logs.length, logs });
+  } catch (error) {
+    next(error);
+  }
+};
+

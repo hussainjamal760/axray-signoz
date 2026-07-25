@@ -87,8 +87,20 @@ export function SessionHeader({ session }: { session: SessionSummary }) {
           <WorkspaceStatusBadge isInitialized={session.workspaceInitialized} />
         </div>
 
-        {/* 6. Pull Request Action & Live Status Badge */}
+        {/* 6. SigNoz Portal Link & Pull Request Actions */}
         <div className="flex items-center gap-3">
+          <a
+            href="http://localhost:8080"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 bg-surface-container-highest text-white font-mono-label text-xs font-black uppercase border-2 border-outline px-3 py-1.5 hover:bg-surface-variant transition-colors brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+            title="Open Self-Hosted SigNoz Observability Portal"
+          >
+            <span className="material-symbols-outlined text-sm text-primary-fixed">monitoring</span>
+            <span>Open SigNoz Portal</span>
+            <span className="material-symbols-outlined text-xs text-on-surface-variant">open_in_new</span>
+          </a>
+
           {pr ? (
             <div className="flex items-center gap-3 font-mono-label text-xs">
               <a

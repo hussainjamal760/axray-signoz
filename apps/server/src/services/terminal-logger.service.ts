@@ -1,5 +1,6 @@
 import { emitTerminalLine } from '../sockets/socket.emitter';
 import { AgentRun } from '../models/agent-run.model';
+import { emitAgentLog } from '../lib/telemetry';
 
 export type TerminalLineType = 'command' | 'stdout' | 'stderr' | 'agent' | 'success' | 'error';
 
@@ -28,6 +29,14 @@ export function appendTerminalLine(
   for (const line of lines) {
     const formatted = formatTerminalLine(type, line);
     buffer.push(formatted);
+
+    // Stream to SigNoz OTLP Logs
+    const logLevel = type === 'error' || type === 'stderr' ? 'error' : 'info';
+    emitAgentLog(logLevel, formatted, {
+      runId,
+      sessionId,
+      type,
+    });
 
     // Emit live line via Socket.IO
     emitTerminalLine(sessionId, {

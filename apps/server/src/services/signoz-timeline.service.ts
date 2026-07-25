@@ -1,8 +1,49 @@
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { AgentRun } from '../models/agent-run.model';
 import { signozService } from './signoz.service';
 import { spanStoreProcessor, SpanRecord } from '../lib/telemetry';
 import { AppError } from '../errors/AppError';
 import { AXRAY_ATTRIBUTES, AxrayPhase } from '../lib/telemetry-attributes';
+
+const execFileAsync = promisify(execFile);
+
+async function fetchSigNozTracesFromClickHouse(runId: string): Promise<SpanRecord[]> {
+  try {
+    const query = `SELECT spanID, traceID, name, hasError, timestamp, durationNano, attributes_string, attributes_number FROM signoz_traces.signoz_index_v3 WHERE attributes_string['axray.run.id'] = '${runId}' OR attributes_string['run.id'] = '${runId}' ORDER BY timestamp ASC FORMAT JSON`;
+
+    const { stdout } = await execFileAsync('docker', [
+      'exec',
+      'signoz-telemetrystore-clickhouse-0-0',
+      'clickhouse-client',
+      '--query',
+      query,
+    ]);
+
+    const parsed = JSON.parse(stdout);
+    if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+      return parsed.data.map((row: any) => {
+        const attrs: Record<string, any> = {
+          ...(row.attributes_string || {}),
+          ...(row.attributes_number || {}),
+        };
+        const durationMs = row.durationNano ? Math.round(row.durationNano / 1_000_000) : 0;
+        return {
+          id: row.spanID,
+          traceId: row.traceID,
+          name: row.name,
+          status: row.hasError ? 'failed' : 'completed',
+          startTime: row.timestamp,
+          durationMs,
+          attributes: attrs,
+        };
+      });
+    }
+  } catch (err) {
+    console.warn(`[SigNoz ClickHouse Query] Error fetching traces for runId=${runId}:`, err instanceof Error ? err.message : String(err));
+  }
+  return [];
+}
 
 export interface TimelineEventMetadata {
   repository?: string;
@@ -166,49 +207,16 @@ export const getTimelineForRun = async (runId: string): Promise<TimelineResponse
   let rawSpans: SpanRecord[] = [];
   let telemetryStatus: 'authoritative_signoz' | 'active_span_store' | 'unavailable' = 'unavailable';
 
-  // 1. Authoritative Source: Query SigNoz for traces strictly matching axray.run.id
+  // 1. Authoritative Source: Query ClickHouse database for traces strictly matching axray.run.id
   try {
-    const apiKey = process.env.SIGNOZ_MCP_API_KEY || process.env.SIGNOZ_API_KEY;
-    if (apiKey) {
-      const queryRes: any = await signozService.executeQuery("traces");
-      if (queryRes && Array.isArray(queryRes.content) && queryRes.content.length > 0) {
-        // Parse SigNoz trace spans
-        const signozSpans: SpanRecord[] = [];
-        for (const item of queryRes.content) {
-          if (item.type === 'text' && item.text) {
-            try {
-              const parsed = JSON.parse(item.text);
-              if (Array.isArray(parsed)) {
-                for (const s of parsed) {
-                  const attrs = s.attributes || s.tagMap || {};
-                  if (
-                    attrs[AXRAY_ATTRIBUTES.RUN_ID] === runId ||
-                    attrs['run.id'] === runId
-                  ) {
-                    signozSpans.push({
-                      id: s.spanId || s.id || Math.random().toString(36).substring(2),
-                      traceId: s.traceId || run.traceId || '',
-                      name: s.name || s.operationName || 'span',
-                      status: s.statusCode === 'ERROR' || s.status === 'failed' ? 'failed' : 'completed',
-                      startTime: s.startTime || new Date().toISOString(),
-                      durationMs: s.durationMs || 0,
-                      attributes: attrs,
-                    });
-                  }
-                }
-              }
-            } catch {}
-          }
-        }
-
-        if (signozSpans.length > 0) {
-          rawSpans = signozSpans;
-          telemetryStatus = 'authoritative_signoz';
-        }
-      }
+    const signozSpans = await fetchSigNozTracesFromClickHouse(runId);
+    if (signozSpans.length > 0) {
+      rawSpans = signozSpans;
+      telemetryStatus = 'authoritative_signoz';
+      console.log(`[Timeline] Successfully fetched ${signozSpans.length} authoritative trace spans from SigNoz ClickHouse for runId=${runId}`);
     }
   } catch (err) {
-    console.warn(`[Timeline] SigNoz query fallback to local spanStoreProcessor:`, err instanceof Error ? err.message : String(err));
+    console.warn(`[Timeline] SigNoz ClickHouse query fallback:`, err instanceof Error ? err.message : String(err));
   }
 
   // 2. Active Ingestion Bridge: Query local spanStoreProcessor strictly for runId
@@ -289,3 +297,30 @@ export const getTimelineForRun = async (runId: string): Promise<TimelineResponse
     events,
   };
 };
+
+export async function fetchSigNozLogsFromClickHouse(runId: string): Promise<Array<{ type: string; text: string; timestamp: string }>> {
+  try {
+    const query = `SELECT timestamp, severity_text, body, attributes_string['type'] as type FROM signoz_logs.logs_v2 WHERE attributes_string['runId'] = '${runId}' OR attributes_string['axray.run.id'] = '${runId}' ORDER BY timestamp ASC FORMAT JSON`;
+
+    const { stdout } = await execFileAsync('docker', [
+      'exec',
+      'signoz-telemetrystore-clickhouse-0-0',
+      'clickhouse-client',
+      '--query',
+      query,
+    ]);
+
+    const parsed = JSON.parse(stdout);
+    if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+      return parsed.data.map((row: any) => ({
+        type: row.type || (row.severity_text === 'ERROR' ? 'error' : 'stdout'),
+        text: row.body,
+        timestamp: new Date(Number(row.timestamp) / 1_000_000).toISOString(),
+      }));
+    }
+  } catch (err) {
+    console.warn(`[SigNoz ClickHouse Logs] Error fetching logs for runId=${runId}:`, err instanceof Error ? err.message : String(err));
+  }
+  return [];
+}
+

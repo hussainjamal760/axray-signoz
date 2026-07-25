@@ -19,8 +19,27 @@ export function TerminalPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isUserScrolledUp, setIsUserScrolledUp] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [signozLogs, setSignozLogs] = useState<Array<{ type: string; text: string }> | null>(null);
 
   const isRunning = selectedRun?.status === "running" || selectedRun?.status === "pending";
+
+  // Fetch authoritative SigNoz ClickHouse logs for finished runs
+  useEffect(() => {
+    if (selectedRun?.id && !isRunning) {
+      fetch(`/api/agent-runs/${selectedRun.id}/logs`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.logs) && data.logs.length > 0) {
+            setSignozLogs(data.logs);
+          } else {
+            setSignozLogs(null);
+          }
+        })
+        .catch(() => setSignozLogs(null));
+    } else {
+      setSignozLogs(null);
+    }
+  }, [selectedRun?.id, isRunning]);
 
   // Derive displayed terminal lines matching website theme
   const displayedContent = useMemo(() => {
@@ -39,6 +58,11 @@ export function TerminalPanel({
         { type: "agent", text: `Task Prompt: "${selectedRun.prompt}"` },
         { type: "stdout", text: "Initializing Docker workspace container & runtime environment..." },
       ];
+    }
+
+    // Authoritative SigNoz ClickHouse Logs
+    if (signozLogs && signozLogs.length > 0) {
+      return signozLogs;
     }
 
     // Finished run: parse persisted terminalOutput
@@ -69,7 +93,7 @@ export function TerminalPanel({
         ? { type: "stdout", text: selectedRun.response }
         : { type: "stdout", text: "No workspace terminal output logged." },
     ];
-  }, [selectedRun, isRunning, liveTerminalLines, session]);
+  }, [selectedRun, isRunning, liveTerminalLines, signozLogs, session]);
 
   // Handle user scroll detection for smart auto-scrolling
   const handleScroll = () => {
@@ -124,6 +148,16 @@ export function TerminalPanel({
         </div>
 
         <div className="flex items-center gap-4">
+          {signozLogs && signozLogs.length > 0 ? (
+            <span className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase px-2 py-0.5 hidden sm:inline-block">
+              SigNoz ClickHouse Logs
+            </span>
+          ) : (
+            <span className="bg-primary-fixed/10 border border-primary-fixed/30 text-primary-fixed text-[10px] font-black uppercase px-2 py-0.5 hidden sm:inline-block">
+              SigNoz OTLP Logs
+            </span>
+          )}
+
           <span className="font-mono-label text-[10px] font-bold text-on-surface-variant">
             {session?.containerId ? `DOCKER: ${session.containerId.substring(0, 8)}` : "CONTAINER: READY"}
           </span>
