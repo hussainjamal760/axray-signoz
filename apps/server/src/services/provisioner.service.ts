@@ -1,4 +1,5 @@
 import * as containerService from './container.service';
+import { BASE_WORKSPACE_IMAGE } from '../lib/docker';
 import { ContainerStatus } from '../models/session.model';
 import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
@@ -44,7 +45,7 @@ export const provisionSessionInfrastructure = async (
       [AXRAY_ATTRIBUTES.PHASE]: 'setup',
       [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'container.start',
       [AXRAY_ATTRIBUTES.IS_INITIAL_SETUP]: true,
-      [AXRAY_ATTRIBUTES.RUNTIME_IMAGE]: 'axray/node:22',
+      [AXRAY_ATTRIBUTES.RUNTIME_IMAGE]: BASE_WORKSPACE_IMAGE,
     },
   });
 

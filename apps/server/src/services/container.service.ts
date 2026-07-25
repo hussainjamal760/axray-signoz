@@ -4,7 +4,7 @@
  * Includes Command Auto-Transformation, Timeout Safeguards, and Output Protection.
  */
 
-import { docker, DOCKER_RUNTIME_IMAGE } from '../lib/docker';
+import { docker, BASE_WORKSPACE_IMAGE, ensureImageExists } from '../lib/docker';
 import { AppError } from '../errors/AppError';
 import { ContainerStatus } from '../models/session.model';
 import { tracer } from '../lib/telemetry';
@@ -89,47 +89,25 @@ export const createContainer = async (params: {
   console.log(`[Docker] Creating container "${containerName}" for repo=${params.repositoryFullName || 'N/A'}`);
 
   try {
-    const targetImage = DOCKER_RUNTIME_IMAGE;
-    let container;
+    const targetImage = BASE_WORKSPACE_IMAGE;
+    await ensureImageExists(targetImage);
 
-    try {
-      container = await docker.createContainer({
-        Image: targetImage,
-        Cmd: ['sleep', 'infinity'],
-        name: containerName,
-        Tty: true,
-        OpenStdin: true,
-        Labels: {
-          'com.axray.session': params.sessionId || '',
-          'com.axray.type': 'session',
-        },
-        HostConfig: {
-          RestartPolicy: { Name: 'no' },
-        },
-      });
-    } catch (createErr: any) {
-      if (createErr?.statusCode === 404 || (typeof createErr?.message === 'string' && createErr.message.includes('No such image'))) {
-        console.warn(`[Docker Warning] Image "${targetImage}" missing locally. Falling back to "node:22"...`);
-        container = await docker.createContainer({
-          Image: 'node:22',
-          Cmd: ['sleep', 'infinity'],
-          name: containerName,
-          Tty: true,
-          OpenStdin: true,
-          Labels: {
-            'com.axray.session': params.sessionId || '',
-            'com.axray.type': 'session',
-          },
-          HostConfig: {
-            RestartPolicy: { Name: 'no' },
-          },
-        });
-      } else {
-        throw createErr;
-      }
-    }
+    const container = await docker.createContainer({
+      Image: targetImage,
+      Cmd: ['sleep', 'infinity'],
+      name: containerName,
+      Tty: true,
+      OpenStdin: true,
+      Labels: {
+        'com.axray.session': params.sessionId || '',
+        'com.axray.type': 'session',
+      },
+      HostConfig: {
+        RestartPolicy: { Name: 'no' },
+      },
+    });
 
-    console.log(`[Docker] Container created: ${container.id}`);
+    console.log(`[Docker] Container created: ${container.id} (image: ${targetImage})`);
     return { containerId: container.id };
   } catch (error) {
     return handleDockerError(error, 'Create container');

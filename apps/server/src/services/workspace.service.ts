@@ -206,38 +206,134 @@ export const ensureRuntime = async (
   spec: IWorkspaceSpec,
   telemetryContext?: { runId?: string; sessionId?: string }
 ): Promise<void> => {
-  const resolution = resolveRuntimeImage(spec.runtime, spec.runtimeVersion);
+  const runtime = (spec.runtime || 'node').toLowerCase().trim();
+  const sessionId = telemetryContext?.sessionId;
+  const runId = telemetryContext?.runId;
+
   const span = tracer.startSpan('workspace.ensure_runtime', {
     attributes: {
-      [AXRAY_ATTRIBUTES.RUN_ID]: telemetryContext?.runId || '',
-      [AXRAY_ATTRIBUTES.SESSION_ID]: telemetryContext?.sessionId || '',
+      [AXRAY_ATTRIBUTES.RUN_ID]: runId || '',
+      [AXRAY_ATTRIBUTES.SESSION_ID]: sessionId || '',
       [AXRAY_ATTRIBUTES.PHASE]: 'workspace',
       [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'workspace.ensure_runtime',
-      [AXRAY_ATTRIBUTES.RUNTIME]: spec.runtime || 'node',
-      [AXRAY_ATTRIBUTES.RUNTIME_VERSION]: spec.runtimeVersion || '22',
-      [AXRAY_ATTRIBUTES.RUNTIME_IMAGE]: resolution.imageName,
+      [AXRAY_ATTRIBUTES.RUNTIME]: runtime,
+      [AXRAY_ATTRIBUTES.RUNTIME_VERSION]: spec.runtimeVersion || 'default',
     },
   });
 
-  console.log(`[Workspace] Selected runtime image: ${resolution.imageName}`);
-  
-  if (telemetryContext?.sessionId && telemetryContext?.runId) {
-    appendTerminalLine(telemetryContext.sessionId, telemetryContext.runId, 'agent', `Using prebuilt runtime image ${resolution.imageName}`);
-    emitLiveEvent(telemetryContext.sessionId, {
-      sessionId: telemetryContext.sessionId,
-      runId: telemetryContext.runId,
-      timestamp: new Date().toISOString(),
-      eventType: 'workspace.runtime.selected',
-      phase: 'workspace',
-      status: 'completed',
-      title: 'Node Runtime Ready',
-      description: `Container using prebuilt runtime ${resolution.imageName}`,
-      metadata: { runtime: spec.runtime, image: resolution.imageName },
-    });
+  console.log(`[Workspace] Ensuring runtime environment for "${runtime}" in container ${containerId}...`);
+  if (sessionId && runId) {
+    appendTerminalLine(sessionId, runId, 'agent', `Provisioning in-container runtime environment for ${runtime}...`);
   }
 
-  span.setStatus({ code: SpanStatusCode.OK });
-  span.end();
+  try {
+    if (
+      runtime.includes('node') ||
+      runtime.includes('javascript') ||
+      runtime.includes('typescript') ||
+      runtime === 'unknown'
+    ) {
+      // Check Node.js
+      const nodeCheck = await containerService.executeCommand(containerId, 'node -v || nodejs -v');
+      if (nodeCheck.exitCode !== 0) {
+        if (sessionId && runId) {
+          appendTerminalLine(sessionId, runId, 'command', 'apk add --no-cache nodejs npm');
+        }
+        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache nodejs npm');
+        if (installRes.exitCode === 0) {
+          if (sessionId && runId) {
+            appendTerminalLine(sessionId, runId, 'stdout', installRes.output);
+            appendTerminalLine(sessionId, runId, 'success', 'Successfully installed Node.js runtime');
+          }
+        } else {
+          throw new AppError(500, `Failed to install Node.js runtime: ${installRes.output}`);
+        }
+      } else {
+        if (sessionId && runId) {
+          appendTerminalLine(sessionId, runId, 'stdout', `Node.js runtime present (${nodeCheck.output})`);
+        }
+      }
+
+      // Check Package Manager (pnpm / yarn)
+      const pm = (spec.packageManager || '').toLowerCase();
+      if (pm === 'pnpm') {
+        const pnpmCheck = await containerService.executeCommand(containerId, 'pnpm -v');
+        if (pnpmCheck.exitCode !== 0) {
+          if (sessionId && runId) {
+            appendTerminalLine(sessionId, runId, 'command', 'npm install -g pnpm');
+          }
+          const pnpmInst = await containerService.executeCommand(containerId, 'npm install -g pnpm');
+          if (sessionId && runId && pnpmInst.exitCode === 0) {
+            appendTerminalLine(sessionId, runId, 'success', 'Successfully installed pnpm package manager');
+          }
+        }
+      } else if (pm === 'yarn') {
+        const yarnCheck = await containerService.executeCommand(containerId, 'yarn -v');
+        if (yarnCheck.exitCode !== 0) {
+          if (sessionId && runId) {
+            appendTerminalLine(sessionId, runId, 'command', 'npm install -g yarn');
+          }
+          const yarnInst = await containerService.executeCommand(containerId, 'npm install -g yarn');
+          if (sessionId && runId && yarnInst.exitCode === 0) {
+            appendTerminalLine(sessionId, runId, 'success', 'Successfully installed yarn package manager');
+          }
+        }
+      }
+    } else if (runtime.includes('python')) {
+      const pyCheck = await containerService.executeCommand(containerId, 'python3 --version');
+      if (pyCheck.exitCode !== 0) {
+        if (sessionId && runId) {
+          appendTerminalLine(sessionId, runId, 'command', 'apk add --no-cache python3 py3-pip');
+        }
+        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache python3 py3-pip');
+        if (installRes.exitCode === 0) {
+          if (sessionId && runId) {
+            appendTerminalLine(sessionId, runId, 'stdout', installRes.output);
+            appendTerminalLine(sessionId, runId, 'success', 'Successfully installed Python3 runtime');
+          }
+        } else {
+          throw new AppError(500, `Failed to install Python runtime: ${installRes.output}`);
+        }
+      }
+    } else if (runtime.includes('go')) {
+      const goCheck = await containerService.executeCommand(containerId, 'go version');
+      if (goCheck.exitCode !== 0) {
+        if (sessionId && runId) {
+          appendTerminalLine(sessionId, runId, 'command', 'apk add --no-cache go');
+        }
+        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache go');
+        if (installRes.exitCode === 0) {
+          if (sessionId && runId) {
+            appendTerminalLine(sessionId, runId, 'stdout', installRes.output);
+            appendTerminalLine(sessionId, runId, 'success', 'Successfully installed Go runtime');
+          }
+        } else {
+          throw new AppError(500, `Failed to install Go runtime: ${installRes.output}`);
+        }
+      }
+    }
+
+    if (sessionId && runId) {
+      emitLiveEvent(sessionId, {
+        sessionId,
+        runId,
+        timestamp: new Date().toISOString(),
+        eventType: 'workspace.runtime.selected',
+        phase: 'workspace',
+        status: 'completed',
+        title: 'Runtime Provisioned',
+        description: `Runtime "${runtime}" prepared in container`,
+        metadata: { runtime, packageManager: spec.packageManager },
+      });
+    }
+
+    span.setStatus({ code: SpanStatusCode.OK });
+    span.end();
+  } catch (err: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message || String(err) });
+    span.end();
+    throw err;
+  }
 };
 
 export const installDependencies = async (

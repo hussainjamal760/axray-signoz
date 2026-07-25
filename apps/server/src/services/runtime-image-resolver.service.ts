@@ -13,7 +13,7 @@ export interface RuntimeImageResolution {
   isPrebuilt: boolean;
 }
 
-export const DEFAULT_NODE_IMAGE = process.env.DOCKER_RUNTIME_IMAGE || 'node:22';
+export const DEFAULT_NODE_IMAGE = process.env.BASE_WORKSPACE_IMAGE || 'axray-workspace:latest';
 
 /**
  * Resolves target prebuilt Docker image based on analyzed runtime metadata.
