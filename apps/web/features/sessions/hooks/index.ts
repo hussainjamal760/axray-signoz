@@ -7,4 +7,4 @@ export * from './useTimeline';
 export * from './useSessionSocket';
 export * from './useCreatePullRequest';
 export * from './useAnalytics';
-
+export * from './useSpanLogs';

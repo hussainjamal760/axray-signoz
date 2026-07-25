@@ -88,3 +88,13 @@ export const getRunLogs = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+export const getSpanLogs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { spanId } = req.params;
+    const logs = await signozTimelineService.fetchSigNozLogsForSpanId(spanId);
+    res.json({ success: true, count: logs.length, logs });
+  } catch (error) {
+    next(error);
+  }
+};
+

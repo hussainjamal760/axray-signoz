@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { requireAuth } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
 import { updateAgentRunSchema } from '../schemas/sessions.schema';
-import { getRunById, updateRun, getRunTimeline, getRunLogs } from '../controllers/agent-runs.controller';
+import { getRunById, updateRun, getRunTimeline, getRunLogs, getSpanLogs } from '../controllers/agent-runs.controller';
 
 const router = Router();
 
+router.get('/:id/logs/span/:spanId', getSpanLogs);
 router.get('/:runId/timeline', getRunTimeline);
 router.get('/:runId/logs', getRunLogs);
 router.get('/:id', requireAuth, getRunById);

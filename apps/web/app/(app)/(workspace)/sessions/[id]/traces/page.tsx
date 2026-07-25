@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useRuns, useRunTimeline } from "@/features/agent-runs/hooks";
-import { useSession } from "@/features/sessions/hooks";
+import { useSession, useSpanLogs } from "@/features/sessions/hooks";
 import { TimelineEvent } from "@/features/agent-runs/types";
 import { RunStatusBadge } from "@/features/agent-runs/components/RunStatusBadge";
 
@@ -50,13 +50,19 @@ export default function TracesExplorerPage() {
 
   const activeRunId = activeRun?.id || "";
 
+  const [selectedSpan, setSelectedSpan] = useState<TraceSpanNode | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [kindFilter, setKindFilter] = useState<"ALL" | "LLM" | "TOOL" | "WORKSPACE" | "ERROR">("ALL");
+  const [activeTab, setActiveTab] = useState<"attributes" | "logs">("attributes");
+
   const { data: timelineData, isLoading: timelineLoading } = useRunTimeline(activeRunId, {
     enabled: Boolean(activeRunId),
   });
 
-  const [selectedSpan, setSelectedSpan] = useState<TraceSpanNode | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [kindFilter, setKindFilter] = useState<string>("ALL");
+  const { data: spanLogs, isLoading: logsLoading } = useSpanLogs(
+    activeRunId,
+    selectedSpan?.spanId
+  );
 
   const handleSelectRunChange = (newRunId: string) => {
     if (newRunId) {
@@ -110,7 +116,7 @@ export default function TracesExplorerPage() {
 
       const node: TraceSpanNode = {
         id: ev.id || `ev-${idx}`,
-        spanId: (typeof meta.spanId === "string" ? meta.spanId : "") || `span-${idx}-${ev.timestamp}`,
+        spanId: ev.id || `span-${idx}-${ev.timestamp}`,
         name: ev.title || ev.eventType,
         kind,
         status: ev.status === "failed" ? "ERROR" : "OK",
@@ -238,7 +244,7 @@ export default function TracesExplorerPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {["ALL", "LLM", "TOOL", "WORKSPACE", "ERROR"].map((k) => (
+          {(["ALL", "LLM", "TOOL", "WORKSPACE", "ERROR"] as const).map((k) => (
             <button
               key={k}
               onClick={() => setKindFilter(k)}
@@ -329,31 +335,97 @@ export default function TracesExplorerPage() {
               )}
             </div>
 
-            {/* Attributes Table */}
-            <div>
-              <h4 className="text-xs font-black uppercase text-white mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm text-primary-fixed">key</span>
-                Span Attributes
-              </h4>
-              <div className="bg-[#050503] border-2 border-outline p-3 space-y-2 text-xs overflow-x-auto max-h-[300px] custom-scrollbar" data-lenis-prevent="true">
-                {Object.entries(selectedSpan.attributes).map(([k, v]) => (
-                  <div key={k} className="flex flex-col border-b border-outline/30 pb-1.5 last:border-none">
-                    <span className="text-[10px] text-primary-fixed font-bold">{k}</span>
-                    <span className="text-white font-mono break-all text-[11px]">
-                      {typeof v === "object" ? JSON.stringify(v) : String(v)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {/* Tabs Navigation */}
+            <div className="flex items-center gap-4 border-b-2 border-outline pb-2 mt-2">
+              <button
+                onClick={() => setActiveTab("attributes")}
+                className={`text-xs font-black uppercase pb-1 border-b-4 transition-all ${
+                  activeTab === "attributes"
+                    ? "border-primary-fixed text-primary-fixed"
+                    : "border-transparent text-on-surface-variant hover:text-white"
+                }`}
+              >
+                Attributes
+              </button>
+              <button
+                onClick={() => setActiveTab("logs")}
+                className={`text-xs font-black uppercase pb-1 border-b-4 transition-all flex items-center gap-2 ${
+                  activeTab === "logs"
+                    ? "border-emerald-400 text-emerald-400"
+                    : "border-transparent text-on-surface-variant hover:text-white"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">terminal</span>
+                Terminal Logs
+              </button>
             </div>
 
-            {/* Raw JSON */}
-            <div>
-              <h4 className="text-xs font-black uppercase text-white mb-2">OTEL Raw Payload</h4>
-              <pre className="bg-[#050503] border-2 border-outline p-3 text-[10px] text-emerald-400 font-mono overflow-x-auto max-h-[200px] custom-scrollbar" data-lenis-prevent="true">
-                {JSON.stringify(selectedSpan, null, 2)}
-              </pre>
-            </div>
+            {activeTab === "attributes" ? (
+              <>
+                {/* Attributes Table */}
+                <div>
+                  <h4 className="text-xs font-black uppercase text-white mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm text-primary-fixed">key</span>
+                    Span Attributes
+                  </h4>
+                  <div className="bg-[#050503] border-2 border-outline p-3 space-y-2 text-xs overflow-x-auto max-h-[300px] custom-scrollbar" data-lenis-prevent="true">
+                    {Object.entries(selectedSpan.attributes).map(([k, v]) => (
+                      <div key={k} className="flex flex-col border-b border-outline/30 pb-1.5 last:border-none">
+                        <span className="text-[10px] text-primary-fixed font-bold">{k}</span>
+                        <span className="text-white font-mono break-all text-[11px]">
+                          {typeof v === "object" ? JSON.stringify(v) : String(v)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Raw JSON */}
+                <div>
+                  <h4 className="text-xs font-black uppercase text-white mb-2">OTEL Raw Payload</h4>
+                  <pre className="bg-[#050503] border-2 border-outline p-3 text-[10px] text-emerald-400 font-mono overflow-x-auto max-h-[200px] custom-scrollbar" data-lenis-prevent="true">
+                    {JSON.stringify(selectedSpan, null, 2)}
+                  </pre>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col min-h-[300px]">
+                <div className="bg-[#050503] border-2 border-outline p-4 flex-1 overflow-y-auto custom-scrollbar font-mono text-[11px]" data-lenis-prevent="true">
+                  {logsLoading ? (
+                    <div className="h-full flex flex-col items-center justify-center text-outline animate-pulse">
+                      <span className="material-symbols-outlined mb-2 text-2xl">sync</span>
+                      Fetching correlated logs...
+                    </div>
+                  ) : !spanLogs || spanLogs.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-outline">
+                      <span className="material-symbols-outlined mb-2 text-2xl">visibility_off</span>
+                      No container logs found for this span window.
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {spanLogs.map((log, idx) => (
+                        <div key={idx} className="flex items-start gap-3">
+                          <span className="text-on-surface-variant/50 select-none whitespace-nowrap">
+                            {new Date(log.timestamp).toISOString().substring(11, 23)}
+                          </span>
+                          <span
+                            className={`flex-1 break-all whitespace-pre-wrap ${
+                              log.severity === 'ERROR'
+                                ? 'text-error font-bold'
+                                : log.severity === 'WARN'
+                                ? 'text-yellow-400'
+                                : 'text-emerald-400'
+                            }`}
+                          >
+                            {log.text}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

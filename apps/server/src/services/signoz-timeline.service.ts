@@ -324,3 +324,30 @@ export async function fetchSigNozLogsFromClickHouse(runId: string): Promise<Arra
   return [];
 }
 
+export async function fetchSigNozLogsForSpanId(spanId: string): Promise<Array<{ type: string; text: string; timestamp: string; severity: string }>> {
+  try {
+    const query = `SELECT timestamp, severity_text, body, attributes_string['type'] as type FROM signoz_logs.logs_v2 WHERE span_id = '${spanId}' ORDER BY timestamp ASC FORMAT JSON`;
+
+    const { stdout } = await execFileAsync('docker', [
+      'exec',
+      'signoz-telemetrystore-clickhouse-0-0',
+      'clickhouse-client',
+      '--query',
+      query,
+    ]);
+
+    const parsed = JSON.parse(stdout);
+    if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+      return parsed.data.map((row: any) => ({
+        type: row.type || (row.severity_text === 'ERROR' ? 'error' : 'stdout'),
+        text: row.body,
+        severity: row.severity_text,
+        timestamp: new Date(Number(row.timestamp) / 1_000_000).toISOString(),
+      }));
+    }
+  } catch (err) {
+    console.warn(`[SigNoz ClickHouse Logs] Error fetching logs for spanId=${spanId}:`, err instanceof Error ? err.message : String(err));
+  }
+  return [];
+}
+
