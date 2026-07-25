@@ -497,6 +497,7 @@ export const executePrompt = async (
             });
           }
 
+          const toolStartTime = Date.now();
           const toolSpan = tracer.startSpan(
             'tool.call',
             {
@@ -528,7 +529,7 @@ export const executePrompt = async (
               toolOutput = `[Cached result - identical call already executed this run]\n${cached.output}`;
               console.log(`[Agent Tool Cache Hit] Function: "${fnName}", Args:`, fnArgs);
               if (sessionId && runId) {
-                appendTerminalLine(sessionId, runId, 'agent', `[Cached Result] ${fnName}(${fnArgs.path || fnArgs.command || fnArgs.pattern || ''})`);
+                appendTerminalLine(sessionId, runId, 'agent', `[Cached Result ⚡] ${fnName}(${fnArgs.path || fnArgs.command || fnArgs.pattern || ''})`);
               }
             } else if (fnName === 'read_file') {
               if (sessionId && runId) {
@@ -590,6 +591,13 @@ export const executePrompt = async (
                   if (sessionId && runId) {
                     appendTerminalLine(sessionId, runId, 'success', toolOutput);
                   }
+                  // Smart Cache Invalidation: Invalidate old read cache for this modified file path
+                  for (const key of executedToolsCache.keys()) {
+                    if (key.includes(filePath)) {
+                      executedToolsCache.delete(key);
+                      console.log(`[Agent Cache Invalidated] Cleared cached reads for modified file: ${filePath}`);
+                    }
+                  }
                 } else {
                   toolOutput = `Error writing file ${filePath}: ${writeRes.output}`;
                   if (sessionId && runId) {
@@ -648,6 +656,10 @@ export const executePrompt = async (
             }
           });
 
+          const toolExecutionMs = Date.now() - toolStartTime;
+          toolSpan.setAttribute('tool.cached', isCached);
+          toolSpan.setAttribute('tool.execution_ms', toolExecutionMs);
+
           const resultStatus = exitCode === 0 ? 'success' : 'error';
           toolSpan.setAttribute('tool.result_status', resultStatus);
 
@@ -658,6 +670,7 @@ export const executePrompt = async (
               sessionId,
               toolName: fnName,
               exitCode,
+              isCached,
             });
           } else {
             toolSpan.setStatus({ code: SpanStatusCode.OK });
@@ -666,6 +679,7 @@ export const executePrompt = async (
               sessionId,
               toolName: fnName,
               exitCode: 0,
+              isCached,
             });
           }
           toolSpan.end();
@@ -680,11 +694,13 @@ export const executePrompt = async (
               status: exitCode === 0 ? 'completed' : 'failed',
               title: `Tool: ${fnName}`,
               description: fnArgs.path || fnArgs.command || fnArgs.pattern || fnName,
+              durationMs: toolExecutionMs,
               metadata: {
                 toolName: fnName,
                 filePath: fnArgs.path,
                 commandSummary: fnArgs.command || fnArgs.pattern,
                 exitCode,
+                isCached,
               },
             });
           }

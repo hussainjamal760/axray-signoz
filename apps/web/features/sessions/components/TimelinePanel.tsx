@@ -221,9 +221,16 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
                     <span className="font-mono-label text-[13px] text-on-surface font-black truncate">
                       {item.description || item.title}
                     </span>
-                    <span className={`font-mono-label text-[11px] font-black uppercase px-3 py-1 ${statusStyle.badgeBg} ${statusStyle.badgeText} whitespace-nowrap ${isRunningEvt ? 'animate-pulse' : ''}`}>
-                      {item.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {item.metadata?.isCached === true && (
+                        <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-mono-label text-[10px] font-black uppercase px-2 py-0.5 animate-pulse">
+                          ⚡ CACHED
+                        </span>
+                      )}
+                      <span className={`font-mono-label text-[11px] font-black uppercase px-3 py-1 ${statusStyle.badgeBg} ${statusStyle.badgeText} whitespace-nowrap ${isRunningEvt ? 'animate-pulse' : ''}`}>
+                        {item.status}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Expandable attributes */}
