@@ -6,12 +6,12 @@ import { AgentRunSummary } from "@/features/agent-runs/types";
 interface Props { runs: AgentRunSummary[]; isLoading?: boolean; }
 
 const BUCKETS = [
-  { label: "<10s",  min: 0,        max: 10_000,   color: "#dcee00", glow: "rgba(220,238,0,0.6)" },
-  { label: "10-30s", min: 10_000,  max: 30_000,   color: "#b8c800", glow: "rgba(184,200,0,0.5)" },
-  { label: "30-60s", min: 30_000,  max: 60_000,   color: "#94a200", glow: "rgba(148,162,0,0.4)" },
-  { label: "1-3m",  min: 60_000,   max: 180_000,  color: "#708400", glow: "rgba(112,132,0,0.3)" },
-  { label: "3-10m", min: 180_000,  max: 600_000,  color: "#ef9a00", glow: "rgba(239,154,0,0.4)" },
-  { label: ">10m",  min: 600_000,  max: Infinity, color: "#ef4444", glow: "rgba(239,68,68,0.5)" },
+  { label: "<10s", min: 0, max: 10_000, color: "#dcee00", glow: "rgba(220,238,0,0.6)" },
+  { label: "10-30s", min: 10_000, max: 30_000, color: "#b8c800", glow: "rgba(184,200,0,0.5)" },
+  { label: "30-60s", min: 30_000, max: 60_000, color: "#94a200", glow: "rgba(148,162,0,0.4)" },
+  { label: "1-3m", min: 60_000, max: 180_000, color: "#708400", glow: "rgba(112,132,0,0.3)" },
+  { label: "3-10m", min: 180_000, max: 600_000, color: "#ef9a00", glow: "rgba(239,154,0,0.4)" },
+  { label: ">10m", min: 600_000, max: Infinity, color: "#ef4444", glow: "rgba(239,68,68,0.5)" },
 ];
 
 const TOOLTIP_STYLE = {
@@ -54,7 +54,6 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
       );
     }
 
-    return (
     return (
       <ResponsiveContainer width="100%" height="100%" minHeight={160}>
         <BarChart data={data} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
