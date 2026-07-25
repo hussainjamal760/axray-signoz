@@ -22,6 +22,4 @@ export * from './TelemetryBar';
 export * from './FailureVisualization';
 export * from './TokensOverTimeChart';
 export * from './DurationDistributionChart';
-
-
-
+export * from './SmartAlertsTab';

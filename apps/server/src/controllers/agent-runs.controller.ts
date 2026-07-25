@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as agentRunsService from '../services/agent-runs.service';
 import * as signozTimelineService from '../services/signoz-timeline.service';
 import { AppError } from '../errors/AppError';
+import { AgentRun } from '../models/agent-run.model';
 
 export const createRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -93,6 +94,61 @@ export const getSpanLogs = async (req: Request, res: Response, next: NextFunctio
     const { spanId } = req.params;
     const logs = await signozTimelineService.fetchSigNozLogsForSpanId(spanId);
     res.json({ success: true, count: logs.length, logs });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAnomalies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id: runId } = req.params;
+    
+    // Check MongoDB for actual run data to find anomalies
+    const run = await AgentRun.findById(runId);
+    if (!run) {
+      res.status(404).json({ success: false, error: 'Run not found' });
+      return;
+    }
+
+    const anomalies = [];
+
+    // 1. Cost Anomaly
+    if (run.cost && run.cost > 0.01) {
+      anomalies.push({
+        id: `cost-${run.id}`,
+        type: 'COST_SPIKE',
+        title: 'High Cost Detected',
+        description: `This session consumed $${run.cost.toFixed(4)}, exceeding the $0.01 threshold.`,
+        severity: 'high',
+        timestamp: run.updatedAt
+      });
+    }
+
+    // 2. Token Anomaly
+    if (run.tokensUsed && run.tokensUsed > 10000) {
+      anomalies.push({
+        id: `token-${run.id}`,
+        type: 'TOKEN_SPIKE',
+        title: 'Massive Token Usage',
+        description: `This session consumed ${run.tokensUsed.toLocaleString()} tokens, exceeding the 10,000 threshold.`,
+        severity: 'medium',
+        timestamp: run.updatedAt
+      });
+    }
+
+    // 3. Status Anomaly
+    if (run.status === 'failed') {
+      anomalies.push({
+        id: `status-${run.id}`,
+        type: 'EXECUTION_FAILURE',
+        title: 'Execution Failed',
+        description: `The agent execution failed with an error. Check traces and logs for details.`,
+        severity: 'critical',
+        timestamp: run.updatedAt
+      });
+    }
+
+    res.json({ success: true, count: anomalies.length, anomalies });
   } catch (error) {
     next(error);
   }

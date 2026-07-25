@@ -8,3 +8,4 @@ export * from './useSessionSocket';
 export * from './useCreatePullRequest';
 export * from './useAnalytics';
 export * from './useSpanLogs';
+export * from './useRunAnomalies';

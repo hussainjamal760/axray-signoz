@@ -17,6 +17,8 @@ import { AnalyticsInsightCards } from "@/features/sessions/components/AnalyticsI
 import { TokensOverTimeChart } from "@/features/sessions/components/TokensOverTimeChart";
 import { DurationDistributionChart } from "@/features/sessions/components/DurationDistributionChart";
 
+import { SmartAlertsTab } from "@/features/sessions/components/SmartAlertsTab";
+
 // Fetch timeline for up to 10 runs and aggregate tool usage from OpenTelemetry spans
 function useToolsAggregate(filteredRuns: AgentRunSummary[]) {
   const last10 = filteredRuns.slice(0, 10);
@@ -81,6 +83,11 @@ export default function AnalyticsDashboardPage() {
         onSelectRun={setSelectedRunId}
       />
       <MetricsRow metrics={metrics} isLoading={isLoading} />
+
+      {/* Smart Alerts Section */}
+      <div className="mb-6 w-full">
+        <SmartAlertsTab runs={filteredRuns} />
+      </div>
 
       {/* Row 1: Success/Failure trend + Failure causes */}
       <div className="grid grid-cols-12 gap-6 mb-6 w-full">
