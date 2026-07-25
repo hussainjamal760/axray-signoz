@@ -53,6 +53,7 @@ export default function TracesExplorerPage() {
   const [selectedSpan, setSelectedSpan] = useState<TraceSpanNode | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [kindFilter, setKindFilter] = useState<"ALL" | "LLM" | "TOOL" | "WORKSPACE" | "ERROR">("ALL");
+  const [showHallucinations, setShowHallucinations] = useState(false);
   const [activeTab, setActiveTab] = useState<"attributes" | "logs">("attributes");
 
   const { data: timelineData, isLoading: timelineLoading } = useRunTimeline(activeRunId, {
@@ -170,7 +171,8 @@ export default function TracesExplorerPage() {
     const matchesSearch = node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       JSON.stringify(node.attributes).toLowerCase().includes(searchTerm.toLowerCase());
     const matchesKind = kindFilter === "ALL" || node.kind === kindFilter;
-    return matchesSearch && matchesKind;
+    const matchesHallucination = !showHallucinations || node.attributes.hallucination === true || node.attributes["llm.hallucination"] === true;
+    return matchesSearch && matchesKind && matchesHallucination;
   };
 
   const backToSessionLink = id ? `/sessions/${id}` : "/sessions";
@@ -243,7 +245,19 @@ export default function TracesExplorerPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-white uppercase border-2 border-outline px-3 py-1 bg-black brutalist-shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-[4px_4px_0_0_rgba(251,191,36,0.2)] hover:border-yellow-400/50">
+            <input 
+              type="checkbox" 
+              checked={showHallucinations} 
+              onChange={(e) => setShowHallucinations(e.target.checked)}
+              className="accent-yellow-400 w-3 h-3"
+            />
+            <span className={showHallucinations ? "text-yellow-400" : "text-on-surface-variant"}>
+              ⚠️ Show Hallucinations
+            </span>
+          </label>
+          <div className="flex items-center gap-2">
           {(["ALL", "LLM", "TOOL", "WORKSPACE", "ERROR"] as const).map((k) => (
             <button
               key={k}
@@ -257,6 +271,7 @@ export default function TracesExplorerPage() {
               {k}
             </button>
           ))}
+          </div>
         </div>
       </div>
 

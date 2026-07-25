@@ -32,17 +32,6 @@ export function SuggestedFixCard({ activeRun }: SuggestedFixCardProps) {
       <p className="text-2xl md:text-3xl font-black text-on-primary-fixed leading-tight mb-8">
         "{fixText}"
       </p>
-      <div className="flex flex-wrap gap-4">
-        <button className="bg-background text-primary-fixed px-6 py-3 font-bold text-sm md:text-base uppercase border-[3px] border-background hover:bg-surface-container-high transition-all brutalist-shadow-sm active:translate-x-1 active:translate-y-1 active:shadow-none">
-          Apply AI Fix
-        </button>
-        <button className="bg-surface text-on-surface px-6 py-3 font-bold text-sm md:text-base uppercase border-[3px] border-background hover:bg-surface-container-high transition-all brutalist-shadow-sm active:translate-x-1 active:translate-y-1 active:shadow-none">
-          Refine Prompt
-        </button>
-        <button className="bg-surface text-on-surface px-6 py-3 font-bold text-sm md:text-base uppercase border-[3px] border-background hover:bg-surface-container-high transition-all brutalist-shadow-sm active:translate-x-1 active:translate-y-1 active:shadow-none">
-          View Raw Trace
-        </button>
-      </div>
     </div>
   );
 }

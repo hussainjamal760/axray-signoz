@@ -59,6 +59,9 @@ export interface TimelineEventMetadata {
   insertions?: number;
   deletions?: number;
   diffTruncated?: boolean;
+  hallucination?: boolean;
+  confidenceScore?: number;
+  parseError?: string;
   [key: string]: unknown;
 }
 

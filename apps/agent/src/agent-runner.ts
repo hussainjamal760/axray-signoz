@@ -302,10 +302,14 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
             const name = match[1].trim();
             const rawArgs = match[2].trim();
             let argsObj: Record<string, any> = {};
+            let hallucinationError = false;
+            let rawHallucinatedArgs = "";
             try {
               const parsed = JSON.parse(rawArgs);
               argsObj = Array.isArray(parsed) ? parsed[0] : parsed;
             } catch (e: any) {
+              hallucinationError = true;
+              rawHallucinatedArgs = rawArgs;
               log(verbose, `Failed to parse fallback args for ${name}: ${rawArgs}`);
             }
 
@@ -315,7 +319,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
               function: {
                 name,
                 arguments: JSON.stringify(argsObj),
-              },
+                // Temporarily store hallucination info to pass to the span later
+                _meta: hallucinationError ? { hallucination: true, rawArgs: rawHallucinatedArgs } : undefined
+              } as any,
             });
           }
 
@@ -339,9 +345,17 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
           for (const tc of toolCalls) {
             const name = tc.function.name;
             let args: Record<string, any> = {};
+            
+            let hallucinated = !!(tc.function as any)._meta?.hallucination;
+            let rawArgs = (tc.function as any)._meta?.rawArgs || tc.function.arguments;
+            let parseError = "";
+
             try {
               args = JSON.parse(tc.function.arguments);
             } catch (e: any) {
+              hallucinated = true;
+              parseError = e.message;
+              rawArgs = tc.function.arguments;
               log(verbose, `Failed to parse arguments for tool ${name}: ${tc.function.arguments}`);
             }
 
@@ -352,10 +366,23 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
                 attributes: {
                   "tool.name": name,
                   "tool.args": JSON.stringify(args),
+                  "llm.hallucination": hallucinated,
+                  "llm.confidence_score": hallucinated ? 0.0 : 1.0,
+                  ...(hallucinated && { "llm.parse_error_details": rawArgs }),
+                  ...(parseError && { "llm.parse_error": parseError })
                 },
               },
               trace.setSpan(context.active(), turnSpan)
             );
+
+            if (hallucinated) {
+              turnSpan.setAttribute("llm.hallucination", true);
+              turnSpan.addEvent("llm.hallucination_detected", {
+                "tool.name": name,
+                "error": parseError
+              });
+              toolSpan.addEvent("llm.hallucination_detected");
+            }
 
             try {
               log(verbose, `Calling tool: ${name}`);

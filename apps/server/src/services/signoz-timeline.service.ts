@@ -182,6 +182,9 @@ function normalizeSpanToEvent(span: SpanRecord): TimelineEvent {
     insertions: attrs[AXRAY_ATTRIBUTES.GIT_INSERTIONS],
     deletions: attrs[AXRAY_ATTRIBUTES.GIT_DELETIONS],
     diffTruncated: attrs[AXRAY_ATTRIBUTES.GIT_DIFF_TRUNCATED],
+    hallucination: attrs['llm.hallucination'] === true || String(attrs['llm.hallucination']) === 'true',
+    confidenceScore: typeof attrs['llm.confidence_score'] !== 'undefined' ? Number(attrs['llm.confidence_score']) : undefined,
+    parseError: attrs['llm.parse_error'],
   };
 
   return {
