@@ -1,4 +1,4 @@
-export type SessionStatus = 'active' | 'archived';
+export type SessionStatus = 'active' | 'archived' | 'completed';
 export type ContainerStatus = 'creating' | 'running' | 'stopped' | 'failed';
 export type PullRequestStatus = 'creating' | 'open' | 'merged' | 'closed' | 'failed';
 

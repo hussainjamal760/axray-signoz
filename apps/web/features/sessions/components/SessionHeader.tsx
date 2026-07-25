@@ -1,29 +1,33 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { SessionSummary } from "../types/sessions.types";
-import { ContainerStatusBadge } from "./ContainerStatusBadge";
-import { WorkspaceStatusBadge } from "./WorkspaceStatusBadge";
 import { useCreatePullRequest } from "../hooks/useCreatePullRequest";
 
 export function SessionHeader({ session }: { session: SessionSummary }) {
+  const queryClient = useQueryClient();
   const { mutate: handleCreatePR, isPending: isCreatingPR, error: prError, reset: resetPRState } = useCreatePullRequest(session.id);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (prError) {
       setToastMessage(prError.message || "No code changes detected in workspace.");
+      queryClient.invalidateQueries({ queryKey: ['session', session.id] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
       const timer = setTimeout(() => {
         setToastMessage(null);
         resetPRState();
-      }, 5000);
+      }, 7000);
       return () => clearTimeout(timer);
     }
-  }, [prError, resetPRState]);
+  }, [prError, resetPRState, queryClient, session.id]);
 
   const badgeClass =
     session.status === "active"
       ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+      : session.status === "completed"
+      ? "bg-purple-500/20 border-purple-500/40 text-purple-300 font-bold"
       : "bg-surface-container border-outline text-on-surface-variant";
 
   const pr = session.pullRequest;
@@ -75,16 +79,10 @@ export function SessionHeader({ session }: { session: SessionSummary }) {
           {/* 3. Session Status */}
           <div className={`flex items-center gap-2 border px-3 py-1 font-mono-label text-xs font-bold ${badgeClass}`}>
             <span className="material-symbols-outlined text-[14px]">
-              {session.status === "active" ? "check_circle" : "archive"}
+              {session.status === "active" ? "check_circle" : session.status === "completed" ? "task_alt" : "archive"}
             </span>
-            {session.status === "active" ? "Active" : "Archived"}
+            {session.status === "active" ? "Active" : session.status === "completed" ? "Completed" : "Archived"}
           </div>
-
-          {/* 4. Container Status */}
-          <ContainerStatusBadge status={session.containerStatus} />
-
-          {/* 5. Workspace Status */}
-          <WorkspaceStatusBadge isInitialized={session.workspaceInitialized} />
         </div>
 
         {/* 6. SigNoz Portal Link & Pull Request Actions */}

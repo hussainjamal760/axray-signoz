@@ -2,18 +2,51 @@ import mongoose from 'mongoose';
 import { AgentRun, IAgentRun } from '../models/agent-run.model';
 import { getSession } from './sessions.service';
 import { Session } from '../models/session.model';
+import { getPullRequestStatus } from './github-pr.service';
 import { AppError } from '../errors/AppError';
 import * as runnerService from './runner.service';
 
 export const createRun = async (
   userId: string,
   sessionId: string,
-  prompt: string
+  prompt: string,
+  accessToken?: string
 ): Promise<IAgentRun> => {
   if (!mongoose.Types.ObjectId.isValid(sessionId)) {
     throw new AppError(400, 'Invalid Session ID format');
   }
   const session = await getSession(userId, sessionId);
+
+  // 1. Rejection if already marked completed/archived
+  if (session.status === 'completed' || session.status === 'archived') {
+    throw new AppError(
+      400,
+      "This session's pull request has been merged or closed. No further runs are allowed."
+    );
+  }
+
+  // 2. Live PR status check on run initiation
+  if (session.pullRequest?.prNumber) {
+    let prStatus = session.pullRequest.status;
+    if (accessToken) {
+      const updatedPr = await getPullRequestStatus(sessionId, accessToken);
+      if (updatedPr) {
+        prStatus = updatedPr.status;
+      }
+    }
+
+    if (prStatus === 'merged' || prStatus === 'closed') {
+      session.status = 'completed';
+      if (session.pullRequest) {
+        session.pullRequest.status = prStatus;
+      }
+      await session.save();
+      throw new AppError(
+        400,
+        "This session's pull request has been merged or closed. No further runs are allowed."
+      );
+    }
+  }
 
   const run = new AgentRun({
     sessionId,

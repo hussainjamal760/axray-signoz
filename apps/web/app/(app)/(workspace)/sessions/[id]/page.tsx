@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession, useSessionSocket } from "@/features/sessions/hooks";
 import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
 import { AgentRunSummary, TimelineEvent } from "@/features/agent-runs/types";
@@ -19,10 +20,12 @@ import {
 export default function SessionIdPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const id = typeof params?.id === "string" ? params.id : "";
   const isValidId = !!id && id !== "undefined" && id !== "null";
 
   const [manuallySelectedRun, setManuallySelectedRun] = useState<AgentRunSummary | null>(null);
+  const [runErrorBanner, setRunErrorBanner] = useState<string | null>(null);
 
   // Hydrate initial REST data from backend API on every page mount (staleTime: 0, refetchOnMount: true)
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval: false });
@@ -191,11 +194,10 @@ export default function SessionIdPage() {
       case "git.diff.completed":
         return "Generating Git Diff...";
       case "run.completed":
-        return "Run Completed";
       case "run.failed":
-        return "Run Failed";
+        return undefined;
       default:
-        return "Agent Executing...";
+        return "Agent Execution Active...";
     }
   }, [latestEvent, isCreatingRun]);
 
@@ -231,6 +233,7 @@ export default function SessionIdPage() {
   };
 
   const handlePromptSubmit = (promptText: string) => {
+    setRunErrorBanner(null);
     clearLiveEvents();
     createRun(
       { prompt: promptText },
@@ -239,9 +242,24 @@ export default function SessionIdPage() {
           setManuallySelectedRun(null); // Clear manual selection so activeOrSelectedRun tracks latest runsState[0]
           setRunsState((prev) => [newRun, ...prev]);
         },
+        onError: (err: any) => {
+          const msg = err.message || "Failed to start agent run.";
+          setRunErrorBanner(msg);
+          // Instantly refresh session query cache in-place
+          queryClient.invalidateQueries({ queryKey: ['session', id] });
+          queryClient.invalidateQueries({ queryKey: ['sessions'] });
+        },
       }
     );
   };
+
+  const isSessionClosedOrCompleted =
+    session.containerStatus === 'failed' ||
+    session.containerStatus === 'stopped' ||
+    session.status === 'completed' ||
+    session.status === 'archived' ||
+    session.pullRequest?.status === 'merged' ||
+    session.pullRequest?.status === 'closed';
 
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden">
@@ -258,6 +276,23 @@ export default function SessionIdPage() {
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6 space-y-6 custom-scrollbar" data-lenis-prevent="true">
         <div className="grid grid-cols-12 gap-6 items-start">
+
+          {/* Rejection / Error Notification Banner */}
+          {runErrorBanner && (
+            <div className="col-span-12 bg-rose-500/20 border-2 border-rose-500/50 p-4 font-mono-label text-xs font-bold text-rose-300 flex items-center justify-between brutalist-shadow-sm animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-base text-rose-400">warning</span>
+                <span>{runErrorBanner}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRunErrorBanner(null)}
+                className="text-rose-400 hover:text-white font-black uppercase text-[10px]"
+              >
+                DISMISS
+              </button>
+            </div>
+          )}
 
           {/* Failure & Error Visualization Banner */}
           {(activeOrSelectedRun?.status === 'failed' || latestEvent?.eventType === 'run.failed') && (
@@ -277,7 +312,7 @@ export default function SessionIdPage() {
               isPending={isCreatingRun}
               isRunning={isSelectedRunExecuting}
               liveStatusText={liveStatusText}
-              disabled={session.containerStatus === 'failed' || session.containerStatus === 'stopped'}
+              disabled={isSessionClosedOrCompleted}
             />
           </div>
 

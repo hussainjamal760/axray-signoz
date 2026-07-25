@@ -20,6 +20,7 @@ export interface SessionsListProps {
 
 const statusColors: Record<SessionStatus, { bg: string; text: string; border: string }> = {
   active: { bg: 'bg-green-500/10', text: 'text-green-500', border: 'border-green-500/30' },
+  completed: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
   archived: { bg: 'bg-surface-container-high', text: 'text-on-surface-variant', border: 'border-outline/50' }
 };
 

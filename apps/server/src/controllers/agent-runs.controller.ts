@@ -13,7 +13,8 @@ export const createRun = async (req: Request, res: Response, next: NextFunction)
     const { sessionId } = req.params;
     const { prompt } = req.body;
 
-    const run = await agentRunsService.createRun(userId, sessionId, prompt);
+    const accessToken = req.session?.githubAccessToken;
+    const run = await agentRunsService.createRun(userId, sessionId, prompt, accessToken);
     res.status(202).json(run);
   } catch (error) {
     next(error);

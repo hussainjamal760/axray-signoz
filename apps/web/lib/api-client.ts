@@ -21,7 +21,15 @@ export const apiClient = async <T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    const errorData = await response.json().catch(() => null);
+    const message =
+      errorData?.error?.message ||
+      errorData?.message ||
+      `API error: ${response.status} ${response.statusText}`;
+    const error: any = new Error(message);
+    error.status = response.status;
+    error.code = errorData?.error?.code || errorData?.code;
+    throw error;
   }
 
   return response.json() as Promise<T>;

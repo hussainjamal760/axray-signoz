@@ -74,6 +74,13 @@ export const createOrUpdatePullRequest = async (
     throw new AppError(400, 'Session container is not ready');
   }
 
+  if (session.status === 'completed' || session.pullRequest?.status === 'merged' || session.pullRequest?.status === 'closed') {
+    throw new AppError(
+      400,
+      "This session's pull request has been merged or closed. No further PR operations are allowed."
+    );
+  }
+
   // Validate changes before proceeding
   const validation = await validateWorkspaceChanges(params.sessionId);
   if (!validation.hasChanges) {
