@@ -12,3 +12,14 @@ export const getSigNozTraces = async (req: Request, res: Response) => {
   const data = await signozService.executeQuery("traces");
   res.json({ success: true, data });
 };
+
+export const getSigNozAlerts = async (req: Request, res: Response) => {
+  console.log("[SigNoz Controller] Fetching Alerts...");
+  try {
+    const data = await signozService.listAlerts();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+

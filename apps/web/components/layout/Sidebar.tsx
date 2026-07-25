@@ -39,6 +39,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const observerLink = activeSessionId ? `/sessions/${activeSessionId}/observer` : "/sessions";
   const tracesLink = activeSessionId ? `/sessions/${activeSessionId}/traces` : "/sessions";
   const analyticsLink = activeSessionId ? `/sessions/${activeSessionId}/analytics` : "/sessions";
+  const signozLink = activeSessionId ? `/sessions/${activeSessionId}/signoz` : "/sessions";
 
   return (
     <aside
@@ -78,6 +79,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
           <Link href={analyticsLink} className={getLinkClasses(analyticsLink)}>
             <span className="material-symbols-outlined text-[20px] shrink-0">monitoring</span>
             <span className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">Analytics</span>
+          </Link>
+          <Link href={signozLink} className={getLinkClasses(signozLink)}>
+            <span className="material-symbols-outlined text-[20px] shrink-0">dashboard_customize</span>
+            <span className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">SigNoz Config</span>
           </Link>
         </nav>
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getSigNozLogs, getSigNozTraces } from '../controllers/signoz.controller';
+import { getSigNozLogs, getSigNozTraces, getSigNozAlerts } from '../controllers/signoz.controller';
 
 export const signozRouter = Router();
 
@@ -8,3 +8,6 @@ signozRouter.get('/logs', getSigNozLogs);
 
 // /api/signoz/traces
 signozRouter.get('/traces', getSigNozTraces);
+
+// /api/signoz/alerts
+signozRouter.get('/alerts', getSigNozAlerts);

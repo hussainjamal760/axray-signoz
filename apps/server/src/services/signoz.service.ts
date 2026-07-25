@@ -73,6 +73,47 @@ export class SigNozService {
       await client.close();
     }
   }
+
+  /**
+   * Fetches alerts from SigNoz using the MCP API
+   */
+  async listAlerts() {
+    const mcpUrl = this.getBaseUrl();
+    const apiKey = process.env.SIGNOZ_MCP_API_KEY || process.env.SIGNOZ_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("SigNoz API key is not configured in .env");
+    }
+
+    const mcpOrigin = new URL(mcpUrl).origin;
+
+    const transport = new StreamableHTTPClientTransport(new URL(mcpUrl), {
+      requestInit: {
+        headers: {
+          "SIGNOZ-API-KEY": apiKey,
+          "X-SigNoz-URL": mcpOrigin,
+        },
+      },
+    });
+
+    const client = new Client({ name: "axray-server", version: "1.0.0" });
+
+    try {
+      await client.connect(transport);
+
+      const result = await client.callTool({
+        name: "signoz_list_alerts",
+        arguments: {},
+      });
+
+      return result;
+    } catch (error) {
+      console.error("[SigNozService] Error fetching alerts via MCP:", error);
+      throw error;
+    } finally {
+      await client.close();
+    }
+  }
 }
 
 export const signozService = new SigNozService();

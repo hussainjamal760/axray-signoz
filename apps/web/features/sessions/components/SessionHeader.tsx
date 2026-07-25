@@ -215,8 +215,7 @@ export function SessionHeader({
           )}
         </div>
       </header>
-
     </div>
-
   );
 }
+
