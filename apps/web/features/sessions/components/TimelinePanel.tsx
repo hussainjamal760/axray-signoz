@@ -9,11 +9,12 @@ export interface TimelinePanelProps {
   runStatus?: string;
   sessionId?: string;
   liveSocketEvents?: TimelineEvent[];
+  forcedEvents?: TimelineEvent[];
   isLive?: boolean;
   className?: string;
 }
 
-export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [], isLive = false, className }: TimelinePanelProps) {
+export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [], forcedEvents, isLive = false, className }: TimelinePanelProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -26,9 +27,11 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
   });
 
   // Combine live socket stream for active runs, or historical fetched events for finished runs
-  const events: TimelineEvent[] = (isLive || isRunning) && liveSocketEvents.length > 0
-    ? liveSocketEvents
-    : (timelineData?.events || []);
+  const events: TimelineEvent[] = forcedEvents
+    ? forcedEvents
+    : (isLive || isRunning) && liveSocketEvents.length > 0
+      ? liveSocketEvents
+      : (timelineData?.events || []);
 
   const summary = timelineData?.summary;
   const telemetryStatus = timelineData?.telemetryStatus;

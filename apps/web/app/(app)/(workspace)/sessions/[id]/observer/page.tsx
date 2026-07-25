@@ -54,7 +54,7 @@ export default function ObserverDashboardPage() {
   const backToSessionLink = id ? `/sessions/${id}` : "/sessions";
 
   return (
-    <div className="flex-1 flex flex-col h-full min-w-0 bg-background overflow-hidden">
+    <div className="flex-1 flex flex-col overflow-y-auto min-h-0 bg-background custom-scrollbar" data-lenis-prevent="true">
       {/* Context Header */}
       <section className="p-gutter border-b-[3px] border-primary-fixed bg-surface-container flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
         <div className="space-y-2 max-w-3xl">
@@ -133,20 +133,21 @@ export default function ObserverDashboardPage() {
       <TelemetryBar />
 
       {/* Three-Pane Observer View */}
-      <section className="flex flex-1 overflow-hidden min-h-0 h-full z-10 relative">
+      <section className="flex flex-col xl:flex-row flex-1 z-10 relative">
         {/* Left Column: Timeline Panel */}
-        <div className="w-1/3 min-w-[340px] max-w-[440px] flex flex-col h-full border-r-[3px] border-outline">
+        <div className="w-full xl:w-1/3 xl:min-w-[340px] xl:max-w-[440px] flex flex-col xl:h-full border-r-[3px] border-outline">
           <TimelinePanel
             selectedRunId={activeRun?.id}
             runStatus={activeRun?.status}
             sessionId={id}
             isLive={false}
+            forcedEvents={events[activeStepIndex] ? [events[activeStepIndex]] : []}
             className="h-full border-0 !shadow-none"
           />
         </div>
 
         {/* Middle Column: Code Diff Viewer */}
-        <div className="flex-1 flex flex-col h-full min-w-0">
+        <div className="flex-1 flex flex-col xl:h-full min-w-0">
           <CodeViewerPanel activeRun={activeRun} isLoading={runsLoading} />
         </div>
         
@@ -155,12 +156,14 @@ export default function ObserverDashboardPage() {
       </section>
 
       {/* Interactive Time-Travel Replay HUD */}
-      <ReplayHUD
-        activeRun={activeRun}
-        events={events}
-        activeStepIndex={activeStepIndex}
-        onStepChange={setActiveStepIndex}
-      />
+      <div className="sticky bottom-0 w-full z-50">
+        <ReplayHUD
+          activeRun={activeRun}
+          events={events}
+          activeStepIndex={activeStepIndex}
+          onStepChange={setActiveStepIndex}
+        />
+      </div>
     </div>
   );
 }
