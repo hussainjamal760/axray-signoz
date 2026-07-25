@@ -1,345 +1,405 @@
-# AXRAY Agent
+<div align="center">
 
-> An autonomous coding agent that observes itself. Built for the **Agents of SigNoz** hackathon by [WeMakeDevs](https://www.wemakedevs.org/hackathons/signoz) x [SigNoz](https://signoz.io).
+# 🛰️ AXRAY — The AI Agent Flight Recorder & Telemetry Engine
 
-AXRAY is a CLI coding agent — give it a task and a repo, and it reads code, edits files, runs tests, and (optionally) commits and pushes changes. What makes it different: **it is fully instrumented with OpenTelemetry, and it queries its own telemetry through the SigNoz MCP server mid-run to detect and correct stuck loops.** If you can't observe your AI agents, you don't own them — AXRAY observes itself.
+### *If you can't observe your AI coding agents, you don't own them.*
 
----
+**An Open-Source, OpenTelemetry-Native AI Agent Orchestrator & Observability Platform Powered by SigNoz**
 
-## Table of Contents
+[![Built on OpenTelemetry](https://img.shields.io/badge/Built%20on-OpenTelemetry-7c5cff?style=for-the-badge&logo=opentelemetry)](https://opentelemetry.io/)
+[![Powered by SigNoz](https://img.shields.io/badge/Powered%20by-SigNoz-00C49F?style=for-the-badge&logo=prometheus)](https://signoz.io/)
+[![SigNoz MCP Protocol](https://img.shields.io/badge/Integration-SigNoz%20MCP-FF6B6B?style=for-the-badge&logo=graphql)](https://modelcontextprotocol.io/)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Node.js 20+](https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
+[![Docker Sandbox](https://img.shields.io/badge/Sandbox-Docker-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-- [How it works](#how-it-works)
-- [Key features](#key-features)
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Setup: self-hosted SigNoz](#setup-self-hosted-signoz)
-- [Setup: the agent](#setup-the-agent)
-- [Running the agent](#running-the-agent)
-- [Observability](#observability)
-- [Dashboards](#dashboards)
-- [Alerts](#alerts)
-- [The self-check loop (MCP in action)](#the-self-check-loop-mcp-in-action)
-- [Reproducing this deployment (for judges)](#reproducing-this-deployment-for-judges)
-- [Troubleshooting](#troubleshooting)
+[Architecture](#-system-architecture) • [Hero Feature: Time-in-Brain](#-the-hero-feature-time-in-brain-vs-time-in-environment) • [SigNoz MCP & ClickHouse](#-signoz-deep-integration--clickhouse-engine) • [Guided Code Tour](#-guided-architecture--code-tour) • [OTel Semantic Conventions](#-opentelemetry-genai-semantic-conventions) • [Quickstart](#-quickstart) • [Full Monorepo Map](#-monorepo-structure--feature-domains)
 
 ---
 
-## How it works
+</div>
 
-<p align="center">
-  <img src="assets/architecture.svg" alt="AXRAY Agent Architecture" width="100%">
-</p>
+## 🏆 Hackathon Spotlight: Why AXRAY Wins "Agents of SigNoz"
 
-### Execution Workflow
+Autonomous AI coding agents operate as non-deterministic state machines: they parse prompts, generate reasoning tokens, execute shell commands inside containers, inspect repository diffs, and self-correct. When an agent turns slow, costs explode, or it gets trapped in an infinite retry loop, standard logging fails.
 
-1. **User Trigger**: The developer passes a task prompt and repository path via CLI (`axray --task "..." --dir .`).
-2. **Core Agent Loop**: `agent-runner.ts` manages the turn loop, system prompt context, and turn history.
-3. **LLM Reasoning & Tool Execution**: The agent sends prompts to Groq LLM (`openai/gpt-oss-20b`) and dispatches sandboxed tool calls (`read_file`, `write_file`, `run_tests`, `git_commit`).
-4. **OTLP Telemetry Streaming**: `instrumentation.ts` automatically captures HTTP spans, logs, and business metrics, exporting them via OTLP gRPC/HTTP to self-hosted **SigNoz** (port `8080`).
-5. **Self-Correction Feedback Loop (SigNoz MCP)**: At every turn, `self-check.ts` queries the **SigNoz MCP Server** (port `8000`) via `signoz_execute_builder_query`. If a tool-call loop or repeated failure is detected in active session traces, a system-level correction message is dynamically injected to break the loop.
+**AXRAY** solves this by turning every agent turn into a structured **OpenTelemetry Trace Tree**, storing telemetry in **SigNoz ClickHouse**, and providing real-time financial, latency, and system execution observability.
 
-<details>
-<summary>🔍 <b>View Interactive Mermaid Architecture Diagram</b></summary>
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+|                                     AXRAY TELEMETRY DASHBOARD                                    |
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+|  Session: #sess_9f82  │ Model: Llama-3.3-70b  │ Container: docker://axray-ws-42  │ Status: ACTIVE |
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+|  ⏱️ LATENCY PROFILE                                                                               |
+|  ├── 🧠 Time-in-Brain (LLM Reasoning):         2,450ms (78%) [Tokens: 14,200 | Cost: $0.0083]     |
+|  └── ⚡ Time-in-Environment (Docker System):     680ms (22%) [Commands: 4  | ExitCode: 0]      |
+|  ─────────────────────────────────────────────────────────────────────────────────────────────── |
+|  🎯 Efficiency Score: 88/100  │  Primary Bottleneck: LLM Context Window & Token Overhead         |
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 💡 What Is AXRAY?
+
+### The Problem
+Traditional APM tools monitor HTTP request/response lifecycles, but AI agents introduce **multi-turn cognitive loops**:
+- **Unpredictable Latency:** Is the slowness caused by LLM API throttling or a hanging `npm install` command?
+- **Financial Blindspots:** Which tool call or prompt turn consumed 80% of the token budget?
+- **Black-Box Retries:** Did the agent fix the code error, or did it execute 10 redundant search queries?
+
+### The AXRAY Solution
+AXRAY acts as an **AI Flight Recorder**. It wraps autonomous agents inside isolated Docker containers, tracks every step using the **OpenTelemetry Node.js SDK**, streams OTLP spans to **SigNoz**, and communicates directly with SigNoz using the **Model Context Protocol (MCP)**.
+
+---
+
+## ⚡ The Hero Feature: "Time-in-Brain" vs "Time-in-Environment"
+
+Agents operate in two distinct modes:
+1. **Time-in-Brain (LLM Reasoning):** Wait time spent generating tokens, evaluating context windows, and emitting function call parameters.
+2. **Time-in-Environment (System Execution):** Time spent running bash commands, installing npm dependencies, querying git diffs, and writing files inside the Docker container.
+
+### Latency Segregation & Efficiency Scoring Formula
+
+AXRAY parses the OpenTelemetry span tree in real-time to compute the segregation ratio and calculate an **Efficiency Score (0–100)**:
+
+$$\text{Total Latency } (T_{\text{total}}) = T_{\text{Brain}} + T_{\text{Env}}$$
+
+$$\text{Brain \%} = \left(\frac{T_{\text{Brain}}}{T_{\text{total}}}\right) \times 100 \quad , \quad \text{Env \%} = 100 - \text{Brain \%}$$
+
+$$\text{Efficiency Score} = \max\left(45, \min\left(98, 100 - (0.35 \times \text{Brain \%} + 0.10 \times \text{Env \%})\right)\right)$$
 
 ```mermaid
-graph TD
-    classDef user fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
-    classDef agent fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#fff
-    classDef llm fill:#3b0764,stroke:#a855f7,stroke-width:2px,color:#fff
-    classDef tool fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
-    classDef otel fill:#0f172a,stroke:#3b82f6,stroke-width:2px,color:#fff
-    classDef signoz fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#fff
-    classDef mcp fill:#78350f,stroke:#f59e0b,stroke-width:2.5px,color:#fff
+gantt
+    title Agent Turn #3 Latency Breakdown (Span Duration Timeline)
+    dateFormat  X
+    axisFormat %s ms
 
-    User["💻 <b>User (CLI)</b><br/><code>axray --task '...'</code>"] :::user
-    Agent["🧠 <b>AXRAY Agent Core</b><br/><code>agent-runner.ts</code>"] :::agent
-    LLM["⚡ <b>Groq LLM API</b><br/><code>openai/gpt-oss-20b</code>"] :::llm
-    Tools["🛠️ <b>Tool Execution Sandbox</b><br/><code>read_file</code> | <code>write_file</code><br/><code>run_tests</code> | <code>git_commit</code>"] :::tool
-    OTel["📡 <b>OpenTelemetry SDK</b><br/><code>instrumentation.ts</code>"] :::otel
-    SigNoz["🔥 <b>SigNoz Platform</b><br/>ClickHouse Traces/Logs/Metrics"] :::signoz
-    MCP["🐝 <b>SigNoz MCP Server</b><br/><code>self-check.ts</code> (Every Turn)"] :::mcp
+    section LLM Inference (Brain)
+    Groq API Token Stream :active, brain1, 0, 2450
 
-    User -->|Task & Repo Path| Agent
-    Agent <-->|Prompts & Tool Calls| LLM
-    Agent -->|Execute Actions| Tools
-    Agent -->|Spans & Custom Metrics| OTel
-    Tools -->|Span Traces| OTel
-    OTel -->|OTLP Stream| SigNoz
-    SigNoz --- MCP
-    MCP -->|<b>Self-Correction Feedback Loop</b><br/>Detects repeated tool loops &amp; injects correction prompt| Agent
+    section Container Execution (Environment)
+    Docker Exec: search_files  :crit, env1, 2450, 2750
+    Docker Exec: write_file    :crit, env2, 2750, 2900
+    Docker Exec: git diff      :crit, env3, 2900, 3130
 ```
 
-</details>
+---
 
-## Key features
+## 🏗️ System Architecture
 
-- **Self-correcting agent** — `self-check.ts` runs after every turn, queries SigNoz's MCP server (`signoz_execute_builder_query`) for repeated `tool.call` spans in the current session, and if a loop is detected, injects a system-level correction message that redirects the LLM.
-- **Full-stack OpenTelemetry instrumentation** — traces, logs, and metrics, all exported over OTLP to a self-hosted SigNoz instance. No third-party SaaS, no cloud dependency.
-- **Custom business metrics** — token usage, run counts, error counts — alongside auto-instrumented HTTP calls (Groq API, MCP server) via `@opentelemetry/auto-instrumentations-node`.
-- **Sandboxed execution** — code edits and test runs happen in an isolated workspace (`sandbox-runner.ts`), with diffs captured (`diff-capture.ts`) before any commit.
-- **Git integration** — on success, the agent can auto-commit and push its changes to a branch (`github-commit.ts`).
+AXRAY is structured as a high-performance TypeScript monorepo with an Express orchestrator, a Next.js 14 glassmorphic frontend, a Docker container provisioner, and a dual SigNoz telemetry pipeline (OTLP + MCP).
 
-## Tech stack
+```mermaid
+flowchart TD
+    subgraph Client ["🖥️ AXRAY Web Client (Next.js 14 + Tailwind CSS)"]
+        DASHBOARD["Session Workspace (/sessions/[id])"]
+        OBSERVER["Flight Recorder (/observer)"]
+        TRACES_UI["OTel Trace Tree Visualizer (/traces)"]
+        SIGNOZ_PANEL["SigNoz Embedded Dashboard (/signoz)"]
+        ANALYTICS["Latency & Cost Profiler (/analytics)"]
+    end
 
-| Layer | Choice |
-|---|---|
-| Language | TypeScript / Node.js |
-| LLM | Groq (`openai/gpt-oss-20b` via `groq-sdk`) |
-| Agent protocol | MCP (`@modelcontextprotocol/sdk`) |
-| Observability | OpenTelemetry SDK → SigNoz (self-hosted via Foundry) |
-| Deployment | Docker Compose, provisioned by SigNoz Foundry (`foundryctl`) |
+    subgraph Server ["⚙️ AXRAY Core Orchestrator (Express + Socket.IO)"]
+        SESSION_CTRL["Session Controller"]
+        RUNNER["Runner & Provisioner Service"]
+        AGENT_ENGINE["Groq LLM Function Calling Engine"]
+        LATENCY_ENGINE["Latency & Efficiency Calculator"]
+        SIGNOZ_MCP["SigNoz MCP Client (@modelcontextprotocol/sdk)"]
+        SANITY["Command Auto-Sanitizer (rg / grep rules)"]
+    end
 
-## Project structure
+    subgraph Sandbox ["🐳 Docker Container Execution Engine"]
+        CONTAINER[("Isolated Alpine/Node Container<br/>/workspace")]
+        TOOLS["Agent Tools: read_file, write_file, search_files, run_command, git_diff"]
+        OTEL_SDK["@opentelemetry/sdk-node"]
+    end
 
+    subgraph Observability ["🛰️ SigNoz Observability Engine"]
+        COLLECTOR[("SigNoz OTLP Collector<br/>:4318 (gRPC/HTTP)")]
+        CLICKHOUSE[("SigNoz ClickHouse DB<br/>signoz_traces.signoz_index_v3")]
+        SIGNOZ_MCP_SERVER[("SigNoz MCP Endpoint<br/>mcp.us2.signoz.cloud")]
+    end
+
+    DASHBOARD <-->|Live Socket.IO Stream| SESSION_CTRL
+    SESSION_CTRL --> RUNNER
+    RUNNER -->|Dockerode Spawn| CONTAINER
+    AGENT_ENGINE <-->|Tool Execution| TOOLS
+    TOOLS --> SANITY
+    SANITY -->|Sanitized Exec| CONTAINER
+    TOOLS --> OTEL_SDK
+    OTEL_SDK -->|OTLP Spans & Metrics| COLLECTOR
+    COLLECTOR --> CLICKHOUSE
+    SIGNOZ_MCP <-->|StreamableHTTP Transport| SIGNOZ_MCP_SERVER
+    SIGNOZ_MCP_SERVER <-->|Alert Rules & Metrics| SIGNOZ_PANEL
+    LATENCY_ENGINE <-->|ClickHouse SQL Query| CLICKHOUSE
+
+    style COLLECTOR fill:#00C49F,color:#000
+    style OTEL_SDK fill:#7c5cff,color:#fff
+    style SIGNOZ_MCP_SERVER fill:#FF6B6B,color:#fff
+    style CONTAINER fill:#2496ED,color:#fff
 ```
-apps/agent/
-├── src/
-│   ├── index.ts            # CLI entrypoint (commander) — starts telemetry, parses --task/--dir/--model
-│   ├── agent-runner.ts      # Core agent loop: LLM calls, tool dispatch, turn management
-│   ├── instrumentation.ts   # OpenTelemetry SDK setup: traces, logs, metrics, custom counters
-│   ├── self-check.ts        # Queries SigNoz MCP for stuck-loop detection + self-correction
-│   ├── sandbox-runner.ts    # Executes tool actions in an isolated workspace
-│   ├── diff-capture.ts      # Captures file diffs before/after agent edits
-│   ├── github-commit.ts     # Auto-commit/push on successful runs
-│   └── tools/                # Individual tool implementations (read/edit/run_tests, etc.)
-├── test-fixture/            # Sample repo with intentionally failing tests, used for demos
-├── Dockerfile
-└── package.json
-deploy/
-├── casting.yaml              # Foundry config used to provision SigNoz (reproducible deployment)
-├── casting.yaml.lock         # Locked/rendered Foundry state
-├── dashboards/                # Exported SigNoz dashboard JSON
-└── alerts/                    # Exported SigNoz alert rules JSON
+
+---
+
+## 🛰️ SigNoz Deep Integration & ClickHouse Engine
+
+AXRAY interacts with SigNoz on two distinct operational planes:
+
+### 1. Direct ClickHouse Telemetry Queries
+To render sub-millisecond trace timelines without API overhead, AXRAY executes native SQL directly against SigNoz's ClickHouse storage engine (`signoz_traces.signoz_index_v3`):
+
+```sql
+-- Fetching Span Trees filtered by AXRAY Session Run ID
+SELECT 
+    spanID, 
+    traceID, 
+    name, 
+    hasError, 
+    timestamp, 
+    durationNano, 
+    attributes_string, 
+    attributes_number 
+FROM signoz_traces.signoz_index_v3 
+WHERE attributes_string['axray.run.id'] = 'run_9f8b7a6c' 
+ORDER BY timestamp ASC 
+FORMAT JSON;
 ```
 
-## Prerequisites
+```sql
+-- Tool Execution Performance & Latency Aggregation
+SELECT 
+    attributes_string['tool.name'] AS toolName, 
+    avg(durationNano) AS avgDurationNano, 
+    max(durationNano) AS maxDurationNano, 
+    count() AS executionCount 
+FROM signoz_traces.signoz_index_v3 
+WHERE name = 'tool.call' AND attributes_string['axray.session.id'] = 'sess_42' 
+GROUP BY toolName 
+ORDER BY avgDurationNano DESC 
+FORMAT JSON;
+```
 
-- Node.js 24+ and npm
-- Docker Engine 20.10+ with the Compose v2 plugin, and **at least 4GB** allocated to Docker
-- A [Groq API key](https://console.groq.com)
-- Linux, macOS, or WSL2 (this project was built and tested on Zorin OS / Ubuntu)
+### 2. Model Context Protocol (MCP) Integration
+AXRAY implements a full **SigNoz MCP Client** using `@modelcontextprotocol/sdk` and `StreamableHTTPClientTransport`. It connects directly to SigNoz to manage alert rules and execute builder queries programmatically:
 
-## Setup: self-hosted SigNoz
+```typescript
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
-We self-host SigNoz using [Foundry](https://github.com/SigNoz/foundry), the official CLI for provisioning the SigNoz stack as code.
+// Initialize SigNoz MCP Transport
+const transport = new StreamableHTTPClientTransport(new URL("https://mcp.us2.signoz.cloud"), {
+  requestInit: {
+    headers: {
+      "SIGNOZ-API-KEY": process.env.SIGNOZ_API_KEY,
+      "X-SigNoz-URL": "https://mcp.us2.signoz.cloud",
+    },
+  },
+});
 
-### 1. Install `foundryctl`
+const client = new Client({ name: "axray-server", version: "1.0.0" });
+await client.connect(transport);
+
+// Call SigNoz MCP Tool to list active alerts
+const activeAlerts = await client.callTool({
+  name: "signoz_list_alerts",
+  arguments: {},
+});
+```
+
+---
+
+## 🗺️ Guided Architecture & Code Tour
+
+Explore the lifecycle of an agent execution request across the codebase:
+
+```mermaid
+graph LR
+    S1["1. Socket Handshake<br/>apps/web & apps/server"] --> S2["2. Docker Sandbox<br/>container.service.ts"]
+    S2 --> S3["3. LLM Reasoning<br/>agent.service.ts"]
+    S3 --> S4["4. OTel Ingestion<br/>telemetry.ts & SigNoz"]
+    S4 --> S5["5. ClickHouse Query<br/>signoz-timeline.service.ts"]
+    S5 --> S6["6. Auto PR Dispatch<br/>github-pr.service.ts"]
+```
+
+### Step 1: Real-Time Handshake & Session Creation
+- **Client Component:** [SessionHeader.tsx](file:///home/hussain/Documents/axray-signoz/apps/web/features/sessions/components/SessionHeader.tsx)
+- **Socket Emitter:** [socket.emitter.ts](file:///home/hussain/Documents/axray-signoz/apps/server/src/sockets/socket.emitter.ts)
+- User prompts trigger a WebSocket session creation event, establishing live bi-directional streaming between client and backend.
+
+### Step 2: Sandboxed Docker Container Provisioning
+- **Service:** [container.service.ts](file:///home/hussain/Documents/axray-signoz/apps/server/src/services/container.service.ts)
+- Dockerode provisions an isolated container with mounted workspace volumes. Incoming terminal search commands (`grep`, `rg`) pass through an **Auto-Sanitizer** that automatically injects exclusion flags (`--exclude-dir=node_modules`, `--exclude-dir=.git`).
+
+### Step 3: LLM Reasoning & Tool Calling Loop
+- **Service:** [agent.service.ts](file:///home/hussain/Documents/axray-signoz/apps/server/src/services/agent.service.ts)
+- Groq LLM evaluates the prompt across bounded turns (max 25). Tools (`read_file`, `write_file`, `search_files`, `run_command`, `git_diff`) are dispatched directly into the Docker sandbox.
+
+### Step 4: OpenTelemetry Instrumentation & OTLP Export
+- **Lib:** [telemetry.ts](file:///home/hussain/Documents/axray-signoz/apps/server/src/lib/telemetry.ts)
+- Spans are enriched with `AXRAY_ATTRIBUTES` and exported asynchronously via `@opentelemetry/sdk-node` to the SigNoz OTLP Collector on `:4318`.
+
+### Step 5: ClickHouse Latency Aggregation & Real-Time Analytics
+- **Service:** [signoz-timeline.service.ts](file:///home/hussain/Documents/axray-signoz/apps/server/src/services/signoz-timeline.service.ts)
+- AXRAY queries SigNoz's ClickHouse instance to parse span trees, calculate **Time-in-Brain vs Time-in-Environment**, and render trace visualizations in the UI.
+
+### Step 6: Automated GitHub Pull Request Creation
+- **Service:** [github-pr.service.ts](file:///home/hussain/Documents/axray-signoz/apps/server/src/services/github-pr.service.ts)
+- Once the task completes, AXRAY inspects uncommitted git changes inside the container (`git status --porcelain`), pushes a topic branch to GitHub, and opens a Pull Request automatically.
+
+---
+
+## 🛡️ OpenTelemetry GenAI Semantic Conventions
+
+AXRAY strictly follows standard OpenTelemetry GenAI & Process semantic conventions:
+
+| Attribute Key | Type | Example Value | Description |
+| :--- | :--- | :--- | :--- |
+| `axray.session.id` | `string` | `"sess_9f82a1b3"` | Correlates all runs under a session |
+| `axray.run.id` | `string` | `"run_42"` | Unique identifier for a single task execution |
+| `axray.phase` | `string` | `"llm"` \| `"tool"` \| `"git"` | Current lifecycle execution phase |
+| `gen_ai.system` | `string` | `"groq"` | Target LLM provider |
+| `gen_ai.request.model` | `string` | `"openai/gpt-oss-20b"` | Exact model identifier |
+| `gen_ai.usage.input_tokens` | `int` | `14200` | Prompt token count for turn |
+| `gen_ai.usage.output_tokens`| `int` | `850` | Generated completion token count |
+| `gen_ai.usage.total_tokens` | `int` | `15050` | Total turn token overhead |
+| `axray.tool.name` | `string` | `"search_files"` | Name of function tool invoked |
+| `axray.tool.exit_code` | `int` | `0` | Return code of executed container process |
+| `container.id` | `string` | `"7f8a9b0c1d2e"` | Target Docker container ID |
+
+---
+
+## 🗺️ Web Frontend Feature Map
+
+| Page Route | Component / Feature | Functionality |
+| :--- | :--- | :--- |
+| `/sessions` | Workspace Session List | Manage past and active agent workspaces |
+| `/sessions/[id]` | Main Interactive Terminal | Real-time chat prompt, terminal logger, file tree, git diff preview |
+| `/sessions/[id]/traces` | OTel Trace Tree Inspector | Visual tree graph of OpenTelemetry spans with direct SigNoz links |
+| `/sessions/[id]/signoz` | Embedded SigNoz Dashboard | Live SigNoz query cards, logs, metrics, and MCP alarms UI |
+| `/sessions/[id]/observer` | Flight Recorder Timeline | Sequential timeline of every prompt, tool execution, and span |
+| `/sessions/[id]/analytics` | Latency & Cost Analytics | **Time-in-Brain** charts, token cost curves, efficiency scores |
+| `/sessions/[id]/analysis` | Codebase Inspector | Auto-detected project entry points, frameworks, dependencies |
+
+---
+
+## 🚀 Quickstart Guide
+
+### Prerequisites
+- **Node.js**: `>= 20.0.0`
+- **Docker**: Running locally (Docker Desktop or Docker Engine)
+- **SigNoz**: Running locally (`http://localhost:8080`) with OTLP receiver on port `4318`
+- **MongoDB**: Local instance (`mongodb://localhost:27017/axray`) or MongoDB Atlas
+- **Groq API Key**: Free key from [Groq Console](https://console.groq.com/)
+
+---
+
+### Step 1: Clone Repository
 
 ```bash
-curl -fsSL https://signoz.io/foundry.sh | bash
-export PATH="$HOME/.local/bin:$PATH"   # add to ~/.bashrc to persist
+git clone https://github.com/hussainjamal760/axray-signoz.git
+cd axray-signoz
 ```
 
-### 2. Deploy SigNoz with MCP enabled
+---
 
-The `deploy/casting.yaml` in this repo already has the MCP server enabled:
+### Step 2: Environment Configuration
 
-```yaml
-apiVersion: v1alpha1
-kind: Installation
-metadata:
-  name: signoz
-spec:
-  deployment:
-    flavor: compose
-    mode: docker
-  mcp:
-    spec:
-      enabled: true
-```
-
-```bash
-cd deploy
-foundryctl cast -f casting.yaml
-```
-
-This pulls the required images, generates Compose files under `pours/deployment/`, and starts:
-- SigNoz UI on `:8080`
-- OTLP ingestion on `:4317` / `:4318`
-- SigNoz MCP server on `:8000`
-
-### 3. Verify
-
-```bash
-docker ps
-```
-
-Open `http://localhost:8080` and create your admin account.
-
-### 4. Everyday start/stop (after the first deploy)
-
-You do **not** need to re-run `foundryctl cast` every time. Just start/stop the containers:
-
-```bash
-# Start
-cd deploy/pours/deployment && docker compose up -d
-
-# Stop (data persists)
-docker compose down
-```
-
-### 5. Create a service account + API key
-
-**Settings → Service Accounts → New Service Account**, then generate an API key from it. **Grant it a role (e.g. Admin)** — service accounts have no permissions by default, and the MCP self-check queries will fail with `403 authz_forbidden` until a role is assigned.
-
-## Setup: the agent
-
-```bash
-cd apps/agent
-npm install
-```
-
-Create a `.env` file in `apps/agent/`:
+Create `apps/server/.env`:
 
 ```env
-# Groq
-GROQ_API_KEY=your-groq-key
-
-# OpenTelemetry export — leave unset to default to http://localhost:4318 (local SigNoz)
-# OTLP_ENDPOINT=
-# SIGNOZ_REGION=
-
-# SigNoz MCP self-check
-SIGNOZ_MCP_ENDPOINT=http://localhost:8000/mcp
-SIGNOZ_MCP_API_KEY=your-signoz-service-account-key
-SIGNOZ_INSTANCE_URL=http://signoz-signoz-0:8080
+PORT=3001
+MONGO_URI=mongodb://localhost:27017/axray
+FRONTEND_URL=http://localhost:3000
+GROQ_API_KEY=gsk_your_groq_api_key_here
+SIGNOZ_INSTANCE_URL=http://localhost:8080
+SIGNOZ_API_KEY=your_signoz_api_key_here
+SIGNOZ_MCP_API_KEY=your_signoz_api_key_here
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ```
 
-> **Why `signoz-signoz-0` and not `localhost` for `SIGNOZ_INSTANCE_URL`?** The MCP server itself runs inside Docker. From inside a container, `localhost` refers to the container, not your host machine — so the MCP server can't reach SigNoz's API through it. `signoz-signoz-0` is the SigNoz backend's Docker-internal hostname on the `signoz-network`, which the MCP container *can* resolve. `SIGNOZ_MCP_ENDPOINT`, by contrast, is called from your host machine (the agent process), so `localhost:8000` is correct there.
+Create `apps/web/.env.local`:
 
-## Running the agent
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_SIGNOZ_URL=http://localhost:8080
+```
+
+---
+
+### Step 3: Install Monorepo Dependencies
 
 ```bash
-npm run dev -- --task "Fix the failing tests" --dir ./test-fixture --verbose
-```
-
-Or use the built-in fixture shortcut:
-
-```bash
-npm run test:fixture:setup   # installs the fixture's own deps once
-npm run test:fixture:run     # runs the agent against the fixture
-```
-
-CLI options:
-
-| Flag | Description | Default |
-|---|---|---|
-| `--task` | The task for the agent to perform (required) | — |
-| `--dir` | Path to the target repo/workspace | current directory |
-| `--model` | Groq model to use | `openai/gpt-oss-20b` |
-| `--max-turns` | Max LLM turns before stopping | `30` |
-| `--commit` | Auto-commit changes on success | `false` |
-| `--push-branch` | Branch to push to on success | — |
-
-## Observability
-
-Every run of AXRAY emits, over OTLP to SigNoz:
-
-**Traces** (`service.name = axray-agent`)
-- `agent.session` — one span per full run, with `session.task`, `session.model`, `session.files_changed_count`, `session.has_changes`
-- `agent.turn` — one span per LLM turn, `turn.number`
-- `llm.call` — one span per Groq API call, with `gen_ai.system`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `llm.cost_usd`, `llm.latency_ms`
-- `tool.call` — one span per tool invocation, `tool.name`, `tool.args`, `tool.result_status`
-- `agent.self_check` — one span per self-check pass, `self_check.mcp_tool_used`, `self_check.triggered_correction`
-- Auto-instrumented HTTP spans for calls to `api.groq.com` and the SigNoz MCP server (via `@opentelemetry/instrumentation-undici`)
-
-**Logs** — all `console.log/info/warn/error` output is captured and shipped as structured OTel logs alongside the run.
-
-**Metrics** — custom counters:
-- `agent.runs.total`
-- `agent.errors.total`
-- `agent.tokens.input.total`
-- `agent.tokens.output.total`
-
-Plus host metrics (CPU, memory) via `@opentelemetry/host-metrics`.
-
-## Dashboards
-
-We import and adapt SigNoz's official [Groq dashboard template](https://signoz.io/docs/dashboards/dashboard-templates/groq-dashboard/), rewired from OpenInference/Traceloop attribute names to the OpenTelemetry GenAI semantic conventions this project actually emits (`gen_ai.usage.input_tokens`, `gen_ai.request.model`, etc.), filtered to `name = 'llm.call'`.
-
-The exported dashboard JSON is in `deploy/dashboards/`. To import:
-
-1. **Dashboards → New Dashboard → Import JSON**
-2. Upload `deploy/dashboards/axray-groq-dashboard.json`
-3. Run the agent to generate live data
-
-
-## Alerts
-
-We use all four SigNoz alert signal types — Traces, Metrics, Logs, and Exceptions — to cover reliability, cost, performance, and integration health end to end. **All agent alerts are connected to Slack, and all notifications are sent directly there.** Exported rule definitions (all 14) live in deploy/alerts/axray-alert-rules.json, and can be recreated on a fresh instance with deploy/alerts/import-alerts.sh (see Reproducing this deployment).
-
-Trace-based (9)
-#	Alert	Filter	Condition	Severity	Purpose
-1	Session Failure	name = 'agent.session' AND status_code = 2	count > 0 / 5m	critical	Catch failed agent runs
-2	Self-Correction Triggered	name = 'agent.self_check' AND self_check.triggered_correction = true	count > 0 / 5m	warning	Confirms the self-correction feature is firing
-3	LLM Cost Threshold	sum(llm.cost_usd) where name = 'llm.call'	> $0.05 / 15m	warning	Cost control
-4	Groq API Errors	server.address = 'api.groq.com' AND http.response.status_code >= 400	count > 0 / 5m	warning	Upstream API reliability (e.g. rate limits)
-5	Slow Turn Detected	p95(duration_nano) where name = 'agent.turn'	> 20s / 5m	warning	Performance regressions
-6	MCP Self-Check Fallback	name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'	count > 0 / 5m	info	MCP integration health
-7	No Activity Detected	name = 'agent.session'	below 1 / 1h	info	Dead-man's switch — fires when the agent goes silent
-8	Approaching Turn Limit	name = 'agent.turn' AND turn.number >= 25	count > 0 / 5m	warning	Flags tasks nearing the --max-turns cap (default 30)
-9	Tool Execution Failed	name = 'tool.call' AND tool.result_status != 'success'	count > 0 / 5m	warning	Catches failing tool calls (edit/test/etc.)
-Metric-based (3)
-#	Alert	Metric	Condition	Severity	Purpose
-10	Error Counter Spike	agent.errors.total	count > 0 / 5m	critical	Fires on the custom error counter — see note below on querying it
-11	Token Burn Spike	agent.tokens.input.total (rate)	above baseline / 5m	warning	Catches abnormal token consumption
-12	High CPU Usage	system.cpu.utilization (host metric)	> 80% / 5m	warning	Host resource pressure
-Log-based (1)
-#	Alert	Filter	Condition	Severity	Purpose
-13	Error Logs Detected	service.name = 'axray-agent' AND severity_text = 'ERROR'	count > 0 / 5m	warning	Any structured ERROR-level log line
-Exceptions-based (1)
-#	Alert	Filter	Condition	Severity	Purpose
-14	Uncaught Exception	service.name = 'axray-agent'	count > 0 / 5m	critical	Unhandled Node.js exceptions, auto-captured by OTel
-
-Note on custom metric names: instrumentation.ts defines counters with dotted names (agent.errors.total, agent.tokens.input.total, ...). SigNoz's Query Builder metric picker didn't surface these by name — they only appear once at least one data point has been exported (i.e. after the code path that calls .add() has actually run at least once). The reliable way to reference them in an alert is via the PromQL tab, where OTel's Prometheus-compatible naming converts dots to underscores (e.g. agent_errors_total).
-
-The self-check loop (MCP in action)
-
-After every turn, self-check.ts does the following:
-
-Connects to the SigNoz MCP server over Streamable HTTP (@modelcontextprotocol/sdk)
-Calls the signoz_execute_builder_query tool with a Query Builder v5 payload, counting tool.call spans for the current session.id in the last 5 minutes
-Cross-references this with an in-memory turn log to detect if the same tool has been called with identical arguments 3+ times
-If a loop is detected, it injects a correction message into the LLM's context:
-
-"⚠️ SYSTEM ALERT (Self-Correction Triggered): You have retried the exact action X with arguments Y N times. STOP repeating this action..."
-
-All of this — the query, the result, the decision — is itself traced as an agent.self_check span
-
-If the MCP call fails for any reason (network, auth, schema mismatch), it falls back gracefully to local turn-log analysis (self_check.mcp_tool_used = 'local_turn_log_fallback') rather than crashing the run — which is exactly what Alert 6 monitors.
-
-Reproducing this deployment (for judges)
-bash
-# 1. Install foundryctl
-curl -fsSL https://signoz.io/foundry.sh | bash
-
-# 2. Deploy SigNoz from the checked-in casting file
-cd deploy
-foundryctl cast -f casting.yaml
-
-# 3. Create a service account + API key in the SigNoz UI, assign it a role
-
-# 4. Import the dashboard
-#    Dashboards → New Dashboard → Import JSON → deploy/dashboards/axray-groq-dashboard.json
-
-# 5. Import all 14 alert rules
-cd deploy/alerts
-SIGNOZ_API_KEY=<your-service-account-key> ./import-alerts.sh
-
-# 6. Set up the agent
-cd ../../apps/agent
 npm install
-# fill in .env with your Groq key + the SigNoz service account key
+```
 
-# 7. Run it
-npm run test:fixture:run
+---
 
-Traces, logs, metrics, and (if triggered) self-correction events will appear in SigNoz within seconds. Some alerts (self-correction, error counter, exceptions) will only fire under specific conditions and won't show data on a first, error-free run — that's expected, see the Alerts section.
+### Step 4: Launch Monorepo Services
 
-Troubleshooting
-service.name shows as unknown_service:node — in instrumentation.ts, Resource.merge() gives priority to the argument, not the base. Make sure defaultResource().merge(resourceFromAttributes({...})) is the order (custom attributes last).
-MCP host not allowed error — the MCP server runs in Docker; SIGNOZ_INSTANCE_URL must use the Docker-internal hostname of the SigNoz backend container (e.g. signoz-signoz-0), not localhost.
-MCP missing start or end timestamp — the query payload must use the full v5 Query Builder shape (start, end, requestType, compositeQuery), not the older filters/aggregateOperator shorthand.
-MCP 403 authz_forbidden — the service account has no role assigned. Assign one in Settings → Service Accounts.
-Docker permission denied — after sudo usermod -aG docker $USER, you need a fresh shell session (newgrp docker or re-login) for group membership to apply.
+Run frontend client and backend server concurrently:
+
+```bash
+npm run dev
+```
+
+Service URLs:
+- 📱 **AXRAY Dashboard:** `http://localhost:3000`
+- ⚙️ **AXRAY Server API:** `http://localhost:3001`
+- 📊 **SigNoz Observability UI:** `http://localhost:8080`
+
+---
+
+## 🧪 Verification & Health Checks
+
+Run these diagnostic commands to verify your setup:
+
+1. **Verify SigNoz OTLP gRPC/HTTP Receiver:**
+   ```bash
+   curl -I http://localhost:4318/v1/traces
+   ```
+   *Expected:* HTTP response indicating the OTLP port is open.
+
+2. **Verify SigNoz ClickHouse Container:**
+   ```bash
+   docker exec -it signoz-telemetrystore-clickhouse-0-0 clickhouse-client --query "SHOW DATABASES;"
+   ```
+   *Expected:* Output contains `signoz_traces`.
+
+3. **Verify AXRAY Backend Health:**
+   ```bash
+   curl http://localhost:3001/api/health
+   ```
+
+---
+
+## 📁 Monorepo Structure & Feature Domains
+
+```text
+axray-signoz/
+├── apps/
+│   ├── server/                         # Express Backend & Telemetry Orchestrator
+│   │   ├── src/
+│   │   │   ├── controllers/            # Agent runs, Sessions, GitHub PR, SigNoz MCP
+│   │   │   ├── services/               # Agent LLM engine, Docker container, ClickHouse timeline
+│   │   │   ├── sockets/                # Socket.IO event emitters & handlers
+│   │   │   ├── lib/                    # OTel SDK setup, Dockerode, GitHub Octokit
+│   │   │   └── models/                 # Mongoose schemas (Session, AgentRun)
+│   └── web/                            # Next.js 14 Glassmorphic Client
+│       ├── app/                        # App Router (/sessions, /traces, /signoz, /analytics)
+│       └── features/                   # Feature-sliced components & custom hooks
+├── package.json                        # Root workspace configuration
+└── README.md                           # Master Documentation
+```
+
+---
+
+<div align="center">
+
+### 🤝 Built with passion for the WeMakeDevs × SigNoz "Agents of SigNoz" Hackathon
+
+*Made by [Team Cipher].*
+
+</div>
