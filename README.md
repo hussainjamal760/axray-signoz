@@ -213,8 +213,8 @@ NEXT_PUBLIC_SIGNOZ_URL=http://localhost:8080
 ### 2. Install & Launch
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 - 📱 **AXRAY Dashboard:** `http://localhost:3000`
