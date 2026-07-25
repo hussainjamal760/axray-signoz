@@ -22,7 +22,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'agent.turn'"
+                "expression": "name = 'agent.turn'"
               },
               "having": {
                 "expression": ""
@@ -103,7 +103,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'"
+                "expression": "name = 'agent.self_check' AND self_check.mcp_tool_used = 'local_turn_log_fallback'"
               },
               "having": {
                 "expression": ""
@@ -185,7 +185,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'llm.call'"
+                "expression": "name = 'llm.call'"
               },
               "having": {
                 "expression": ""
@@ -419,7 +419,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'agent.session'"
+                "expression": "name = 'agent.session'"
               },
               "having": {
                 "expression": ""
@@ -500,7 +500,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'agent.session'"
+                "expression": "name = 'agent.session'"
               },
               "having": {
                 "expression": ""
@@ -581,7 +581,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'agent.turn' AND turn.number >= 25"
+                "expression": "name = 'agent.turn' AND turn.number >= 25"
               },
               "having": {
                 "expression": ""
@@ -662,7 +662,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'tool.call' AND tool.result_status != 'success'"
+                "expression": "name = 'tool.call' AND tool.result_status != 'success'"
               },
               "having": {
                 "expression": ""
@@ -744,7 +744,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND name = 'agent.self_check' AND self_check.triggered_correction = true"
+                "expression": "name = 'agent.self_check' AND self_check.triggered_correction = true"
               },
               "having": {
                 "expression": ""
@@ -825,7 +825,7 @@
               ],
               "disabled": false,
               "filter": {
-                "expression": "service.name = 'axray-agent' AND server.address = 'api.groq.com' AND http.response.status_code >= 400"
+                "expression": "server.address = 'api.groq.com' AND http.response.status_code >= 400"
               },
               "having": {
                 "expression": ""
