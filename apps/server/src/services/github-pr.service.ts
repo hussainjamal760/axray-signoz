@@ -166,7 +166,7 @@ export const createOrUpdatePullRequest = async (
 
     const pushRes = await containerService.executeCommand(
       containerId,
-      `cd /workspace && git push https://${params.accessToken}@github.com/${session.repositoryFullName}.git ${branchName}:${branchName} --force-with-lease`
+      `cd /workspace && git fetch origin && git push https://${params.accessToken}@github.com/${session.repositoryFullName}.git ${branchName}:${branchName} --force`
     );
 
     if (pushRes.exitCode !== 0) {
