@@ -81,8 +81,8 @@ export const createOrUpdatePullRequest = async (
   }
 
   const runIdStr = session.latestRunId?.toString() || '';
-  const branchName = session.pullRequest?.branchName || `axray/session/${params.sessionId}`;
-  const baseBranch = session.branch || 'main';
+  const branchName = session.branch || 'main';
+  const baseBranch = 'main';
   const { owner, repo } = parseRepository(session.repositoryFullName);
 
   // 1. Emit PR Creation Started & Terminal Log
@@ -102,7 +102,7 @@ export const createOrUpdatePullRequest = async (
     params.sessionId,
     runIdStr,
     'agent',
-    `${getTimeHeader()} Creating pull request for ${session.repositoryFullName}...`
+    `${getTimeHeader()} Creating pull request for ${session.repositoryFullName} (${branchName})...`
   );
 
   try {
@@ -114,38 +114,7 @@ export const createOrUpdatePullRequest = async (
       'git -C /workspace config user.name "AXRAY Agent" && git -C /workspace config user.email "agent@axray.dev"'
     );
 
-    // 2. Checkout or Create PR Branch
-    appendTerminalLine(
-      params.sessionId,
-      runIdStr,
-      'command',
-      `${getTimeHeader()} Creating branch:\n${branchName}`
-    );
-
-    const checkoutRes = await containerService.executeCommand(
-      containerId,
-      `cd /workspace && (git checkout ${branchName} || git checkout -b ${branchName})`
-    );
-
-    if (checkoutRes.exitCode !== 0) {
-      appendTerminalLine(params.sessionId, runIdStr, 'stderr', checkoutRes.output);
-    } else {
-      appendTerminalLine(params.sessionId, runIdStr, 'stdout', `Switched to branch '${branchName}'`);
-    }
-
-    emitLiveEvent(params.sessionId, {
-      sessionId: params.sessionId,
-      runId: runIdStr,
-      timestamp: new Date().toISOString(),
-      eventType: 'pr.branch.created',
-      phase: 'git',
-      status: 'completed',
-      title: 'PR Branch Created',
-      description: `Branch ${branchName} ready`,
-      metadata: { branchName },
-    });
-
-    // 3. Git Add & Commit Workspace Changes
+    // 2. Git Add & Commit Workspace Changes
     appendTerminalLine(params.sessionId, runIdStr, 'command', `${getTimeHeader()} Committing changes:\nfeat: agent generated changes`);
     await containerService.executeCommand(containerId, 'cd /workspace && git add .');
 
@@ -176,7 +145,7 @@ export const createOrUpdatePullRequest = async (
       metadata: { commitHash },
     });
 
-    // 4. Push Branch to GitHub Remote
+    // 3. Push Branch to GitHub Remote
     emitLiveEvent(params.sessionId, {
       sessionId: params.sessionId,
       runId: runIdStr,
@@ -192,7 +161,7 @@ export const createOrUpdatePullRequest = async (
       params.sessionId,
       runIdStr,
       'command',
-      `${getTimeHeader()} Pushing branch...`
+      `${getTimeHeader()} Pushing branch ${branchName}...`
     );
 
     const pushRes = await containerService.executeCommand(
@@ -219,16 +188,7 @@ export const createOrUpdatePullRequest = async (
       description: `Successfully pushed ${branchName}`,
     });
 
-    // 5. Create or Update GitHub Pull Request via Octokit API
-    appendTerminalLine(
-      params.sessionId,
-      runIdStr,
-      'command',
-      `${getTimeHeader()} Creating GitHub pull request...`
-    );
-
-    const octokit = createGithubClient(params.accessToken);
-
+    // 4. Handle Direct Push to Default Branch or GitHub PR Creation
     if (session.pullRequest && session.pullRequest.prNumber) {
       // Existing PR: verify / update status on GitHub
       const existingPr = session.pullRequest;
@@ -260,8 +220,35 @@ export const createOrUpdatePullRequest = async (
       return existingPr;
     }
 
+    if (branchName === baseBranch) {
+      appendTerminalLine(
+        params.sessionId,
+        runIdStr,
+        'success',
+        `${getTimeHeader()}\nPushed changes directly to '${branchName}'. No PR needed against itself.`
+      );
+      const directPushPr: IPullRequest = {
+        provider: 'github',
+        prNumber: 0,
+        number: 0,
+        prUrl: `https://github.com/${session.repositoryFullName}/tree/${branchName}`,
+        branchName,
+        sourceBranch: branchName,
+        baseBranch,
+        targetBranch: baseBranch,
+        status: 'merged',
+        lastSyncedCommit: commitHash,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      session.pullRequest = directPushPr;
+      await session.save();
+      return directPushPr;
+    }
+
     // Create New GitHub Pull Request
-    const prTitle = params.title || `AXRAY Agent: Changes for ${session.branch}`;
+    const octokit = createGithubClient(params.accessToken);
+    const prTitle = params.title || `AXRAY Agent: Changes for ${branchName}`;
     const prBody = params.body || `### AXRAY AI Agent Execution\n\nAutomated Pull Request created by AXRAY for session \`${params.sessionId}\`.`;
 
     const prResponse = await octokit.pulls.create({

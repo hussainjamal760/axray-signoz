@@ -224,6 +224,17 @@ export const ensureRuntime = async (
   console.log(`[Workspace] Ensuring runtime environment for "${runtime}" in container ${containerId}...`);
   if (sessionId && runId) {
     appendTerminalLine(sessionId, runId, 'agent', `Provisioning in-container runtime environment for ${runtime}...`);
+    emitLiveEvent(sessionId, {
+      sessionId,
+      runId,
+      timestamp: new Date().toISOString(),
+      eventType: 'workspace.runtime.install.started',
+      phase: 'workspace',
+      status: 'running',
+      title: 'Provisioning Runtime',
+      description: `Installing ${runtime} environment in container...`,
+      metadata: { runtime, packageManager: spec.packageManager },
+    });
   }
 
   try {

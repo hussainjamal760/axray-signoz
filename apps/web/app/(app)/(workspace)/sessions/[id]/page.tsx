@@ -175,6 +175,9 @@ export default function SessionIdPage() {
       case "workspace.analysis.started":
       case "workspace.analysis.completed":
         return "Analyzing Repository...";
+      case "workspace.runtime.install.started":
+      case "workspace.runtime.selected":
+        return "Provisioning Runtime...";
       case "workspace.dependencies.install.started":
       case "workspace.dependencies.install.completed":
         return "Installing Dependencies...";
