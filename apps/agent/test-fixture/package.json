@@ -1,9 +1,0 @@
-{
-  "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --no-cache",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0"
-  }
-}
