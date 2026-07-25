@@ -227,6 +227,6 @@ npm run dev
 
 ### 🤝 Built by Team Cipher for the WeMakeDevs × SigNoz "Agents of SigNoz" Hackathon
 
-*Developed with ❤️ by **Hussain Jamal** & Team Cipher.*
+*Developed with ❤️ by **Team Cipher***
 
 </div>
