@@ -64,20 +64,20 @@ export function Sidebar({ isOpen }: SidebarProps) {
 
         <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
           <Link href={agentLink} className={getLinkClasses(agentLink)}>
-            <span className="material-symbols-outlined text-[20px]">smart_toy</span>
-            <span>Agent</span>
+            <span className="material-symbols-outlined text-[20px] shrink-0">smart_toy</span>
+            <span className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">Agent</span>
           </Link>
           <Link href={observerLink} className={getLinkClasses(observerLink)}>
-            <span className="material-symbols-outlined text-[20px]">play_circle</span>
-            <span>Observer</span>
+            <span className="material-symbols-outlined text-[20px] shrink-0">play_circle</span>
+            <span className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">Observer</span>
           </Link>
           <Link href={tracesLink} className={getLinkClasses(tracesLink)}>
-            <span className="material-symbols-outlined text-[20px]">rebase_edit</span>
-            <span>Traces</span>
+            <span className="material-symbols-outlined text-[20px] shrink-0">rebase_edit</span>
+            <span className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">Traces</span>
           </Link>
           <Link href={analyticsLink} className={getLinkClasses(analyticsLink)}>
-            <span className="material-symbols-outlined text-[20px]">monitoring</span>
-            <span>Analytics</span>
+            <span className="material-symbols-outlined text-[20px] shrink-0">monitoring</span>
+            <span className="whitespace-nowrap transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">Analytics</span>
           </Link>
         </nav>
 

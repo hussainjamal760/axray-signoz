@@ -111,7 +111,7 @@ export function SessionHeader({
         </div>
       )}
 
-      <section className="px-6 py-4 border-b border-outline-variant/20 bg-surface-container-lowest/80 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 z-20">
+      <header className="sticky top-0 z-20 border-b border-outline-variant/20 bg-surface-container-lowest px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div className="flex flex-wrap gap-3 items-center">
           <div className="flex items-center gap-2 pr-2">
             <span className="material-symbols-outlined text-primary-fixed text-lg">dashboard</span>
@@ -214,7 +214,9 @@ export function SessionHeader({
             </button>
           )}
         </div>
-      </section>
+      </header>
+
     </div>
+
   );
 }
