@@ -179,58 +179,42 @@ export default function TracesExplorerPage() {
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background overflow-hidden font-sans">
-      {/* 1. Context Header & Observer-style Dropdown */}
-      <section className="p-4 md:p-6 border-b border-outline-variant/20 bg-surface-container-lowest/40 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 z-20">
-        <div className="space-y-2 max-w-3xl">
-          <div className="flex items-center gap-2 font-mono-label text-xs text-on-surface-variant">
-            <Link href={backToSessionLink} className="hover:text-primary-fixed cursor-pointer flex items-center gap-1 font-bold">
-              <span className="material-symbols-outlined text-sm">arrow_back</span>
-              SESSION #{id ? id.slice(-4).toUpperCase() : "1042"}
-            </Link>
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-primary-fixed font-bold">
-              {activeRun ? `RUN #${activeRun.id.slice(-6).toUpperCase()}` : "TRACES"}
-            </span>
-          </div>
+      {/* 1. Simplified Context Header (Only Run Selection Dropdown & Back Button) */}
+      <section className="px-4 md:px-6 py-3 border-b border-outline-variant/20 bg-surface-container-lowest/60 backdrop-blur-md flex items-center justify-between gap-4 shrink-0 z-20">
+        <div className="flex items-center gap-3">
+          <Link
+            href={backToSessionLink}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant hover:text-white hover:border-primary-fixed/50 font-mono text-xs font-semibold transition-all shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            <span>Back to Workspace</span>
+          </Link>
+          
+          <div className="h-5 w-px bg-outline-variant/30 hidden sm:block" />
 
-          <h1 className="font-headline-lg text-2xl md:text-3xl text-primary-fixed uppercase font-black truncate">
-            {activeRun?.prompt || session?.repositoryFullName || "OpenTelemetry Trace Explorer"}
-          </h1>
-
-          <div className="flex flex-wrap gap-4 items-center">
-            {session?.repositoryFullName && (
-              <div className="flex items-center gap-2 bg-surface-container-highest border border-outline px-3 py-1 font-mono-label text-xs font-bold">
-                <span className="material-symbols-outlined text-sm text-on-surface-variant">folder</span>
-                {session.repositoryFullName} ({session.branch || "main"})
-              </div>
-            )}
-
-            {activeRun && (
-              <div className="flex items-center gap-2">
-                <RunStatusBadge status={activeRun.status} />
-              </div>
-            )}
-
-            {/* Run Selection Dropdown (Observer Page Matching UI) */}
-            {runs.length > 0 && (
-              <div className="flex items-center gap-2 bg-surface-container/40 backdrop-blur-sm border border-outline-variant/30 px-3 py-1.5 rounded-full font-mono-label text-xs font-bold text-primary-fixed shadow-sm">
-                <span className="material-symbols-outlined text-[14px]">history</span>
-                <select
-                  value={activeRun?.id || ""}
-                  onChange={(e) => handleSelectRunChange(e.target.value)}
-                  className="bg-transparent text-primary-fixed font-mono-label text-xs font-black outline-none cursor-pointer max-w-[280px] truncate appearance-none"
-                >
-                  {runs.map((r, index) => (
-                    <option key={r.id} value={r.id} className="bg-black text-on-surface">
-                      Run #{runs.length - index} — {r.prompt ? (r.prompt.length > 25 ? `${r.prompt.slice(0, 25)}...` : r.prompt) : r.id.slice(-6)} ({r.status.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-                <span className="material-symbols-outlined text-[14px] pointer-events-none">expand_more</span>
-              </div>
-            )}
-          </div>
+          <span className="text-xs font-mono text-on-surface-variant uppercase tracking-wider font-semibold hidden md:inline-block">
+            Trace Explorer
+          </span>
         </div>
+
+        {/* Run Selection Dropdown */}
+        {runs.length > 0 && (
+          <div className="flex items-center gap-2.5 bg-surface-container-high/80 border border-primary-fixed/40 px-4 py-2 rounded-2xl font-mono text-xs font-bold text-primary-fixed shadow-[0_0_15px_rgba(220,238,0,0.15)]">
+            <span className="material-symbols-outlined text-[16px] text-primary-fixed">history</span>
+            <select
+              value={activeRun?.id || ""}
+              onChange={(e) => handleSelectRunChange(e.target.value)}
+              className="bg-transparent text-primary-fixed font-mono text-xs font-extrabold outline-none cursor-pointer max-w-[280px] sm:max-w-[360px] truncate appearance-none"
+            >
+              {runs.map((r, index) => (
+                <option key={r.id} value={r.id} className="bg-surface-container-lowest text-white">
+                  Run #{runs.length - index} — {r.prompt ? (r.prompt.length > 30 ? `${r.prompt.slice(0, 30)}...` : r.prompt) : r.id.slice(-6)} ({r.status.toUpperCase()})
+                </option>
+              ))}
+            </select>
+            <span className="material-symbols-outlined text-[16px] pointer-events-none text-primary-fixed">expand_more</span>
+          </div>
+        )}
       </section>
 
       {/* 2. Search & Filter Bar */}
