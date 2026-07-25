@@ -88,12 +88,15 @@ export function LiveTraceTree({ sessionId = "", liveTraces = [] }: LiveTraceTree
 
       {/* Footer */}
       <div className="p-2 border-t-2 border-outline-variant bg-black shrink-0 flex justify-between items-center px-4 font-mono-label text-[10px] text-outline">
-        <span>PREVIEW_MODE // SOCKET.IO</span>
-        {sessionId && (
-          <Link href={observerUrl} className="text-primary-fixed font-bold hover:underline">
-            Inspect in Observer →
-          </Link>
-        )}
+        <span>PREVIEW_MODE // OPEN-TELEMETRY</span>
+        <a
+          href="http://localhost:8080/traces"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary-fixed font-bold hover:underline flex items-center gap-1"
+        >
+          Open SigNoz Traces Portal <span className="material-symbols-outlined !text-xs">open_in_new</span>
+        </a>
       </div>
     </div>
   );

@@ -335,6 +335,18 @@ export default function TracesExplorerPage() {
               )}
             </div>
 
+            {/* Direct OpenTelemetry Trace link to SigNoz UI */}
+            <a
+              href={`http://localhost:8080/trace/${selectedSpan.spanId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-fixed/10 hover:bg-primary-fixed/20 border border-primary-fixed/30 rounded-2xl text-primary-fixed text-xs font-bold transition-all shadow-[0_0_15px_rgba(220,238,0,0.15)] group"
+            >
+              <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform">open_in_new</span>
+              <span>Inspect Span in SigNoz Portal</span>
+            </a>
+
+
             {/* Tabs Navigation */}
             <div className="flex items-center gap-6 border-b border-outline-variant/20 pb-1 mt-2">
               <button
