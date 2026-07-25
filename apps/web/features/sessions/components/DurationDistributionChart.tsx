@@ -35,6 +35,65 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
   const hasData = runs.some(r => r.durationMs !== undefined);
   const topBucket = hasData ? data.reduce((a, b) => b.count > a.count ? b : a, data[0]) : null;
 
+  const renderChartArea = () => {
+    if (isLoading) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center gap-3">
+          <div className="w-8 h-8 border-[3px] border-primary-fixed border-t-transparent animate-spin" />
+          <span className="font-mono-label text-xs text-outline uppercase font-bold">Loading...</span>
+        </div>
+      );
+    }
+
+    if (!hasData) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center gap-3">
+          <span className="material-symbols-outlined text-outline text-5xl">speed</span>
+          <span className="font-mono-label text-xs text-outline uppercase font-bold">No duration data</span>
+        </div>
+      );
+    }
+
+    return (
+    return (
+      <ResponsiveContainer width="100%" height="100%" minHeight={160}>
+        <BarChart data={data} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="6 6" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <XAxis
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#8a8a6e", fontFamily: "JetBrains Mono", fontSize: 9, fontWeight: "bold" }}
+            dy={8}
+          />
+          <YAxis
+            allowDecimals={false}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#8a8a6e", fontFamily: "JetBrains Mono", fontSize: 9, fontWeight: "bold" }}
+          />
+          <Tooltip
+            cursor={{ fill: "rgba(220,238,0,0.04)" }}
+            contentStyle={TOOLTIP_STYLE}
+            formatter={(value: number, _: string, props: any) => [`${value} runs`, props.payload.label]}
+            itemStyle={{ color: "#dcee00" }}
+            labelFormatter={() => "Duration"}
+          />
+          <Bar dataKey="count" barSize={32} radius={[4, 4, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.color}
+                opacity={entry.count === 0 ? 0.15 : 1}
+                style={entry.count > 0 ? { filter: `drop-shadow(0 0 6px ${entry.glow})` } : {}}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  };
+
   return (
     <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.025]" style={{
@@ -67,55 +126,7 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
         )}
 
         <div className="flex-1 min-h-[160px] relative w-full mt-2">
-          {isLoading ? (
-            <div className="h-full flex flex-col items-center justify-center gap-3">
-              <div className="w-8 h-8 border-[3px] border-primary-fixed border-t-transparent animate-spin" />
-              <span className="font-mono-label text-xs text-outline uppercase font-bold">Loading...</span>
-            </div>
-          ) : !hasData ? (
-            <div className="h-full flex flex-col items-center justify-center gap-3">
-              <span className="material-symbols-outlined text-outline text-5xl">speed</span>
-              <span className="font-mono-label text-xs text-outline uppercase font-bold">No duration data</span>
-            </div>
-          ) : (
-            <div className="absolute inset-0">
-              <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="6 6" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#8a8a6e", fontFamily: "JetBrains Mono", fontSize: 9, fontWeight: "bold" }}
-                  dy={8}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#8a8a6e", fontFamily: "JetBrains Mono", fontSize: 9, fontWeight: "bold" }}
-                />
-                <Tooltip
-                  cursor={{ fill: "rgba(220,238,0,0.04)" }}
-                  contentStyle={TOOLTIP_STYLE}
-                  formatter={(value: number, _: string, props: any) => [`${value} runs`, props.payload.label]}
-                  itemStyle={{ color: "#dcee00" }}
-                  labelFormatter={() => "Duration"}
-                />
-                <Bar dataKey="count" barSize={32} radius={[4, 4, 0, 0]}>
-                  {data.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.color}
-                      opacity={entry.count === 0 ? 0.15 : 1}
-                      style={entry.count > 0 ? { filter: `drop-shadow(0 0 6px ${entry.glow})` } : {}}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            </div>
-          )}
+          {renderChartArea()}
         </div>
       </div>
     </div>
