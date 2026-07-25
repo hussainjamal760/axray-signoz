@@ -13,6 +13,7 @@ import {
   TimelinePanel,
   TerminalPanel,
   CodeDiffCard,
+  FailureVisualization,
 } from "@/features/sessions/components";
 
 export default function SessionIdPage() {
@@ -254,6 +255,17 @@ export default function SessionIdPage() {
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6 space-y-6 custom-scrollbar" data-lenis-prevent="true">
         <div className="grid grid-cols-12 gap-6 items-start">
+
+          {/* Failure & Error Visualization Banner */}
+          {(activeOrSelectedRun?.status === 'failed' || latestEvent?.eventType === 'run.failed') && (
+            <div className="col-span-12">
+              <FailureVisualization
+                run={activeOrSelectedRun}
+                latestEvent={latestEvent}
+                onRetry={() => activeOrSelectedRun?.prompt && handlePromptSubmit(activeOrSelectedRun.prompt)}
+              />
+            </div>
+          )}
 
           {/* Row 1: Initialize Context & Timeline */}
           <div className="col-span-12 lg:col-span-7 flex flex-col">
