@@ -11,7 +11,7 @@ export interface CodeViewerPanelProps {
 
 export function CodeViewerPanel({ activeRun, isLoading = false }: CodeViewerPanelProps) {
   return (
-    <div className="flex-1 flex flex-col border-r-[3px] border-primary-fixed bg-surface-container-lowest overflow-y-auto custom-scrollbar">
+    <div className="flex-1 flex flex-col border-r-[3px] border-primary-fixed bg-surface-container-lowest overflow-y-auto custom-scrollbar" data-lenis-prevent="true">
       <CodeDiffCard
         diff={activeRun?.diff}
         filesChanged={activeRun?.filesChanged}

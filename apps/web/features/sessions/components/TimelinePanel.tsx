@@ -10,9 +10,10 @@ export interface TimelinePanelProps {
   sessionId?: string;
   liveSocketEvents?: TimelineEvent[];
   isLive?: boolean;
+  className?: string;
 }
 
-export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [], isLive = false }: TimelinePanelProps) {
+export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [], isLive = false, className }: TimelinePanelProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +125,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
   };
 
   return (
-    <div className="bg-surface border-[3px] border-outline flex flex-col brutalist-shadow h-[220px] max-h-[220px] w-full overflow-hidden">
+    <div className={`bg-surface border-[3px] border-outline flex flex-col brutalist-shadow w-full overflow-hidden ${className || 'h-[220px] max-h-[220px]'}`}>
       {/* Header */}
       <div className="p-4 border-b-[3px] border-outline flex justify-between items-center bg-black shrink-0">
         <div className="flex items-center gap-3">
@@ -164,6 +165,7 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 relative bg-background"
+        data-lenis-prevent="true"
       >
         {isLoading && events.length === 0 && !isLive && !isRunning ? (
           <div className="font-mono-label text-xs text-outline-variant text-center py-8 animate-pulse font-black uppercase">

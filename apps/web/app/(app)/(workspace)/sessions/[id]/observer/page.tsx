@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "@/features/sessions/hooks";
-import { useRuns } from "@/features/agent-runs/hooks";
+import { useRuns, useRunTimeline } from "@/features/agent-runs/hooks";
 import { AgentRunSummary } from "@/features/agent-runs/types";
 import { TimelinePanel } from "@/features/sessions/components/TimelinePanel";
 import { CodeViewerPanel } from "@/features/sessions/components/CodeViewerPanel";
@@ -11,6 +11,8 @@ import { IntelligencePanel } from "@/features/sessions/components/IntelligencePa
 import { ReplayHUD } from "@/features/sessions/components/ReplayHUD";
 import { RunStatusBadge } from "@/features/agent-runs/components/RunStatusBadge";
 import Link from "next/link";
+
+import { TelemetryBar } from "@/features/sessions/components/TelemetryBar";
 
 export default function ObserverDashboardPage() {
   const params = useParams();
@@ -22,6 +24,7 @@ export default function ObserverDashboardPage() {
 
   const { data: session } = useSession(id);
   const { data: runs = [], isLoading: runsLoading } = useRuns(id);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
 
   // Automatically select run matching runId in URL, or default to latest run
   const activeRun: AgentRunSummary | null = useMemo(() => {
@@ -32,8 +35,17 @@ export default function ObserverDashboardPage() {
     return runs[0] || null;
   }, [queryRunId, runs]);
 
+  // Fetch authoritative SigNoz timeline events for trajectory replay
+  const { data: timelineData } = useRunTimeline(activeRun?.id, {
+    enabled: Boolean(activeRun?.id),
+    refetchInterval: false,
+  });
+
+  const events = timelineData?.events || [];
+
   const handleSelectRunChange = (newRunId: string) => {
     if (newRunId) {
+      setActiveStepIndex(0);
       router.push(`/sessions/${id}/observer?runId=${newRunId}`);
     }
   };
@@ -95,7 +107,19 @@ export default function ObserverDashboardPage() {
           </div>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto items-center">
+          <a
+            href="http://localhost:8080"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 bg-surface-container-highest text-white font-mono-label text-xs font-black uppercase border-2 border-outline px-3 py-2 hover:bg-surface-variant transition-colors brutalist-shadow-sm active:translate-x-0.5 active:translate-y-0.5"
+            title="Open Self-Hosted SigNoz Observability Portal"
+          >
+            <span className="material-symbols-outlined text-sm text-primary-fixed">monitoring</span>
+            <span>Open SigNoz</span>
+            <span className="material-symbols-outlined text-xs text-on-surface-variant">open_in_new</span>
+          </a>
+
           <Link
             href={analysisLink}
             className="bg-primary-fixed text-on-primary-fixed font-black px-6 py-3 border-[3px] border-on-primary-fixed neo-shadow hover:-translate-y-1 hover:-translate-x-1 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all flex items-center justify-center uppercase text-sm"
@@ -105,24 +129,38 @@ export default function ObserverDashboardPage() {
         </div>
       </section>
 
+      {/* Telemetry Bar */}
+      <TelemetryBar />
+
       {/* Three-Pane Observer View */}
-      <section className="flex flex-1 overflow-hidden min-h-0 z-10 relative" data-lenis-prevent="true">
-        <div className="w-1/3 min-w-[320px] flex flex-col border-r-[3px] border-outline">
+      <section className="flex flex-1 overflow-hidden min-h-0 h-full z-10 relative">
+        {/* Left Column: Timeline Panel */}
+        <div className="w-1/3 min-w-[340px] max-w-[440px] flex flex-col h-full border-r-[3px] border-outline">
           <TimelinePanel
             selectedRunId={activeRun?.id}
             runStatus={activeRun?.status}
             sessionId={id}
             isLive={false}
+            className="h-full border-0 !shadow-none"
           />
         </div>
 
-        <CodeViewerPanel activeRun={activeRun} isLoading={runsLoading} />
+        {/* Middle Column: Code Diff Viewer */}
+        <div className="flex-1 flex flex-col h-full min-w-0">
+          <CodeViewerPanel activeRun={activeRun} isLoading={runsLoading} />
+        </div>
         
+        {/* Right Column: Intelligence Panel */}
         <IntelligencePanel activeRun={activeRun} />
       </section>
 
-      {/* Bottom Replay HUD */}
-      <ReplayHUD activeRun={activeRun} />
+      {/* Interactive Time-Travel Replay HUD */}
+      <ReplayHUD
+        activeRun={activeRun}
+        events={events}
+        activeStepIndex={activeStepIndex}
+        onStepChange={setActiveStepIndex}
+      />
     </div>
   );
 }

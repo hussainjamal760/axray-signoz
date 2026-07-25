@@ -12,9 +12,12 @@ export function IntelligencePanel({ activeRun }: IntelligencePanelProps) {
   const modelStr = activeRun?.modelName || 'openai/gpt-oss-20b';
 
   return (
-    <div className="w-96 flex-col bg-surface shrink-0 hidden xl:flex">
-      <div className="p-4 border-b-[3px] border-outline-variant bg-surface-container-high shrink-0">
-        <span className="font-mono-label text-mono-label font-black text-on-surface">AGENT INTELLIGENCE</span>
+    <div className="w-96 flex-col h-full bg-surface shrink-0 hidden xl:flex overflow-y-auto custom-scrollbar border-l-[3px] border-outline" data-lenis-prevent="true">
+      <div className="p-4 border-b-[3px] border-outline bg-surface-container-high shrink-0 flex items-center justify-between">
+        <span className="font-mono-label text-xs font-black text-on-surface">AGENT INTELLIGENCE</span>
+        <span className="bg-primary-fixed/10 border border-primary-fixed/30 text-primary-fixed text-[10px] font-black uppercase px-2 py-0.5">
+          SigNoz OTEL
+        </span>
       </div>
       
       <div className="p-gutter border-b-2 border-outline-variant shrink-0">
