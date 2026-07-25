@@ -251,7 +251,7 @@ chmod +x start.sh
 - Installs `foundryctl` (SigNoz manager) using the latest `foundry.sh` installer into `~/.local/bin`.
 - Deploys SigNoz locally and safely waits for the `http://localhost:8080` root UI to become healthy.
 - Installs all workspace dependencies using `pnpm`.
-- Injects AXRAY's custom Dashboards and Alert Rules directly into the SigNoz Postgres metastore.
+- **Dynamically queries the SigNoz Postgres metastore** to extract your fresh `orgId` and `userId` UUIDs, and seamlessly injects AXRAY's custom Dashboards and Alert Rules without any manual copy-pasting.
 - Starts the Next.js Frontend and Express Backend (`pnpm dev`).
 
 When the script finishes, open **`http://localhost:3000`** in your browser. Start an agent session, and watch the traces and alerts stream live into your local SigNoz instance at `http://localhost:8080`!
