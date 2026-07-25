@@ -225,45 +225,36 @@ npm run dev
 
 ## 🧪 Judge's Evaluation Guide (Zero-Friction Local Setup)
 
-To evaluate AXRAY locally with full SigNoz capabilities (Dashboards & Alerts), follow these simple steps to spin up SigNoz on your machine. **No manual dashboard configuration required!**
+To evaluate AXRAY locally with full SigNoz capabilities (Dashboards & Alerts) without running multiple commands, we have provided an automated setup script.
 
-### Prerequisites
-- **Docker Engine 20.10+** (Allocate at least 4GB RAM)
-- *Windows Users:* We highly recommend using Docker natively inside WSL 2 to prevent ClickHouse crashes.
-- **Node.js v18+**
-
-### Step 1: Install `foundryctl` (SigNoz Manager)
-SigNoz uses `foundryctl` to manage its microservices. Open your terminal and install it:
-```bash
-# macOS, Linux, or Windows WSL
-curl -sL https://signoz.io/install.sh | bash
-```
-
-### Step 2: Clone AXRAY & Deploy SigNoz
-We have a pre-configured `casting.yaml` that sets up SigNoz specifically for AXRAY's AI telemetry.
+### Step 1: Clone & Configure
 ```bash
 git clone https://github.com/hussainjamal760/axray-signoz.git
 cd axray-signoz
-
-# Launch SigNoz locally (takes 3-5 mins to pull images)
-foundryctl cast --file deploy/casting.yaml
 ```
-*Wait until SigNoz is fully up and running on `http://localhost:8080` before proceeding to Step 3.*
+1. Create `apps/server/.env` from the example file:
+   ```bash
+   cp apps/server/.env.example apps/server/.env
+   ```
+2. **Open `apps/server/.env` and add your `GROQ_API_KEY`.**
+   *(Note: You do NOT need to configure the `MONGO_URI`. The startup script will automatically spin up a local MongoDB container and configure the URI for you).*
 
-### Step 3: Inject AXRAY Dashboards & Alerts
-Instead of manually importing JSON files, run our automated injection script. This will use Postgres injection to instantly attach our custom dashboards and alert rules to your local SigNoz instance.
+### Step 2: One-Click Launch 🚀
+Ensure you have Docker Desktop running (with at least 4GB RAM), then simply run:
 ```bash
-# Inside the axray-signoz directory
-npm install
-node deploy/import-signoz-local.js
+chmod +x start.sh
+./start.sh
 ```
 
-### Step 4: Run AXRAY
-Now launch the AXRAY backend and frontend:
-```bash
-npm run dev
-```
-Open **`http://localhost:3000`** in your browser. Start an agent session, and watch the traces and alerts stream live into your local SigNoz instance!
+**What the script does automatically for you:**
+- Automatically provisions `MONGO_URI` and starts a MongoDB container for AXRAY's backend.
+- Installs `foundryctl` (SigNoz manager) using the latest `foundry.sh` installer into `~/.local/bin`.
+- Deploys SigNoz locally and safely waits for the `http://localhost:8080` root UI to become healthy.
+- Installs all workspace dependencies using `pnpm`.
+- Injects AXRAY's custom Dashboards and Alert Rules directly into the SigNoz Postgres metastore.
+- Starts the Next.js Frontend and Express Backend (`pnpm dev`).
+
+When the script finishes, open **`http://localhost:3000`** in your browser. Start an agent session, and watch the traces and alerts stream live into your local SigNoz instance at `http://localhost:8080`!
 
 ---
 
