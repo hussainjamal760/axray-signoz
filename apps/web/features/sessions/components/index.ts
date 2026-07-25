@@ -23,3 +23,4 @@ export * from './FailureVisualization';
 export * from './TokensOverTimeChart';
 export * from './DurationDistributionChart';
 export * from './SmartAlertsTab';
+export * from './TimeInBrainVsEnvironmentChart';

@@ -19,6 +19,7 @@ import { DurationDistributionChart } from "@/features/sessions/components/Durati
 import { ToolPerformanceCard } from "@/features/sessions/components/ToolPerformanceCard";
 
 import { SmartAlertsTab } from "@/features/sessions/components/SmartAlertsTab";
+import { TimeInBrainVsEnvironmentChart } from "@/features/sessions/components/TimeInBrainVsEnvironmentChart";
 
 // Fetch timeline for up to 10 runs and aggregate tool usage from OpenTelemetry spans
 function useToolsAggregate(filteredRuns: AgentRunSummary[]) {
@@ -74,6 +75,11 @@ export default function AnalyticsDashboardPage() {
         isLoading={isLoading}
       />
       <MetricsRow metrics={metrics} isLoading={isLoading} />
+
+      {/* Latency Bottleneck Feature: Time-in-Brain vs Time-in-Environment */}
+      <div className="mb-6 w-full">
+        <TimeInBrainVsEnvironmentChart runs={allRuns} isLoading={isLoading} />
+      </div>
 
       <div className="mb-6 w-full">
         <SmartAlertsTab runs={allRuns} />
