@@ -14,7 +14,7 @@
 [![Docker Sandbox](https://img.shields.io/badge/Sandbox-Docker-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[Architecture](#-system-architecture) • [Hero Feature: Time-in-Brain](#-the-hero-feature-time-in-brain-vs-time-in-environment) • [SigNoz MCP & ClickHouse](#-signoz-deep-integration--clickhouse-engine) • [Guided Code Tour](#-guided-architecture--code-tour) • [OTel Semantic Conventions](#-opentelemetry-genai-semantic-conventions) • [Quickstart](#-quickstart) • [Full Monorepo Map](#-monorepo-structure--feature-domains)
+[Architecture](#-system-architecture) • [SigNoz Alerts & Dashboards](#-signoz-alerts--embedded-dashboard-architecture) • [Hero Feature: Time-in-Brain](#-the-hero-feature-time-in-brain-vs-time-in-environment) • [ClickHouse Engine](#-signoz-deep-integration--clickhouse-engine) • [Guided Code Tour](#-guided-architecture--code-tour) • [Quickstart](#-quickstart)
 
 ---
 
@@ -24,7 +24,7 @@
 
 Autonomous AI coding agents operate as non-deterministic state machines: they parse prompts, generate reasoning tokens, execute shell commands inside containers, inspect repository diffs, and self-correct. When an agent turns slow, costs explode, or it gets trapped in an infinite retry loop, standard logging fails.
 
-**AXRAY** solves this by turning every agent turn into a structured **OpenTelemetry Trace Tree**, storing telemetry in **SigNoz ClickHouse**, and providing real-time financial, latency, and system execution observability.
+**AXRAY** solves this by turning every agent turn into a structured **OpenTelemetry Trace Tree**, storing telemetry in **SigNoz ClickHouse**, fetching live alert rules via the **SigNoz Model Context Protocol (MCP)**, and providing an embedded SigNoz dashboard with real-time financial, latency, and system execution observability.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -36,22 +36,161 @@ Autonomous AI coding agents operate as non-deterministic state machines: they pa
 |  ├── 🧠 Time-in-Brain (LLM Reasoning):         2,450ms (78%) [Tokens: 14,200 | Cost: $0.0083]     |
 |  └── ⚡ Time-in-Environment (Docker System):     680ms (22%) [Commands: 4  | ExitCode: 0]      |
 |  ─────────────────────────────────────────────────────────────────────────────────────────────── |
+|  🚨 SIGNOZ MCP ALERTS: 1 Critical Alert Active (Cost Spike > $0.05 / Agent Loop Flagged)          |
 |  🎯 Efficiency Score: 88/100  │  Primary Bottleneck: LLM Context Window & Token Overhead         |
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💡 What Is AXRAY?
+## 🚨 SigNoz Alerts & Embedded Dashboard Architecture
 
-### The Problem
-Traditional APM tools monitor HTTP request/response lifecycles, but AI agents introduce **multi-turn cognitive loops**:
-- **Unpredictable Latency:** Is the slowness caused by LLM API throttling or a hanging `npm install` command?
-- **Financial Blindspots:** Which tool call or prompt turn consumed 80% of the token budget?
-- **Black-Box Retries:** Did the agent fix the code error, or did it execute 10 redundant search queries?
+AXRAY integrates directly with SigNoz to surface live alert rules, monitor system anomalies, and render custom metrics panels seamlessly inside the UI without context-switching.
 
-### The AXRAY Solution
-AXRAY acts as an **AI Flight Recorder**. It wraps autonomous agents inside isolated Docker containers, tracks every step using the **OpenTelemetry Node.js SDK**, streams OTLP spans to **SigNoz**, and communicates directly with SigNoz using the **Model Context Protocol (MCP)**.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as 🖥️ Next.js Web UI (SmartAlertsTab / SigNoz Page)
+    participant Hook as 🎣 useSigNozAlerts Hook (React Query)
+    participant API as ⚙️ Express Backend API (/api/signoz/alerts)
+    participant MCP as 🔌 SigNoz MCP Client (SigNozService)
+    participant Cloud as 🛰️ SigNoz Cloud / Local MCP Server (:8080)
+    participant Dash as 📊 Embedded SigNoz Portal (Iframe)
+
+    Note over UI, Cloud: 1. Fetching & Monitoring Live SigNoz Alerts
+    UI->>Hook: Mount SmartAlertsTab component
+    Hook->>API: GET /api/signoz/alerts (Polls every 30s)
+    API->>MCP: signozService.listAlerts()
+    MCP->>Cloud: StreamableHTTPTransport callTool("signoz_list_alerts")
+    Cloud-->>MCP: Returns active alerts JSON
+    MCP-->>API: Content response ({ alertName, severity, description })
+    API-->>Hook: { success: true, data: [...] }
+    Hook-->>UI: Renders Proactive Alarms with "SIGNOZ API" Provenance Badge
+
+    Note over UI, Dash: 2. Embedded SigNoz Dashboard Panel
+    UI->>Dash: Render Glassmorphic Iframe (http://localhost:8080/dashboards)
+    Dash-->>UI: Interactive SigNoz Query Builder & Custom Metric Panels
+```
+
+---
+
+### 1. 🔔 How SigNoz Alerts Work & How to Fetch Them
+
+AXRAY fetches alert rules directly from your SigNoz instance using the **SigNoz Model Context Protocol (MCP)** server:
+
+#### Backend: MCP Tool Execution (`apps/server/src/services/signoz.service.ts`)
+The server uses `@modelcontextprotocol/sdk` and `StreamableHTTPClientTransport` to invoke `signoz_list_alerts`:
+
+```typescript
+// GET /api/signoz/alerts Handler
+export async function listAlerts() {
+  const mcpUrl = process.env.SIGNOZ_INSTANCE_URL || "https://mcp.us2.signoz.cloud";
+  const apiKey = process.env.SIGNOZ_MCP_API_KEY || process.env.SIGNOZ_API_KEY;
+
+  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl), {
+    requestInit: {
+      headers: {
+        "SIGNOZ-API-KEY": apiKey,
+        "X-SigNoz-URL": new URL(mcpUrl).origin,
+      },
+    },
+  });
+
+  const client = new Client({ name: "axray-server", version: "1.0.0" });
+  await client.connect(transport);
+
+  // Invoke SigNoz MCP alert listing tool
+  const result = await client.callTool({
+    name: "signoz_list_alerts",
+    arguments: {},
+  });
+
+  return result;
+}
+```
+
+#### Express API Route (`apps/server/src/controllers/signoz.controller.ts`)
+Exposes the endpoint to the web application:
+```typescript
+// GET /api/signoz/alerts
+export const getSigNozAlerts = async (req: Request, res: Response) => {
+  try {
+    const data = await signozService.listAlerts();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+```
+
+#### Frontend Hook (`apps/web/features/sessions/hooks/useSigNozAlerts.ts`)
+Uses React Query to fetch alerts and automatically refresh them every 30 seconds:
+```typescript
+import { useQuery } from '@tanstack/react-query';
+
+const fetchSigNozAlerts = async () => {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/signoz/alerts`);
+  if (!res.ok) throw new Error('Failed to fetch SigNoz alerts');
+  const json = await res.json();
+  return json.data?.content || [];
+};
+
+export const useSigNozAlerts = () => {
+  return useQuery({
+    queryKey: ['signoz-alerts'],
+    queryFn: fetchSigNozAlerts,
+    refetchInterval: 30000, // Refresh every 30s
+  });
+};
+```
+
+#### Proactive Alerts Component (`apps/web/features/sessions/components/SmartAlertsTab.tsx`)
+Merges real SigNoz alerts with local agent execution heuristics:
+- 🚨 **SigNoz MCP Custom Alerts:** Active monitor rules from SigNoz (e.g. *Agent Retry Loop*, *System Memory Threshold*).
+- 💰 **Cost Spike Anomaly:** Triggers when total session LLM cost exceeds `$0.01`.
+- 🔢 **Token Spike Anomaly:** Triggers when total token consumption exceeds `10,000 tokens`.
+
+---
+
+### 2. 📊 Embedded SigNoz Dashboard Panel
+
+AXRAY embeds the complete SigNoz Query Builder & Dashboard directly within the session workspace at `/sessions/[id]/signoz`:
+
+#### Page Route (`apps/web/app/(app)/(workspace)/sessions/[id]/signoz/page.tsx`)
+```tsx
+export default function SigNozDashboardPage() {
+  return (
+    <div className="flex-1 w-full bg-surface-container-lowest border border-outline-variant/30 rounded-3xl overflow-hidden relative">
+      {/* Interactive SigNoz Dashboard Iframe */}
+      <iframe
+        src="http://localhost:8080/dashboards" // Local SigNoz port 8080
+        className="w-full h-full border-0"
+        title="SigNoz Dashboard"
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+      />
+    </div>
+  );
+}
+```
+
+#### Fetching Custom Query Metrics via MCP (`signoz_execute_builder_query`)
+In addition to the iframe, AXRAY calls SigNoz's query builder API programmatically:
+```typescript
+// Execute Query Builder via MCP for Logs, Traces, or Metrics
+const result = await client.callTool({
+  name: "signoz_execute_builder_query",
+  arguments: {
+    query: {
+      dataSource: "metrics", // "logs" | "traces" | "metrics"
+      aggregateOperator: "rate",
+      filters: [],
+      limit: 10,
+    },
+    start: Date.now() - 15 * 60 * 1000, // Last 15 minutes
+    end: Date.now(),
+  },
+});
+```
 
 ---
 
@@ -148,7 +287,7 @@ flowchart TD
 
 AXRAY interacts with SigNoz on two distinct operational planes:
 
-### 1. Direct ClickHouse Telemetry Queries
+### Direct ClickHouse Telemetry Queries
 To render sub-millisecond trace timelines without API overhead, AXRAY executes native SQL directly against SigNoz's ClickHouse storage engine (`signoz_traces.signoz_index_v3`):
 
 ```sql
@@ -180,33 +319,6 @@ WHERE name = 'tool.call' AND attributes_string['axray.session.id'] = 'sess_42'
 GROUP BY toolName 
 ORDER BY avgDurationNano DESC 
 FORMAT JSON;
-```
-
-### 2. Model Context Protocol (MCP) Integration
-AXRAY implements a full **SigNoz MCP Client** using `@modelcontextprotocol/sdk` and `StreamableHTTPClientTransport`. It connects directly to SigNoz to manage alert rules and execute builder queries programmatically:
-
-```typescript
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-
-// Initialize SigNoz MCP Transport
-const transport = new StreamableHTTPClientTransport(new URL("https://mcp.us2.signoz.cloud"), {
-  requestInit: {
-    headers: {
-      "SIGNOZ-API-KEY": process.env.SIGNOZ_API_KEY,
-      "X-SigNoz-URL": "https://mcp.us2.signoz.cloud",
-    },
-  },
-});
-
-const client = new Client({ name: "axray-server", version: "1.0.0" });
-await client.connect(transport);
-
-// Call SigNoz MCP Tool to list active alerts
-const activeAlerts = await client.callTool({
-  name: "signoz_list_alerts",
-  arguments: {},
-});
 ```
 
 ---
@@ -268,20 +380,6 @@ AXRAY strictly follows standard OpenTelemetry GenAI & Process semantic conventio
 | `axray.tool.name` | `string` | `"search_files"` | Name of function tool invoked |
 | `axray.tool.exit_code` | `int` | `0` | Return code of executed container process |
 | `container.id` | `string` | `"7f8a9b0c1d2e"` | Target Docker container ID |
-
----
-
-## 🗺️ Web Frontend Feature Map
-
-| Page Route | Component / Feature | Functionality |
-| :--- | :--- | :--- |
-| `/sessions` | Workspace Session List | Manage past and active agent workspaces |
-| `/sessions/[id]` | Main Interactive Terminal | Real-time chat prompt, terminal logger, file tree, git diff preview |
-| `/sessions/[id]/traces` | OTel Trace Tree Inspector | Visual tree graph of OpenTelemetry spans with direct SigNoz links |
-| `/sessions/[id]/signoz` | Embedded SigNoz Dashboard | Live SigNoz query cards, logs, metrics, and MCP alarms UI |
-| `/sessions/[id]/observer` | Flight Recorder Timeline | Sequential timeline of every prompt, tool execution, and span |
-| `/sessions/[id]/analytics` | Latency & Cost Analytics | **Time-in-Brain** charts, token cost curves, efficiency scores |
-| `/sessions/[id]/analysis` | Codebase Inspector | Auto-detected project entry points, frameworks, dependencies |
 
 ---
 
