@@ -28,13 +28,21 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, subColor = "text-primary-fixed", hoverBorder = "hover:border-primary-fixed", isLoading }: StatCardProps) {
   return (
-    <div className={`border-[3px] border-white p-6 bg-surface-container brutalist-shadow transition-transform ${hoverBorder} hover:-translate-y-1 hover:-translate-x-1 hover:shadow-none cursor-default`}>
-      <p className="font-mono-label text-[10px] text-on-surface-variant uppercase mb-4 font-bold">{label}</p>
-      <p className={`text-4xl font-black text-white ${isLoading ? "animate-pulse opacity-40" : ""}`}>{isLoading ? "---" : value}</p>
-      <p className={`font-mono-label text-[10px] mt-2 font-bold ${subColor}`}>{sub}</p>
+    <div className={`border-[3px] border-white p-6 bg-[#0d0e08] brutalist-shadow transition-all ${hoverBorder} hover:-translate-y-1 hover:-translate-x-1 hover:shadow-none cursor-default relative overflow-hidden`}>
+      <div className="absolute inset-0 opacity-[0.025]" style={{
+        backgroundImage: "linear-gradient(#dcee00 1px, transparent 1px), linear-gradient(90deg, #dcee00 1px, transparent 1px)",
+        backgroundSize: "20px 20px",
+      }} />
+      <p className="font-mono-label text-[10px] text-on-surface-variant uppercase mb-4 font-bold relative z-10">{label}</p>
+      <p className={`text-4xl font-black text-white relative z-10 ${isLoading ? "animate-pulse opacity-40" : ""}`}
+        style={!isLoading && value !== "-" ? { textShadow: "0 0 20px rgba(220,238,0,0.3)" } : {}}>
+        {isLoading ? "---" : value}
+      </p>
+      <p className={`font-mono-label text-[10px] mt-2 font-bold relative z-10 ${subColor}`}>{sub}</p>
     </div>
   );
 }
+
 
 export function MetricsRow({ metrics, isLoading }: MetricsRowProps) {
   return (
