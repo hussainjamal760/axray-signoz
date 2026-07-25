@@ -7,7 +7,7 @@ export interface LiveExecutionEvent {
   timestamp: string;
   eventType: string;
   phase: AxrayPhase;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'incomplete';
   title: string;
   description?: string;
   durationMs?: number;

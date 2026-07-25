@@ -1,4 +1,4 @@
-export type RunStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type RunStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'incomplete';
 
 export const ACTIVE_RUN_STATUSES = ['pending', 'queued', 'running'] as const;
 
@@ -69,7 +69,7 @@ export interface TimelineEvent {
   description?: string;
   phase: AxrayPhase;
   eventType: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'incomplete';
   durationMs?: number;
   metadata?: TimelineEventMetadata;
 }

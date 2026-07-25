@@ -22,7 +22,7 @@ import { appendTerminalLine } from './terminal-logger.service';
 
 const WORKSPACE_DIR = '/workspace';
 const DEFAULT_GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
-const MAX_TURNS = 15;
+const MAX_TURNS = 25;
 
 export interface AgentExecutionOptions {
   containerId: string;
@@ -36,6 +36,7 @@ export interface AgentExecutionResult {
   response: string;
   tokensUsed: number;
   cost?: number;
+  finishReason: 'natural' | 'max_turns';
 }
 
 const TOOL_DECLARATIONS: any[] = [
@@ -177,6 +178,7 @@ export const executePrompt = async (
     return {
       response: 'GROQ_API_KEY not configured. Set GROQ_API_KEY in server environment to enable live AI reasoning.',
       tokensUsed: 0,
+      finishReason: 'natural',
     };
   }
 
@@ -746,6 +748,7 @@ export const executePrompt = async (
         return {
           response: finalContent,
           tokensUsed: totalTokens,
+          finishReason: 'natural',
         };
       }
 
@@ -761,6 +764,7 @@ export const executePrompt = async (
     return {
       response: `Agent reached maximum turn limit (${maxTurns} turns) without explicit completion summary.`,
       tokensUsed: totalTokens,
+      finishReason: 'max_turns',
     };
   } catch (error: any) {
     span.setStatus({

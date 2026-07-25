@@ -74,7 +74,7 @@ export interface TimelineEvent {
   description?: string;
   phase: AxrayPhase;
   eventType: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'incomplete';
   durationMs?: number;
   metadata?: TimelineEventMetadata;
 }

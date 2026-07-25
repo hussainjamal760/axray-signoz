@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type RunStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type RunStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'incomplete';
 
 export interface IAgentRun extends Document {
   sessionId: mongoose.Types.ObjectId;
@@ -36,7 +36,7 @@ const AgentRunSchema: Schema = new Schema(
     prompt: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled'],
+      enum: ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled', 'incomplete'],
       default: 'pending',
     },
     response: { type: String },

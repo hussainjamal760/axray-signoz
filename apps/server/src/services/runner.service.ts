@@ -158,8 +158,10 @@ export const executeRun = async (runId: string): Promise<void> => {
       console.warn('[Runner Warning] Failed to capture git diff:', gitErr);
     }
 
-    // 6. Complete run
-    run.status = 'completed';
+    // 6. Complete or mark run incomplete based on finishReason
+    const isMaxTurns = result.finishReason === 'max_turns';
+    const finalStatus = isMaxTurns ? 'incomplete' : 'completed';
+    run.status = finalStatus;
     run.response = result.response;
     run.tokensUsed = result.tokensUsed;
     run.completedAt = new Date();
@@ -167,7 +169,11 @@ export const executeRun = async (runId: string): Promise<void> => {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     
-    appendTerminalLine(sessionIdStr, runId, 'success', `Run completed successfully in ${((run.durationMs || 0) / 1000).toFixed(1)}s (${run.tokensUsed || 0} tokens used).`);
+    if (isMaxTurns) {
+      appendTerminalLine(sessionIdStr, runId, 'stderr', `Run stopped after reaching max turn limit (${result.tokensUsed || 0} tokens used). Task may be incomplete.`);
+    } else {
+      appendTerminalLine(sessionIdStr, runId, 'success', `Run completed successfully in ${((run.durationMs || 0) / 1000).toFixed(1)}s (${run.tokensUsed || 0} tokens used).`);
+    }
 
     // Flush accumulated terminal output and persist onto AgentRun
     const finalTerminalOutput = await flushAndPersistTerminalOutput(runId);
@@ -181,7 +187,7 @@ export const executeRun = async (runId: string): Promise<void> => {
         [AXRAY_ATTRIBUTES.SESSION_ID]: sessionIdStr,
         [AXRAY_ATTRIBUTES.PHASE]: 'completion',
         [AXRAY_ATTRIBUTES.EVENT_TYPE]: 'run.completed',
-        [AXRAY_ATTRIBUTES.RUN_STATUS]: 'completed',
+        [AXRAY_ATTRIBUTES.RUN_STATUS]: finalStatus,
         'run.duration_ms': run.durationMs || 0,
       },
     });
@@ -198,13 +204,16 @@ export const executeRun = async (runId: string): Promise<void> => {
       timestamp: new Date().toISOString(),
       eventType: 'run.completed',
       phase: 'completion',
-      status: 'completed',
-      title: 'Run Completed',
-      description: `Agent completed execution successfully`,
+      status: finalStatus,
+      title: isMaxTurns ? 'Run Stopped (Max Turns Reached)' : 'Run Completed',
+      description: isMaxTurns
+        ? `Agent reached max turn limit before natural completion`
+        : `Agent completed execution successfully`,
       durationMs: run.durationMs,
       metadata: {
         response: run.response,
         tokensUsed: run.tokensUsed,
+        finishReason: result.finishReason,
         changeSummary: run.changeSummary,
         filesChanged: run.filesChanged,
         insertions: run.insertions,
@@ -212,7 +221,7 @@ export const executeRun = async (runId: string): Promise<void> => {
       },
     });
 
-    console.log(`[Runner] Run ${run._id} completed successfully in ${run.durationMs}ms with diff (${run.changeSummary}).`);
+    console.log(`[Runner] Run ${run._id} finished (${finalStatus}) in ${run.durationMs}ms with diff (${run.changeSummary}).`);
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : String(error);
     console.error(`[Runner] Execution failed for run ${runId}:`, errMessage);

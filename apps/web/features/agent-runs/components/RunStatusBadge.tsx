@@ -6,7 +6,8 @@ const statusColors: Record<RunStatus, { bg: string; text: string; border: string
   running: { bg: 'bg-primary-fixed-dim/20', text: 'text-primary-fixed', border: 'border-primary-fixed', icon: 'sync' },
   completed: { bg: 'bg-green-500/10', text: 'text-green-600', border: 'border-green-600', icon: 'check_circle' },
   failed: { bg: 'bg-error-container', text: 'text-error', border: 'border-error', icon: 'error' },
-  cancelled: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50', icon: 'block' }
+  cancelled: { bg: 'bg-surface-container', text: 'text-on-surface-variant', border: 'border-outline/50', icon: 'block' },
+  incomplete: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/50', icon: 'warning' },
 };
 
 export function RunStatusBadge({ status }: { status: RunStatus }) {
