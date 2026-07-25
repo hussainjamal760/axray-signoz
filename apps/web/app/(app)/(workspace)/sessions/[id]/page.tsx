@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession, useSessionSocket } from "@/features/sessions/hooks";
-import { useRuns, useCreateRun } from "@/features/agent-runs/hooks";
+import { useRuns, useCreateRun, useCancelRun } from "@/features/agent-runs/hooks";
 import { AgentRunSummary, TimelineEvent } from "@/features/agent-runs/types";
 import { AgentRunsList } from "@/features/agent-runs/components";
 import {
@@ -31,6 +31,7 @@ export default function SessionIdPage() {
   const { data: session, isLoading: sessionLoading, isError: sessionError } = useSession(id, { refetchInterval: false });
   const { data: fetchedRuns = [], isLoading: runsLoading, refetch: refetchRuns } = useRuns(id, { refetchInterval: false });
   const { mutate: createRun, isPending: isCreatingRun } = useCreateRun(id);
+  const { mutate: cancelRun } = useCancelRun(id);
 
   // Maintain local runs list for instant Socket.IO real-time updates
   const [runsState, setRunsState] = useState<AgentRunSummary[]>([]);
@@ -309,6 +310,7 @@ export default function SessionIdPage() {
           <div className="col-span-12 lg:col-span-7 flex flex-col">
             <InitializeContextPanel
               onSubmit={handlePromptSubmit}
+              onCancel={() => activeOrSelectedRun?.id && cancelRun(activeOrSelectedRun.id)}
               isPending={isCreatingRun}
               isRunning={isSelectedRunExecuting}
               liveStatusText={liveStatusText}

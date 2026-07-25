@@ -36,7 +36,7 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
   const topBucket = hasData ? data.reduce((a, b) => b.count > a.count ? b : a, data[0]) : null;
 
   return (
-    <div className="col-span-12 lg:col-span-6 border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col relative overflow-hidden">
+    <div className="h-full w-full border-[3px] border-white bg-[#0d0e08] p-6 brutalist-shadow flex flex-col relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.025]" style={{
         backgroundImage: "linear-gradient(#dcee00 1px, transparent 1px), linear-gradient(90deg, #dcee00 1px, transparent 1px)",
         backgroundSize: "32px 32px",
@@ -66,7 +66,7 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
           </div>
         )}
 
-        <div className="flex-1 min-h-[160px]">
+        <div className="flex-1 min-h-[160px] relative w-full mt-2">
           {isLoading ? (
             <div className="h-full flex flex-col items-center justify-center gap-3">
               <div className="w-8 h-8 border-[3px] border-primary-fixed border-t-transparent animate-spin" />
@@ -78,7 +78,8 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
               <span className="font-mono-label text-xs text-outline uppercase font-bold">No duration data</span>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <div className="absolute inset-0">
+              <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="6 6" stroke="rgba(255,255,255,0.04)" vertical={false} />
                 <XAxis
@@ -113,6 +114,7 @@ export function DurationDistributionChart({ runs, isLoading }: Props) {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            </div>
           )}
         </div>
       </div>

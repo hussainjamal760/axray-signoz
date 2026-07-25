@@ -154,3 +154,19 @@ export const getAnomalies = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const getSessionToolPerformance = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { sessionId } = req.params;
+    if (!sessionId) {
+      throw new AppError(400, 'Session ID is required');
+    }
+
+    const { fetchToolPerformanceFromClickHouse } = await import('../services/signoz-timeline.service');
+    const tools = await fetchToolPerformanceFromClickHouse(sessionId);
+
+    res.json({ success: true, tools });
+  } catch (error) {
+    next(error);
+  }
+};
+

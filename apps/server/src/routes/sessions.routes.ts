@@ -12,7 +12,7 @@ import {
   createPullRequest,
   getPullRequestStatus,
 } from '../controllers/sessions.controller';
-import { createRun, listRunsForSession } from '../controllers/agent-runs.controller';
+import { createRun, listRunsForSession, getSessionToolPerformance } from '../controllers/agent-runs.controller';
 
 const router = Router();
 
@@ -30,5 +30,6 @@ router.get('/:id/pull-request', requireAuth, getPullRequestStatus);
 // Nested Agent Runs
 router.post('/:sessionId/runs', requireAuth, validate(createAgentRunSchema), createRun);
 router.get('/:sessionId/runs', requireAuth, listRunsForSession);
+router.get('/:sessionId/analytics/tools', requireAuth, getSessionToolPerformance);
 
 export const sessionsRouter = router;

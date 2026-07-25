@@ -160,16 +160,20 @@ export const executeRun = async (runId: string): Promise<void> => {
 
     // 6. Complete or mark run incomplete based on finishReason
     const isMaxTurns = result.finishReason === 'max_turns';
-    const finalStatus = isMaxTurns ? 'incomplete' : 'completed';
+    const isCancelled = result.finishReason === 'cancelled';
+    const finalStatus = isCancelled ? 'cancelled' : (isMaxTurns ? 'incomplete' : 'completed');
     run.status = finalStatus;
     run.response = result.response;
     run.tokensUsed = result.tokensUsed;
+    run.cost = result.cost;
     run.completedAt = new Date();
     if (run.startedAt) {
       run.durationMs = run.completedAt.getTime() - run.startedAt.getTime();
     }
     
-    if (isMaxTurns) {
+    if (isCancelled) {
+      appendTerminalLine(sessionIdStr, runId, 'error', `Run was force stopped by user (${result.tokensUsed || 0} tokens used).`);
+    } else if (isMaxTurns) {
       appendTerminalLine(sessionIdStr, runId, 'stderr', `Run stopped after reaching max turn limit (${result.tokensUsed || 0} tokens used). Task may be incomplete.`);
     } else {
       appendTerminalLine(sessionIdStr, runId, 'success', `Run completed successfully in ${((run.durationMs || 0) / 1000).toFixed(1)}s (${run.tokensUsed || 0} tokens used).`);
@@ -205,8 +209,10 @@ export const executeRun = async (runId: string): Promise<void> => {
       eventType: 'run.completed',
       phase: 'completion',
       status: finalStatus,
-      title: isMaxTurns ? 'Run Stopped (Max Turns Reached)' : 'Run Completed',
-      description: isMaxTurns
+      title: isCancelled ? 'Run Cancelled' : (isMaxTurns ? 'Run Stopped (Max Turns Reached)' : 'Run Completed'),
+      description: isCancelled
+        ? `Agent execution was force stopped by the user`
+        : isMaxTurns
         ? `Agent reached max turn limit before natural completion`
         : `Agent completed execution successfully`,
       durationMs: run.durationMs,
@@ -237,6 +243,16 @@ export const executeRun = async (runId: string): Promise<void> => {
 
     run.status = 'failed';
     run.errorMessage = errMessage;
+    
+    if (error && typeof error === 'object') {
+      if ('cost' in error && typeof (error as any).cost === 'number') {
+        run.cost = (error as any).cost;
+      }
+      if ('tokensUsed' in error && typeof (error as any).tokensUsed === 'number') {
+        run.tokensUsed = (error as any).tokensUsed;
+      }
+    }
+
     run.completedAt = new Date();
     run.terminalOutput = finalTerminalOutput;
     if (run.startedAt) {

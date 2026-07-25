@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { SessionSummary } from "../types/sessions.types";
 import { AgentRunSummary } from "@/features/agent-runs/types";
 import { LiveTerminalLine } from "../hooks/useSessionSocket";
+import { BASE_URL } from "@/lib/api-client";
 
 export interface TerminalPanelProps {
   session?: SessionSummary;
@@ -26,7 +27,7 @@ export function TerminalPanel({
   // Fetch authoritative SigNoz ClickHouse logs for finished runs
   useEffect(() => {
     if (selectedRun?.id && !isRunning) {
-      fetch(`/api/agent-runs/${selectedRun.id}/logs`)
+      fetch(`${BASE_URL}/api/agent-runs/${selectedRun.id}/logs`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && Array.isArray(data.logs) && data.logs.length > 0) {

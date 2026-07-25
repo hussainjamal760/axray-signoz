@@ -12,6 +12,7 @@ import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode, trace, context } from '@opentelemetry/api';
 import { emitLiveEvent } from '../sockets/socket.emitter';
 import { appendTerminalLine } from './terminal-logger.service';
+import { AgentRun } from '../models/agent-run.model';
 
 /**
  * Agent Service
@@ -36,7 +37,7 @@ export interface AgentExecutionResult {
   response: string;
   tokensUsed: number;
   cost?: number;
-  finishReason: 'natural' | 'max_turns';
+  finishReason: 'natural' | 'max_turns' | 'cancelled';
 }
 
 const TOOL_DECLARATIONS: any[] = [
@@ -191,10 +192,27 @@ export const executePrompt = async (
   let turn = 0;
   const maxTurns = options.maxTurns || MAX_TURNS;
   let totalTokens = 0;
+  let totalCostUsd = 0;
   const executedToolsCache = new Map<string, { output: string; exitCode: number }>();
 
   try {
     while (turn < maxTurns) {
+      // Check for manual cancellation
+      if (options.runId) {
+        const runDoc = await AgentRun.findById(options.runId).select('status');
+        if (runDoc && runDoc.status === 'cancelled') {
+          console.log(`[Agent] Run ${options.runId} was cancelled by user. Aborting execution loop.`);
+          span.setAttribute('agent.status', 'cancelled');
+          span.end();
+          return {
+            response: 'Agent execution was force stopped by the user.',
+            tokensUsed: totalTokens,
+            cost: totalCostUsd,
+            finishReason: 'cancelled',
+          };
+        }
+      }
+
       turn++;
       console.log(`[Agent Turn ${turn}/${maxTurns}] Querying Groq (${DEFAULT_GROQ_MODEL})...`);
 
@@ -332,7 +350,7 @@ export const executePrompt = async (
                   failedGen = extracted;
                 }
               }
-            } catch {}
+            } catch { }
           }
 
           const isToolUseOrParseFailed =
@@ -373,6 +391,7 @@ export const executePrompt = async (
           totalTokens += tTokens;
 
           const costUsd = ((pTokens * 0.59) + (cTokens * 0.79)) / 1_000_000;
+          totalCostUsd += costUsd;
           const latencyMs = Date.now() - llmStartTime;
 
           llmSpan.setAttribute(AXRAY_ATTRIBUTES.GEN_AI_INPUT_TOKENS, pTokens);
@@ -459,7 +478,7 @@ export const executePrompt = async (
                 parsedArgs.content = '<content written, see file on disk>';
                 tc.function.arguments = JSON.stringify(parsedArgs);
               }
-            } catch {}
+            } catch { }
           }
         }
       }
@@ -748,6 +767,7 @@ export const executePrompt = async (
         return {
           response: finalContent,
           tokensUsed: totalTokens,
+          cost: totalCostUsd,
           finishReason: 'natural',
         };
       }
@@ -764,6 +784,7 @@ export const executePrompt = async (
     return {
       response: `Agent reached maximum turn limit (${maxTurns} turns) without explicit completion summary.`,
       tokensUsed: totalTokens,
+      cost: totalCostUsd,
       finishReason: 'max_turns',
     };
   } catch (error: any) {
@@ -772,6 +793,8 @@ export const executePrompt = async (
       message: error?.message || String(error),
     });
     span.end();
+    error.cost = totalCostUsd;
+    error.tokensUsed = totalTokens;
     throw error;
   }
 };

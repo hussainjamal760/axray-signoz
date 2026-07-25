@@ -5,9 +5,6 @@ interface AnalyticsHeaderProps {
   session?: any;
   metrics: AnalyticsMetrics;
   isLoading?: boolean;
-  runs: AgentRunSummary[];
-  selectedRunId: string;
-  onSelectRun: (id: string) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -26,7 +23,7 @@ function shortLabel(run: AgentRunSummary, index: number): string {
 }
 
 export function AnalyticsHeader({
-  session, metrics, isLoading, runs, selectedRunId, onSelectRun,
+  session, metrics, isLoading
 }: AnalyticsHeaderProps) {
   const lastRunTime = metrics.lastRunAt
     ? new Date(metrics.lastRunAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -61,52 +58,6 @@ export function AnalyticsHeader({
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Run Filter Tabs */}
-      <div className="flex flex-wrap gap-2 border-b-[3px] border-outline pb-4">
-        {/* ALL button */}
-        <button
-          onClick={() => onSelectRun("all")}
-          className={`px-4 py-2 font-mono-label text-xs font-black uppercase border-[3px] transition-all ${
-            selectedRunId === "all"
-              ? "bg-primary-fixed text-on-primary-fixed border-primary-fixed brutalist-shadow"
-              : "border-outline text-on-surface-variant bg-surface hover:border-white hover:text-white"
-          }`}
-        >
-          All Runs ({runs.length})
-        </button>
-
-        {/* Individual run buttons */}
-        {runs.slice(0, 12).map((run, idx) => {
-          const isSelected = selectedRunId === run.id;
-          const statusClass = statusColors[run.status] || "bg-outline text-black";
-          const shortPrompt = (run.prompt || "").slice(0, 22) + ((run.prompt || "").length > 22 ? "…" : "");
-
-          return (
-            <button
-              key={run.id}
-              onClick={() => onSelectRun(run.id)}
-              title={run.prompt}
-              className={`px-3 py-2 font-mono-label text-[10px] font-black uppercase border-[3px] transition-all flex items-center gap-2 ${
-                isSelected
-                  ? "bg-surface-container text-white border-white brutalist-shadow"
-                  : "border-outline text-on-surface-variant bg-surface hover:border-white hover:text-white"
-              }`}
-            >
-              <span className={`text-[9px] px-1.5 py-0.5 font-black ${statusClass}`}>
-                #{idx + 1}
-              </span>
-              <span className="hidden sm:inline">{shortPrompt || `Run ${idx + 1}`}</span>
-            </button>
-          );
-        })}
-
-        {runs.length > 12 && (
-          <span className="px-3 py-2 font-mono-label text-[10px] text-on-surface-variant font-bold self-center">
-            +{runs.length - 12} more
-          </span>
-        )}
       </div>
     </div>
   );

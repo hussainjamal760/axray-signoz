@@ -16,6 +16,7 @@ import { ToolsUsageChart } from "@/features/sessions/components/ToolsUsageChart"
 import { AnalyticsInsightCards } from "@/features/sessions/components/AnalyticsInsightCards";
 import { TokensOverTimeChart } from "@/features/sessions/components/TokensOverTimeChart";
 import { DurationDistributionChart } from "@/features/sessions/components/DurationDistributionChart";
+import { ToolPerformanceCard } from "@/features/sessions/components/ToolPerformanceCard";
 
 import { SmartAlertsTab } from "@/features/sessions/components/SmartAlertsTab";
 
@@ -58,16 +59,8 @@ export default function AnalyticsDashboardPage() {
   const { data: session } = useSession(sessionId);
   const { data: allRuns = [], isLoading } = useRuns(sessionId);
 
-  // "all" = all runs in this session, or a specific runId
-  const [selectedRunId, setSelectedRunId] = useState<string>("all");
-
-  const filteredRuns = useMemo(() => {
-    if (selectedRunId === "all") return allRuns;
-    return allRuns.filter(r => r.id === selectedRunId);
-  }, [selectedRunId, allRuns]);
-
-  const metrics = useAnalytics(filteredRuns);
-  const toolsData = useToolsAggregate(filteredRuns);
+  const metrics = useAnalytics(allRuns);
+  const toolsData = useToolsAggregate(allRuns);
 
   return (
     <main
@@ -78,15 +71,11 @@ export default function AnalyticsDashboardPage() {
         session={session}
         metrics={metrics}
         isLoading={isLoading}
-        runs={allRuns}
-        selectedRunId={selectedRunId}
-        onSelectRun={setSelectedRunId}
       />
       <MetricsRow metrics={metrics} isLoading={isLoading} />
 
-      {/* Smart Alerts Section */}
       <div className="mb-6 w-full">
-        <SmartAlertsTab runs={filteredRuns} />
+        <SmartAlertsTab runs={allRuns} />
       </div>
 
       {/* Row 1: Success/Failure trend + Failure causes */}
@@ -102,9 +91,16 @@ export default function AnalyticsDashboardPage() {
       </div>
 
       {/* Row 3: Tools breakdown + Duration histogram */}
-      <div className="grid grid-cols-12 gap-6 mb-6 w-full">
-        <ToolsUsageChart toolsData={toolsData} isLoading={isLoading} />
-        <DurationDistributionChart runs={filteredRuns} isLoading={isLoading} />
+      <div className="grid grid-cols-12 gap-6 mb-6 w-full h-[400px]">
+        <div className="col-span-12 lg:col-span-4 h-full">
+          <ToolsUsageChart toolsData={toolsData} isLoading={isLoading} />
+        </div>
+        <div className="col-span-12 lg:col-span-4 h-full">
+          <ToolPerformanceCard sessionId={sessionId} />
+        </div>
+        <div className="col-span-12 lg:col-span-4 h-full">
+          <DurationDistributionChart runs={allRuns} isLoading={isLoading} />
+        </div>
       </div>
 
       <AnalyticsInsightCards metrics={metrics} isLoading={isLoading} />

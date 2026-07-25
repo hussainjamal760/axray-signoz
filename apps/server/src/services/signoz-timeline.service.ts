@@ -45,6 +45,45 @@ async function fetchSigNozTracesFromClickHouse(runId: string): Promise<SpanRecor
   return [];
 }
 
+export async function fetchToolPerformanceFromClickHouse(sessionId: string) {
+  try {
+    // We group by tool.name which is stored in attributes_string['tool.name']
+    const query = `
+      SELECT 
+        attributes_string['tool.name'] as toolName, 
+        avg(durationNano) as avgDurationNano, 
+        max(durationNano) as maxDurationNano, 
+        count() as executionCount 
+      FROM signoz_traces.signoz_index_v3 
+      WHERE name = 'tool.call' AND attributes_string['agent.session_id'] = '${sessionId}' 
+      GROUP BY toolName 
+      ORDER BY avgDurationNano DESC 
+      FORMAT JSON
+    `;
+
+    const { stdout } = await execFileAsync('docker', [
+      'exec',
+      'signoz-telemetrystore-clickhouse-0-0',
+      'clickhouse-client',
+      '--query',
+      query,
+    ]);
+
+    const parsed = JSON.parse(stdout);
+    if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+      return parsed.data.map((row: any) => ({
+        toolName: row.toolName || 'unknown',
+        avgDurationMs: row.avgDurationNano ? Math.round(Number(row.avgDurationNano) / 1_000_000) : 0,
+        maxDurationMs: row.maxDurationNano ? Math.round(Number(row.maxDurationNano) / 1_000_000) : 0,
+        executionCount: row.executionCount ? Number(row.executionCount) : 0,
+      }));
+    }
+  } catch (err) {
+    console.warn(`[SigNoz ClickHouse Query] Error fetching tool performance for sessionId=${sessionId}:`, err instanceof Error ? err.message : String(err));
+  }
+  return [];
+}
+
 export interface TimelineEventMetadata {
   repository?: string;
   branch?: string;
