@@ -1,21 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import HeroSimulator from "@/features/marketing/components/HeroSimulator";
 import AgentBentoGrid from "@/features/marketing/components/AgentBentoGrid";
 import VideoModal from "@/features/marketing/components/VideoModal";
+import SetupGuideModal from "@/features/marketing/components/SetupGuideModal";
 import SectionVideoPlayer from "@/features/marketing/components/SectionVideoPlayer";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { ArrowRight, Play, Rocket, ShieldCheck, Terminal, Cpu, Activity, Sparkles, AlertTriangle, Layers, Eye } from "lucide-react";
+import { ArrowRight, Play, Rocket, ShieldCheck, Terminal, Cpu, Activity, Sparkles, AlertTriangle, Layers, Eye, BookOpen, Wrench } from "lucide-react";
 
 export default function Home() {
   const { data, isLoading } = useCurrentUser();
   const isAuthenticated = !!data?.authenticated;
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
+
+  // Automatically trigger setup guide modal on page load after brief delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSetupModalOpen(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   const heroCta = isLoading ? null : (
     <Link
@@ -69,12 +79,22 @@ export default function Home() {
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-center max-w-[1500px] mx-auto relative z-10">
             <div className="xl:col-span-7 space-y-8">
 
-              {/* Version Pill */}
-              <div className="inline-flex items-center px-4 py-1.5 bg-surface-container-lowest/60 backdrop-blur-xl border border-outline-variant/30 rounded-full text-xs font-medium text-white shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2.5 animate-pulse shadow-[0_0_8px_currentColor]"></span>
-                <span className="font-mono text-primary-fixed font-bold uppercase tracking-wider">AXRAY v1.0.0</span>
-                <span className="text-on-surface-variant/40 mx-2.5">|</span>
-                <span className="text-on-surface-variant font-mono">Live Agent Observability</span>
+              {/* Version Pill & Setup Instructions Button */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex items-center px-4 py-1.5 bg-surface-container-lowest/60 backdrop-blur-xl border border-outline-variant/30 rounded-full text-xs font-medium text-white shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2.5 animate-pulse shadow-[0_0_8px_currentColor]"></span>
+                  <span className="font-mono text-primary-fixed font-bold uppercase tracking-wider">AXRAY v1.0.0</span>
+                  <span className="text-on-surface-variant/40 mx-2.5">|</span>
+                  <span className="text-on-surface-variant font-mono">Live Agent Observability</span>
+                </div>
+
+                <button
+                  onClick={() => setIsSetupModalOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary-fixed/10 hover:bg-primary-fixed/20 border border-primary-fixed/30 hover:border-primary-fixed rounded-full text-xs font-mono font-bold text-primary-fixed uppercase tracking-wider transition-all duration-200 shadow-[0_0_15px_rgba(220,238,0,0.1)] cursor-pointer"
+                >
+                  <Wrench size={13} />
+                  <span>Setup Guide (Self-Hosted)</span>
+                </button>
               </div>
 
               {/* Compact Developer Headline */}
@@ -98,7 +118,7 @@ export default function Home() {
 
                 <button 
                   onClick={() => setIsVideoModalOpen(true)}
-                  className="bg-surface-container-lowest/60 hover:bg-surface-container/60 text-white font-semibold text-sm md:text-base px-8 py-4 rounded-2xl border border-outline-variant/30 backdrop-blur-xl transition-all duration-300 flex items-center justify-center gap-2.5 hover:border-white/40 shadow-sm w-full sm:w-auto"
+                  className="bg-surface-container-lowest/60 hover:bg-surface-container/60 text-white font-semibold text-sm md:text-base px-8 py-4 rounded-2xl border border-outline-variant/30 backdrop-blur-xl transition-all duration-300 flex items-center justify-center gap-2.5 hover:border-white/40 shadow-sm w-full sm:w-auto cursor-pointer"
                 >
                   <Play size={18} className="text-primary-fixed" />
                   <span>Watch Demo</span>
@@ -313,6 +333,14 @@ export default function Home() {
         onClose={() => setIsVideoModalOpen(false)}
         videoSrc="/demo.mp4"
       />
+
+      {/* Setup Guide Modal (Opens automatically on load) */}
+      <SetupGuideModal
+        isOpen={isSetupModalOpen}
+        onClose={() => setIsSetupModalOpen(false)}
+        onWatchDemo={() => setIsVideoModalOpen(true)}
+      />
     </div>
   );
 }
+
