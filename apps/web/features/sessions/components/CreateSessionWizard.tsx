@@ -108,11 +108,6 @@ export function CreateSessionWizard() {
         setSelectedBranch(createdName);
       }
 
-      setToast({
-        type: "success",
-        message: `Branch "${createdName}" created successfully`,
-      });
-
       setNewBranchName("");
       setIsCreatingBranchPanelOpen(false);
     } catch (err: any) {
