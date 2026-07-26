@@ -101,13 +101,15 @@ export default function ObserverDashboardPage() {
             <span className="material-symbols-outlined text-xs text-white/40 group-hover:text-white/80 transition-colors">arrow_outward</span>
           </a>
 
-          <Link
-            href={analysisLink}
-            className="group relative flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold px-5 py-2 rounded-2xl text-xs uppercase tracking-wider transition-all duration-300 hover:shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <span className="material-symbols-outlined text-sm">analytics</span>
-            <span>EXPLAIN FAILURE</span>
-          </Link>
+          {activeRun?.status === 'failed' && (
+            <Link
+              href={analysisLink}
+              className="group relative flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold px-5 py-2 rounded-2xl text-xs uppercase tracking-wider transition-all duration-300 hover:shadow-[0_0_15px_rgba(244,63,94,0.25)] hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <span className="material-symbols-outlined text-sm">analytics</span>
+              <span>EXPLAIN FAILURE</span>
+            </Link>
+          )}
         </div>
       </section>
 
