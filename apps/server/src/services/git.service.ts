@@ -59,7 +59,13 @@ export const getDiff = async (
   console.log(`[Git] Fetching git diff for container ${containerId}...`);
 
   try {
-    // 1. Fetch raw diff (staged + unstaged working tree changes)
+    // 1. Mark untracked files as intent-to-add (git add -N .) so git diff HEAD includes new untracked files in diff & numstat
+    await containerService.executeCommand(
+      containerId,
+      `cd ${WORKSPACE_DIR} && git add -N .`
+    );
+
+    // 2. Fetch raw diff (staged + unstaged + intent-to-add working tree changes)
     const diffRes = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && (git diff HEAD || git diff)`,
@@ -68,11 +74,17 @@ export const getDiff = async (
     const fullDiff = diffRes.exitCode === 0 ? diffRes.output : '';
     const diffSize = Buffer.byteLength(fullDiff, 'utf8');
 
-    // 2. Fetch numstat for filesChanged, insertions, deletions
+    // 3. Fetch numstat for filesChanged, insertions, deletions
     const numstatRes = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && (git diff HEAD --numstat || git diff --numstat)`,
       { maxBufferBytes: 100000 }
+    );
+
+    // 4. Safely reset intent-to-add index state so working tree remains clean for PR/commit flow
+    await containerService.executeCommand(
+      containerId,
+      `cd ${WORKSPACE_DIR} && git reset`
     );
 
     const numstatOutput = numstatRes.exitCode === 0 ? numstatRes.output : '';
@@ -96,7 +108,7 @@ export const getDiff = async (
       }
     }
 
-    // 3. Check for untracked files (git status --porcelain)
+    // 5. Fallback check for any leftover untracked files (git status --porcelain)
     const statusRes = await containerService.executeCommand(
       containerId,
       `cd ${WORKSPACE_DIR} && git status --porcelain`,
