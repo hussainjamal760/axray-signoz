@@ -21,10 +21,12 @@ export default function Home() {
 
   // Automatically trigger setup guide modal on page load after brief delay
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsSetupModalOpen(true);
-    }, 600);
-    return () => clearTimeout(timer);
+    if (typeof window !== "undefined" && window.location.hostname === "axray-signoz-web.vercel.app") {
+      const timer = setTimeout(() => {
+        setIsSetupModalOpen(true);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const heroCta = isLoading ? null : (
