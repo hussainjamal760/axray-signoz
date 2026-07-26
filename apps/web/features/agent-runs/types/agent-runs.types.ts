@@ -5,6 +5,7 @@ export const ACTIVE_RUN_STATUSES = ['pending', 'queued', 'running'] as const;
 export interface AgentRunSummary {
   id: string;
   sessionId: string;
+  traceId?: string;
   prompt: string;
   status: RunStatus;
   response?: string;
@@ -41,6 +42,8 @@ export type AxrayPhase =
   | 'error';
 
 export interface TimelineEventMetadata {
+  traceId?: string;
+  spanId?: string;
   repository?: string;
   branch?: string;
   runtime?: string;
@@ -67,6 +70,7 @@ export interface TimelineEventMetadata {
 
 export interface TimelineEvent {
   id: string;
+  traceId?: string;
   timestamp: string;
   title: string;
   description?: string;
