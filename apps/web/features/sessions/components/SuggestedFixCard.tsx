@@ -24,16 +24,16 @@ export function SuggestedFixCard({ activeRun }: SuggestedFixCardProps) {
   }, [activeRun]);
 
   return (
-    <div className="bg-emerald-500/10 backdrop-blur-md rounded-2xl border border-emerald-500/30 p-6 shadow-sm reveal-text relative overflow-hidden group" style={{ animationDelay: '0.3s' }}>
+    <div className="bg-emerald-500/10 backdrop-blur-md rounded-3xl border border-emerald-500/30 p-7 md:p-8 min-h-[150px] flex flex-col justify-center shadow-sm reveal-text relative overflow-hidden group" style={{ animationDelay: '0.3s' }}>
       {/* Subtle Glow */}
-      <div className="absolute w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl -top-10 -right-10 pointer-events-none group-hover:bg-emerald-500/20 transition-all duration-700"></div>
+      <div className="absolute w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl -top-10 -right-10 pointer-events-none group-hover:bg-emerald-500/20 transition-all duration-700"></div>
       
       <div className="relative z-10">
-        <h3 className="text-emerald-400 font-bold uppercase text-[11px] mb-4 tracking-widest flex items-center gap-2">
+        <h3 className="text-emerald-400 font-bold uppercase text-[11px] mb-3 tracking-widest flex items-center gap-2">
           <span className="material-symbols-outlined text-base">auto_fix</span>
           Recommended Solution
         </h3>
-        <p className="text-xl md:text-2xl font-bold text-emerald-300 leading-relaxed mb-2">
+        <p className="text-base md:text-lg font-semibold text-emerald-300 leading-relaxed">
           "{fixText}"
         </p>
       </div>
