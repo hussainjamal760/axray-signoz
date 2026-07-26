@@ -184,33 +184,103 @@ flowchart TD
 
 ---
 
-## 🚀 Quickstart Guide
+# 🚀 AXRAY — Quickstart Guide
 
-### 1. Clone & Configure
+---
+
+## 🧪 For Judges: Zero-Setup Local Reproduction
+
+This is the officially supported flow for reproducing this project. It requires
+only **Docker** and **Foundry** (SigNoz's official CLI) — no manual database setup,
+no cloud accounts, and only one config value to fill in (your Groq API key).
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and
+  running (at least 4GB RAM allocated to Docker)
+- [Foundry CLI (`foundryctl`)](https://github.com/SigNoz/foundry) installed —
+  see the [Foundry quickstart](https://signoz.io/docs/install/docker/) for your OS
+
+### Step 1 — Clone the repo
 
 ```bash
 git clone https://github.com/hussainjamal760/axray-signoz.git
 cd axray-signoz
 ```
 
-Create `apps/server/.env`:
-```env
-PORT=3001
-MONGO_URI=mongodb://localhost:27017/axray
-FRONTEND_URL=http://localhost:3000
-GROQ_API_KEY=gsk_your_groq_api_key
-SIGNOZ_INSTANCE_URL=http://localhost:8080
-SIGNOZ_API_KEY=your_signoz_api_key
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+### Step 2 — Deploy SigNoz + MCP Server (via Foundry)
+
+```bash
+cd deploy
+foundryctl cast -f casting.yaml
 ```
 
-Create `apps/web/.env.local`:
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_SIGNOZ_URL=http://localhost:8080
+> **Note:** the first run pulls several large Docker images and may take a few
+> minutes. Subsequent runs are much faster since images are cached.
+
+Once complete, confirm SigNoz is up:
+
+- **SigNoz UI:** [http://localhost:8080](http://localhost:8080)
+
+### Step 3 — Configure your API key
+
+```bash
+cd ..
+cp .env.example .env
 ```
 
-### 2. Install & Launch
+Open `.env` and set your Groq API key:
+
+```env
+GROQ_API_KEY=gsk_your_groq_api_key_here
+```
+
+Everything else in `.env` is pre-configured with sensible defaults for this
+containerized flow (local MongoDB, container-network SigNoz endpoints) — no
+other changes needed.
+
+### Step 4 — Launch AXRAY
+
+```bash
+docker compose up -d
+```
+
+This starts three containers — the AXRAY backend, the AXRAY frontend, and a
+local MongoDB instance — all joined to the same Docker network SigNoz created
+in Step 2.
+
+
+### Step 5 — Open AXRAY
+
+- 📱 **AXRAY Dashboard:** [http://localhost:3000](http://localhost:3000)
+- ⚙️ **AXRAY API:** [http://localhost:3001](http://localhost:3001)
+- 📊 **SigNoz UI:** [http://localhost:8080](http://localhost:8080)
+
+Create a session, run a prompt, and watch real-time traces, logs, and metrics
+flow into SigNoz — including our pre-attached Groq dashboard and alert rules —
+as the agent works.
+
+### Verifying it's real, live telemetry
+
+Once a session run completes:
+
+1. Open [http://localhost:8080/traces](http://localhost:8080/traces)
+2. Filter by `service.name = axray-agent`
+3. You'll see live OpenTelemetry trace trees for every LLM request, tool call,
+   and workspace operation from the run you just triggered
+
+### Stopping everything
+
+```bash
+docker compose down
+cd deploy/pours/deployment && docker compose down
+```
+
+---
+
+
+
+### 2. Install & launch
 
 ```bash
 pnpm install
@@ -220,41 +290,6 @@ pnpm dev
 - 📱 **AXRAY Dashboard:** `http://localhost:3000`
 - ⚙️ **AXRAY API:** `http://localhost:3001`
 - 📊 **SigNoz UI:** `http://localhost:8080`
-
----
-
-## 🧪 Judge's Evaluation Guide (Zero-Friction Local Setup)
-
-To evaluate AXRAY locally with full SigNoz capabilities (Dashboards & Alerts) without running multiple commands, we have provided an automated setup script.
-
-### Step 1: Clone & Configure
-```bash
-git clone https://github.com/hussainjamal760/axray-signoz.git
-cd axray-signoz
-```
-1. Create `apps/server/.env` from the example file:
-   ```bash
-   cp apps/server/.env.example apps/server/.env
-   ```
-2. **Open `apps/server/.env` and add your `GROQ_API_KEY`.**
-   *(Note: You do NOT need to configure the `MONGO_URI`. The startup script will automatically spin up a local MongoDB container and configure the URI for you).*
-
-### Step 2: One-Click Launch 🚀
-Ensure you have Docker Desktop running (with at least 4GB RAM), then simply run:
-```bash
-chmod +x start.sh
-./start.sh
-```
-
-**What the script does automatically for you:**
-- Automatically provisions `MONGO_URI` and starts a MongoDB container for AXRAY's backend.
-- Installs `foundryctl` (SigNoz manager) using the latest `foundry.sh` installer into `~/.local/bin`.
-- Deploys SigNoz locally and safely waits for the `http://localhost:8080` root UI to become healthy.
-- Installs all workspace dependencies using `pnpm`.
-- **Dynamically queries the SigNoz Postgres metastore** to extract your fresh `orgId` and `userId` UUIDs, and seamlessly injects AXRAY's custom Dashboards and Alert Rules without any manual copy-pasting.
-- Starts the Next.js Frontend and Express Backend (`pnpm dev`).
-
-When the script finishes, open **`http://localhost:3000`** in your browser. Start an agent session, and watch the traces and alerts stream live into your local SigNoz instance at `http://localhost:8080`!
 
 ---
 
