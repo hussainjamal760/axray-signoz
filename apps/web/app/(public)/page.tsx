@@ -13,23 +13,37 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, Play, Rocket, ShieldCheck, Terminal, Cpu, Activity, Sparkles, AlertTriangle, Layers, Eye, BookOpen, Wrench } from "lucide-react";
 
+import { isVercelProductionDomain } from "@/lib/utils";
+
 export default function Home() {
   const { data, isLoading } = useCurrentUser();
   const isAuthenticated = !!data?.authenticated;
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
 
-  // Automatically trigger setup guide modal on page load after brief delay
+  // Automatically trigger setup guide modal on page load or when setup query param is present
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hostname === "axray-signoz-web.vercel.app") {
-      const timer = setTimeout(() => {
-        setIsSetupModalOpen(true);
-      }, 600);
-      return () => clearTimeout(timer);
+    if (typeof window !== "undefined") {
+      const isVercel = isVercelProductionDomain();
+      const hasSetupParam = window.location.search.includes("setup=true");
+      if (isVercel || hasSetupParam) {
+        const timer = setTimeout(() => {
+          setIsSetupModalOpen(true);
+        }, 400);
+        return () => clearTimeout(timer);
+      }
     }
   }, []);
 
-  const heroCta = isLoading ? null : (
+  const heroCta = isLoading ? null : isVercelProductionDomain() ? (
+    <button
+      onClick={() => setIsSetupModalOpen(true)}
+      className="bg-primary-fixed hover:bg-primary-fixed/90 text-black font-bold text-sm md:text-base px-8 py-4 rounded-2xl shadow-[0_0_25px_rgba(220,238,0,0.35)] hover:shadow-[0_0_35px_rgba(220,238,0,0.55)] transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 w-full sm:w-auto"
+    >
+      <span>Run Self-Hosted Setup</span>
+      <Rocket size={18} strokeWidth={2.5} className="animate-bounce" />
+    </button>
+  ) : (
     <Link
       href={isAuthenticated ? "/sessions" : "/auth"}
       className="bg-primary-fixed hover:bg-primary-fixed/90 text-black font-bold text-sm md:text-base px-8 py-4 rounded-2xl shadow-[0_0_25px_rgba(220,238,0,0.35)] hover:shadow-[0_0_35px_rgba(220,238,0,0.55)] transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 w-full sm:w-auto"
