@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import HeroSimulator from "@/features/marketing/components/HeroSimulator";
 import AgentBentoGrid from "@/features/marketing/components/AgentBentoGrid";
+import VideoModal from "@/features/marketing/components/VideoModal";
+import SectionVideoPlayer from "@/features/marketing/components/SectionVideoPlayer";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -12,6 +15,7 @@ import { ArrowRight, Play, Rocket, ShieldCheck, Terminal, Cpu, Activity, Sparkle
 export default function Home() {
   const { data, isLoading } = useCurrentUser();
   const isAuthenticated = !!data?.authenticated;
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   const heroCta = isLoading ? null : (
     <Link
@@ -92,7 +96,10 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 pt-2">
                 {heroCta}
 
-                <button className="bg-surface-container-lowest/60 hover:bg-surface-container/60 text-white font-semibold text-sm md:text-base px-8 py-4 rounded-2xl border border-outline-variant/30 backdrop-blur-xl transition-all duration-300 flex items-center justify-center gap-2.5 hover:border-white/40 shadow-sm w-full sm:w-auto">
+                <button 
+                  onClick={() => setIsVideoModalOpen(true)}
+                  className="bg-surface-container-lowest/60 hover:bg-surface-container/60 text-white font-semibold text-sm md:text-base px-8 py-4 rounded-2xl border border-outline-variant/30 backdrop-blur-xl transition-all duration-300 flex items-center justify-center gap-2.5 hover:border-white/40 shadow-sm w-full sm:w-auto"
+                >
                   <Play size={18} className="text-primary-fixed" />
                   <span>Watch Demo</span>
                 </button>
@@ -138,23 +145,29 @@ export default function Home() {
         </section>
 
         {/* The Problem Section */}
-        <section className="border-y border-outline-variant/20 bg-surface-container-lowest/30 backdrop-blur-md py-20 relative">
-          <div className="max-w-4xl mx-auto text-center px-6 space-y-8 relative z-10">
-            <div className="inline-flex items-center gap-2 border border-red-500/30 bg-red-500/10 px-4 py-1.5 rounded-full text-red-400 text-xs font-semibold uppercase tracking-wider shadow-sm">
-              <AlertTriangle size={14} />
+        <section className="border-y border-outline-variant/20 bg-surface-container-lowest/30 backdrop-blur-md py-24 relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+          <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] h-[400px] bg-red-500/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+
+          <div className="max-w-6xl mx-auto text-center px-6 space-y-8 relative z-10">
+            <div className="inline-flex items-center gap-2 border border-red-500/40 bg-red-500/10 px-5 py-2 rounded-full text-red-400 text-sm font-semibold uppercase tracking-widest shadow-[0_0_20px_rgba(248,113,113,0.15)]">
+              <AlertTriangle size={16} className="animate-pulse" />
               The Reality of Autonomous Coding
             </div>
 
-            <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-tight uppercase">
-              The <span className="text-red-400 underline decoration-red-500/40 underline-offset-8">Black Box</span> Problem
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-tight">
+              The <span className="text-red-400 relative inline-block">Black Box<svg className="absolute -bottom-2 left-0 w-full text-red-500/50" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 10 Q 50 20 100 10" stroke="currentColor" strokeWidth="4" fill="transparent"/></svg></span> Problem
             </h2>
 
-            <p className="text-lg sm:text-2xl text-on-surface-variant font-medium leading-relaxed max-w-3xl mx-auto">
-              When AI agents fail, their execution output remains <span className="text-white font-semibold">opaque, frustrating, and costly.</span>
+            <p className="text-lg md:text-2xl text-on-surface-variant font-medium leading-relaxed max-w-4xl mx-auto">
+              When AI agents fail, their execution output remains <span className="text-red-400 font-bold drop-shadow-[0_0_10px_rgba(248,113,113,0.3)]">opaque, frustrating, and costly.</span>
             </p>
-            <p className="text-sm sm:text-base text-on-surface-variant/80 max-w-2xl mx-auto leading-relaxed">
-              Without trace-level observability, a failed PR from an agent is just an unreadable wall of logs. AXRAY acts as your flight recorder, powered natively by <strong className="text-white">SigNoz</strong>.
+            <p className="text-base md:text-lg text-on-surface-variant/90 max-w-3xl mx-auto leading-relaxed">
+              Without trace-level observability, a failed PR from an agent is just an unreadable wall of logs. AXRAY acts as your flight recorder, powered natively by <strong className="text-white bg-white/10 px-2 py-0.5 rounded">SigNoz</strong>.
             </p>
+            
+            <SectionVideoPlayer />
           </div>
         </section>
 
@@ -293,6 +306,13 @@ export default function Home() {
 
       {/* Footer */}
       <Footer variant="home" />
+
+      {/* Video Modal */}
+      <VideoModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        videoSrc="/demo.mp4"
+      />
     </div>
   );
 }
