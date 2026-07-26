@@ -85,6 +85,8 @@ export async function fetchToolPerformanceFromClickHouse(sessionId: string) {
 }
 
 export interface TimelineEventMetadata {
+  traceId?: string;
+  spanId?: string;
   repository?: string;
   branch?: string;
   runtime?: string;
@@ -108,6 +110,7 @@ export interface TimelineEventMetadata {
 
 export interface TimelineEvent {
   id: string;
+  traceId?: string;
   timestamp: string;
   title: string;
   description?: string;
@@ -203,6 +206,8 @@ function normalizeSpanToEvent(span: SpanRecord): TimelineEvent {
   }
 
   const metadata: TimelineEventMetadata = {
+    traceId: span.traceId,
+    spanId: span.id,
     repository: attrs[AXRAY_ATTRIBUTES.REPOSITORY],
     branch: attrs[AXRAY_ATTRIBUTES.BRANCH],
     runtime: attrs[AXRAY_ATTRIBUTES.RUNTIME],
@@ -228,6 +233,7 @@ function normalizeSpanToEvent(span: SpanRecord): TimelineEvent {
 
   return {
     id: span.id,
+    traceId: span.traceId,
     timestamp: span.startTime,
     title,
     description,

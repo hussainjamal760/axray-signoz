@@ -11,6 +11,7 @@ import { RunStatusBadge } from "@/features/agent-runs/components/RunStatusBadge"
 interface TraceSpanNode {
   id: string;
   spanId: string;
+  traceId?: string;
   parentSpanId?: string;
   name: string;
   kind: "LLM" | "TOOL" | "WORKSPACE" | "AGENT_RUN" | "ERROR";
@@ -114,10 +115,13 @@ export default function TracesExplorerPage() {
       else if (ev.status === "failed" || ev.phase === "error") kind = "ERROR";
 
       const meta = ev.metadata || {};
+      const nodeTraceId = ev.traceId || (meta.traceId as string) || activeRun?.traceId;
+      const nodeSpanId = (meta.spanId as string) || ev.id || `span-${idx}-${ev.timestamp}`;
 
       const node: TraceSpanNode = {
         id: ev.id || `ev-${idx}`,
-        spanId: ev.id || `span-${idx}-${ev.timestamp}`,
+        spanId: nodeSpanId,
+        traceId: nodeTraceId,
         name: ev.title || ev.eventType,
         kind,
         status: ev.status === "failed" ? "ERROR" : "OK",
@@ -137,9 +141,12 @@ export default function TracesExplorerPage() {
       childrenNodes.push(node);
     });
 
+    const rootTraceId = (events[0] && (events[0].traceId || (events[0].metadata?.traceId as string))) || activeRun?.traceId;
+
     const rootNode: TraceSpanNode = {
       id: activeRun?.id || "root",
       spanId: `span-root-${(activeRun?.id || "0").slice(-6)}`,
+      traceId: rootTraceId,
       name: `agent.run: ${activeRun?.prompt?.slice(0, 45) || "Session Execution"}`,
       kind: "AGENT_RUN",
       status: activeRun?.status === "completed" ? "OK" : activeRun?.status === "failed" ? "ERROR" : "RUNNING",
@@ -326,15 +333,26 @@ export default function TracesExplorerPage() {
             </div>
 
             {/* Direct OpenTelemetry Trace link to SigNoz UI */}
-            <a
-              href={`http://localhost:8080/trace/${selectedSpan.spanId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-fixed/10 hover:bg-primary-fixed/20 border border-primary-fixed/30 rounded-2xl text-primary-fixed text-xs font-bold transition-all shadow-[0_0_15px_rgba(220,238,0,0.15)] group"
-            >
-              <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform">open_in_new</span>
-              <span>Inspect Span in SigNoz Portal</span>
-            </a>
+            {(() => {
+              const targetTraceId = selectedSpan?.traceId || (selectedSpan?.attributes?.traceId as string) || activeRun?.traceId;
+              const targetSpanId = selectedSpan?.spanId && !selectedSpan.spanId.startsWith("span-") && !selectedSpan.spanId.startsWith("ev-") ? selectedSpan.spanId : undefined;
+              const isValid32HexTraceId = targetTraceId && /^[0-9a-fA-F]{32}$/.test(targetTraceId);
+              const signozUrl = isValid32HexTraceId
+                ? `http://localhost:8080/trace/${targetTraceId}${targetSpanId ? `?spanId=${targetSpanId}` : ''}`
+                : `http://localhost:8080/logs/logs-explorer`;
+
+              return (
+                <a
+                  href={signozUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-fixed/10 hover:bg-primary-fixed/20 border border-primary-fixed/30 rounded-2xl text-primary-fixed text-xs font-bold transition-all shadow-[0_0_15px_rgba(220,238,0,0.15)] group"
+                >
+                  <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform">open_in_new</span>
+                  <span>Inspect Span in SigNoz Portal</span>
+                </a>
+              );
+            })()}
 
 
             {/* Tabs Navigation */}
