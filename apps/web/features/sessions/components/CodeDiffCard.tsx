@@ -6,6 +6,8 @@ import { FileDiffCard } from "./FileDiffCard";
 import { PullRequestSummary } from "../types/sessions.types";
 import { useCreatePullRequest } from "../hooks/useCreatePullRequest";
 
+import { classifyRunError } from "@/features/agent-runs/lib/run-error-utils";
+
 export interface CodeDiffCardProps {
   sessionId?: string;
   pullRequest?: PullRequestSummary;
@@ -18,6 +20,8 @@ export interface CodeDiffCardProps {
   changeSummary?: string;
   isLoading?: boolean;
   isError?: boolean;
+  runStatus?: string;
+  runErrorMessage?: string;
 }
 
 export function CodeDiffCard({
@@ -32,6 +36,8 @@ export function CodeDiffCard({
   changeSummary,
   isLoading = false,
   isError = false,
+  runStatus,
+  runErrorMessage,
 }: CodeDiffCardProps) {
   const [activeFileIndex, setActiveFileIndex] = useState<number | null>(null);
 
@@ -41,6 +47,10 @@ export function CodeDiffCard({
     if (!diff) return [];
     return parseUnifiedDiff(diff);
   }, [diff]);
+
+  const category = useMemo(() => {
+    return classifyRunError(runStatus, runErrorMessage);
+  }, [runStatus, runErrorMessage]);
 
   const totalInsertions = useMemo(() => {
     if (parsedFiles.length > 0) {
@@ -78,16 +88,57 @@ export function CodeDiffCard({
     );
   }
 
-  // Error State
+  // Special Rate / Token Limit State (when diff is empty due to Groq limit)
+  if (!diff && (category === 'token_limit_413' || category === 'rate_limit_429')) {
+    return (
+      <div className="bg-surface-container-lowest/40 backdrop-blur-md rounded-[32px] p-12 text-center font-sans flex flex-col items-center justify-center h-full border border-amber-500/20 shadow-inner">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center font-semibold mb-4">
+          <span className="material-symbols-outlined text-2xl">speed</span>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-on-surface text-base font-semibold mb-1">
+          No Code Diff Generated (Groq Limit Exceeded)
+        </div>
+        <p className="text-on-surface-variant text-xs max-w-md mx-auto leading-relaxed font-light">
+          {category === 'token_limit_413'
+            ? "The agent run reached Groq's model token context limit (HTTP 413) before repository changes could be completed."
+            : "The agent run reached Groq's API rate limit (HTTP 429) before completing repository changes."}
+        </p>
+        <span className="mt-4 bg-amber-500/10 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-[11px] font-mono font-semibold">
+          GROQ_LIMIT_EXCEEDED
+        </span>
+      </div>
+    );
+  }
+
+  // Failed Run Empty State
+  if (!diff && runStatus === 'failed') {
+    return (
+      <div className="bg-surface-container-lowest/40 backdrop-blur-md rounded-[32px] p-12 text-center font-sans flex flex-col items-center justify-center h-full border border-rose-500/20 shadow-inner">
+        <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center font-semibold mb-4">
+          <span className="material-symbols-outlined text-2xl">history_toggle_off</span>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-on-surface text-base font-semibold mb-1">
+          No Code Changes Created
+        </div>
+        <p className="text-on-surface-variant text-xs max-w-md mx-auto leading-relaxed font-light">
+          This run failed before modifying any repository files in the workspace.
+        </p>
+      </div>
+    );
+  }
+
+  // Generic Error State
   if (isError) {
     return (
-      <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-3xl p-8 shadow-sm text-center font-sans">
-        <div className="flex items-center justify-center gap-2 text-rose-400 text-sm font-semibold mb-1">
-          <span className="material-symbols-outlined text-lg">error</span>
-          Unable to generate Git diff.
+      <div className="bg-surface-container-lowest/40 backdrop-blur-md rounded-[32px] p-12 text-center font-sans flex flex-col items-center justify-center h-full border border-outline-variant/30 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-surface-container border border-outline-variant/30 text-on-surface-variant flex items-center justify-center font-semibold mb-4">
+          <span className="material-symbols-outlined text-2xl">description</span>
         </div>
-        <p className="text-on-surface-variant text-xs font-light">
-          An error occurred while inspecting repository changes for this run.
+        <div className="flex items-center justify-center gap-2 text-on-surface text-base font-semibold mb-1">
+          Git Diff Unavailable
+        </div>
+        <p className="text-on-surface-variant text-xs max-w-md mx-auto leading-relaxed font-light">
+          No repository changes could be inspected for this run.
         </p>
       </div>
     );

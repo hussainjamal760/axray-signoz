@@ -21,7 +21,9 @@ export function CodeViewerPanel({ activeRun, isLoading = false }: CodeViewerPane
         diffSize={activeRun?.diffSize}
         changeSummary={activeRun?.changeSummary}
         isLoading={isLoading}
-        isError={activeRun?.status === 'failed' && !activeRun?.diff}
+        isError={false}
+        runStatus={activeRun?.status}
+        runErrorMessage={activeRun?.errorMessage}
       />
     </div>
   );

@@ -343,6 +343,8 @@ export default function SessionIdPage() {
               changeSummary={activeOrSelectedRun?.changeSummary}
               isLoading={isDiffLoading}
               isError={isDiffError}
+              runStatus={activeOrSelectedRun?.status}
+              runErrorMessage={activeOrSelectedRun?.errorMessage}
             />
           </div>
 
