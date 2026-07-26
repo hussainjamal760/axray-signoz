@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useRepositories, useBranches, useCreateBranch } from "@/features/repositories/hooks";
 import { useCreateSession } from "../hooks/useCreateSession";
@@ -35,6 +35,34 @@ export function CreateSessionWizard() {
 
   // Feedback Toast state
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Searchable Repository Dropdown State
+  const [isRepoDropdownOpen, setIsRepoDropdownOpen] = useState(false);
+  const [repoSearchQuery, setRepoSearchQuery] = useState("");
+  const repoDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close repository dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (repoDropdownRef.current && !repoDropdownRef.current.contains(event.target as Node)) {
+        setIsRepoDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Filtered repositories based on search input query
+  const filteredRepositories = useMemo(() => {
+    if (!repoSearchQuery.trim()) return repositories;
+    const q = repoSearchQuery.toLowerCase().trim();
+    return repositories.filter(
+      (repo) =>
+        repo.fullName.toLowerCase().includes(q) ||
+        repo.name.toLowerCase().includes(q) ||
+        repo.owner.toLowerCase().includes(q)
+    );
+  }, [repositories, repoSearchQuery]);
 
   // Mutations
   const { mutateAsync: createBranchMutate, isPending: isBranchMutationPending } = useCreateBranch(owner, repoName);
@@ -211,32 +239,101 @@ export function CreateSessionWizard() {
             <div className="absolute -top-32 -right-32 w-80 h-80 bg-primary-fixed opacity-[0.04] rounded-full blur-3xl pointer-events-none"></div>
 
             {/* Repository Select */}
-            <div className="mb-10 relative z-10">
+            <div className="mb-10 relative z-30">
               <div className="flex justify-between items-end mb-4">
                 <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-[0.15em]">
                   Repository
                 </label>
               </div>
-              <div className="relative group">
-                <select
-                  value={selectedRepoId}
-                  onChange={(e) => setSelectedRepoId(Number(e.target.value))}
+
+              <div className="relative" ref={repoDropdownRef}>
+                {/* Trigger Button */}
+                <button
+                  type="button"
                   disabled={isRepoDisabled}
-                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-2xl px-6 py-5 text-base text-on-surface appearance-none focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed/50 outline-none transition-all disabled:opacity-60 cursor-pointer shadow-inner"
+                  onClick={() => setIsRepoDropdownOpen((prev) => !prev)}
+                  className="w-full bg-surface-container-highest border border-outline-variant/30 rounded-2xl px-6 py-5 text-base text-on-surface flex items-center justify-between focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed/50 outline-none transition-all disabled:opacity-60 cursor-pointer shadow-inner text-left"
                 >
-                  {repositoriesLoading ? (
-                    <option value="">Loading repositories...</option>
-                  ) : repositories.length === 0 ? (
-                    <option value="">No repositories found</option>
-                  ) : (
-                    repositories.map((repo) => (
-                      <option key={repo.id} value={repo.id}>{repo.fullName}</option>
-                    ))
-                  )}
-                </select>
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none w-8 h-8 flex items-center justify-center bg-surface-container-lowest rounded-full border border-outline-variant/20">
-                  <span className="material-symbols-outlined text-[16px] text-on-surface">unfold_more</span>
-                </div>
+                  <span className="truncate font-medium">
+                    {repositoriesLoading
+                      ? "Loading repositories..."
+                      : repositories.length === 0
+                      ? "No repositories found"
+                      : selectedRepoObj
+                      ? selectedRepoObj.fullName
+                      : "Select a repository"}
+                  </span>
+                  <div className="w-8 h-8 flex items-center justify-center bg-surface-container-lowest rounded-full border border-outline-variant/20 shrink-0 ml-3">
+                    <span className="material-symbols-outlined text-[16px] text-on-surface">
+                      {isRepoDropdownOpen ? "expand_less" : "unfold_more"}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Dropdown Menu Popup with Working Search Input */}
+                {isRepoDropdownOpen && !isRepoDisabled && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-surface-container-highest border border-outline-variant/40 rounded-2xl p-3 shadow-2xl backdrop-blur-2xl animate-in fade-in-50 zoom-in-95">
+                    {/* Search Input Box */}
+                    <div className="relative mb-2">
+                      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant/60 pointer-events-none">
+                        search
+                      </span>
+                      <input
+                        type="text"
+                        value={repoSearchQuery}
+                        onChange={(e) => setRepoSearchQuery(e.target.value)}
+                        placeholder="Search repositories..."
+                        autoFocus
+                        className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl pl-10 pr-9 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary-fixed focus:outline-none transition-all"
+                      />
+                      {repoSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setRepoSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/60 hover:text-on-surface"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Scrollable Repository List */}
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-0.5">
+                      {filteredRepositories.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-on-surface-variant/70 text-center">
+                          No repositories match "{repoSearchQuery}"
+                        </div>
+                      ) : (
+                        filteredRepositories.map((repo) => {
+                          const isSelected = repo.id === selectedRepoId;
+                          return (
+                            <button
+                              key={repo.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedRepoId(repo.id);
+                                setIsRepoDropdownOpen(false);
+                                setRepoSearchQuery("");
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${
+                                isSelected
+                                  ? "bg-primary-fixed/15 text-primary-fixed font-semibold"
+                                  : "text-on-surface hover:bg-surface-container-lowest/80"
+                              }`}
+                            >
+                              <span className="truncate">{repo.fullName}</span>
+                              {isSelected && (
+                                <span className="material-symbols-outlined text-[18px] text-primary-fixed shrink-0 ml-2">
+                                  check
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
