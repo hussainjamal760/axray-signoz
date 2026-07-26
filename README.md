@@ -71,6 +71,9 @@
 <br/>
 ![Analytics Dashboard 2](apps/web/public/ss/analytics-2.png)
 *Embedded SigNoz dashboards powered by the SigNoz MCP server. Get live alerts on token anomalies, cost spikes, and system execution failures directly within AXRAY.*
+### 6. Seamless SigNoz Configuration
+![SigNoz Setup](apps/web/public/ss/signozconfig.png)
+*A dedicated setup guide and configuration interface that makes connecting to your self-hosted SigNoz instance or SigNoz Cloud effortless.*
 
 ---
 
