@@ -184,16 +184,16 @@ export function CodeDiffCard({
         </div>
       )}
 
-      {/* Multiple Files Tab Selector */}
+      {/* Multiple Files Tab Selector (Horizontally Scrollable) */}
       {parsedFiles.length > 1 && (
-        <div className="bg-surface-container/30 border-b border-outline-variant/20 p-3 flex flex-wrap gap-2 text-xs font-sans">
+        <div className="bg-surface-container/30 border-b border-outline-variant/20 px-4 py-3 flex items-center gap-2 text-xs font-sans overflow-x-auto custom-scrollbar whitespace-nowrap shrink-0">
           <button
             type="button"
             onClick={() => setActiveFileIndex(null)}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`shrink-0 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
               activeFileIndex === null
-                ? "bg-primary-fixed text-black"
-                : "bg-surface-container text-on-surface-variant hover:text-on-surface"
+                ? "bg-primary-fixed text-black shadow-sm"
+                : "bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
             }`}
           >
             All Files ({parsedFiles.length})
@@ -203,10 +203,10 @@ export function CodeDiffCard({
               key={idx}
               type="button"
               onClick={() => setActiveFileIndex(idx)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
+              className={`shrink-0 px-3.5 py-1.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
                 activeFileIndex === idx
-                  ? "bg-primary-fixed text-black"
-                  : "bg-surface-container text-on-surface-variant hover:text-on-surface"
+                  ? "bg-primary-fixed text-black shadow-sm"
+                  : "bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
               }`}
             >
               <span className="font-mono">{file.filename}</span>
