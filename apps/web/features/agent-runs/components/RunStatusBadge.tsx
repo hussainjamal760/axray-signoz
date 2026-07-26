@@ -15,8 +15,8 @@ export function RunStatusBadge({ status }: { status: RunStatus }) {
   const isRunning = status === 'running';
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-semibold ${colors.bg} ${colors.text} ${colors.border}`}>
-      <span className={`material-symbols-outlined text-[13px] ${isRunning ? 'animate-spin' : ''}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-semibold tracking-wide ${colors.bg} ${colors.text} ${colors.border}`}>
+      <span className={`material-symbols-outlined text-[5px] ${isRunning ? 'animate-spin' : ''}`}>
         {colors.icon}
       </span>
       <span className="capitalize">{status}</span>
