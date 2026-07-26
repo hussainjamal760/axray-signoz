@@ -53,7 +53,7 @@ export default function ObserverDashboardPage() {
   const backToSessionLink = id ? `/sessions/${id}` : "/sessions";
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto min-h-0 bg-background custom-scrollbar" data-lenis-prevent="true">
+    <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden bg-background font-sans">
       {/* Context Header */}
       <section className="px-6 py-4 border-b border-outline-variant/10 bg-surface-container-lowest/60 backdrop-blur-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 z-20">
         <div className="space-y-1.5 max-w-3xl">
@@ -112,21 +112,21 @@ export default function ObserverDashboardPage() {
       </section>
 
       {/* Three-Pane Observer View */}
-      <section className="flex flex-col xl:flex-row flex-1 z-10 relative">
+      <section className="flex flex-col xl:flex-row flex-1 min-h-0 overflow-hidden z-10 relative">
         {/* Left Column: Timeline Panel */}
-        <div className="w-full xl:w-1/3 xl:min-w-[340px] xl:max-w-[440px] flex flex-col xl:h-full border-r border-outline-variant/10">
+        <div className="w-full xl:w-1/3 xl:min-w-[340px] xl:max-w-[440px] flex flex-col h-full min-h-0 overflow-hidden border-r border-outline-variant/10">
           <TimelinePanel
             selectedRunId={activeRun?.id}
             runStatus={activeRun?.status}
             sessionId={id}
             isLive={false}
-            forcedEvents={events[activeStepIndex] ? [events[activeStepIndex]] : []}
+            forcedEvents={events.slice(0, activeStepIndex + 1)}
             className="h-full border-0 !shadow-none !rounded-none"
           />
         </div>
 
         {/* Middle Column: Code Diff Viewer */}
-        <div className="flex-1 flex flex-col xl:h-full min-w-0">
+        <div className="flex-1 flex flex-col h-full min-h-0 min-w-0 overflow-hidden">
           <CodeViewerPanel activeRun={activeRun} isLoading={runsLoading} />
         </div>
         

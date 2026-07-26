@@ -36,9 +36,15 @@ export function TimelinePanel({ selectedRunId, runStatus, liveSocketEvents = [],
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+      const container = scrollContainerRef.current;
+      const scrollToBottom = () => {
+        container.scrollTop = container.scrollHeight;
+      };
+      scrollToBottom();
+      const timer = setTimeout(scrollToBottom, 50);
+      return () => clearTimeout(timer);
     }
-  }, [events]);
+  }, [events.length, events]);
 
   const getEventIcon = (event: TimelineEvent) => {
     switch (event.phase) {
