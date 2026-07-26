@@ -61,12 +61,13 @@
 ![OTel Traces](apps/web/public/ss/traces.png)
 *Full OpenTelemetry trace visualization. Dive deep into the specific tokens used, exit codes, and LLM latency for every single tool invocation.*
 
-### 4. Code & Execution Analysis
+### 4. Code & Failure Analysis
 ![Execution Analysis](apps/web/public/ss/analysis.png)
-*Granular breakdown of the execution phase. Understand exactly how much "Time-in-Brain" (reasoning) vs "Time-in-Environment" (executing) the agent spent.*
+*Granular breakdown of the execution phase. Understand exactly where the Failure occur and how to solve it*
 
 ### 5. SigNoz Alerts & Embedded Analytics
 ![Analytics Dashboard 1](apps/web/public/ss/analytics.png)
+ *Understand exactly how much "Time-in-Brain" (reasoning) vs "Time-in-Environment" (executing) the agent spent.*
 <br/>
 ![Analytics Dashboard 2](apps/web/public/ss/analytics-2.png)
 *Embedded SigNoz dashboards powered by the SigNoz MCP server. Get live alerts on token anomalies, cost spikes, and system execution failures directly within AXRAY.*
