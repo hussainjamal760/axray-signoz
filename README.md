@@ -33,6 +33,16 @@
 
 ---
 
+## 🎥 Demo Video
+
+Watch the live session run, real-time OpenTelemetry trace tree generation, and SigNoz integration below.
+
+<video src="https://raw.githubusercontent.com/hussainjamal760/axray-signoz/main/apps/web/public/demo.mp4" controls="controls" width="100%"></video>
+
+*If the video above doesn't play, you can [**watch the 60-second demo here**](https://github.com/hussainjamal760/axray-signoz/blob/main/apps/web/public/demo.mp4).*
+
+---
+
 ## 🤖 The Autonomous AI Developer Workflow
 
 AXRAY operates as a fully autonomous CLI developer backed by OpenTelemetry observability:
@@ -281,12 +291,6 @@ cd deploy/pours/deployment && docker compose down
 > **Note:** if you're running AXRAY outside Docker for local development
 > instead of the containerized flow above, use `pnpm install && pnpm dev`
 > from the repo root after Step 3 (skip Step 4).
-
----
-
-## 🎥 Demo Video
-
-[Watch the 60-second demo](apps/web/public/demo.mp4) — live session run, trace tree populating in real time, and traces showing up in SigNoz.
 
 ---
 
