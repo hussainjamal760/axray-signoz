@@ -1,5 +1,5 @@
 import * as containerService from './container.service';
-import { parseNumstat, NumstatParsedResult } from '../utils/diff-parser';
+import { parseNumstat, parseUnifiedDiff, NumstatParsedResult } from '../utils/diff-parser';
 import { tracer } from '../lib/telemetry';
 import { AXRAY_ATTRIBUTES } from '../lib/telemetry-attributes';
 import { SpanStatusCode } from '@opentelemetry/api';
@@ -59,10 +59,10 @@ export const getDiff = async (
   console.log(`[Git] Fetching git diff for container ${containerId}...`);
 
   try {
-    // 1. Fetch raw diff
+    // 1. Fetch raw diff (staged + unstaged working tree changes)
     const diffRes = await containerService.executeCommand(
       containerId,
-      `cd ${WORKSPACE_DIR} && git diff`,
+      `cd ${WORKSPACE_DIR} && (git diff HEAD || git diff)`,
       { maxBufferBytes: 500000 }
     );
     const fullDiff = diffRes.exitCode === 0 ? diffRes.output : '';
@@ -71,12 +71,30 @@ export const getDiff = async (
     // 2. Fetch numstat for filesChanged, insertions, deletions
     const numstatRes = await containerService.executeCommand(
       containerId,
-      `cd ${WORKSPACE_DIR} && git diff --numstat`,
+      `cd ${WORKSPACE_DIR} && (git diff HEAD --numstat || git diff --numstat)`,
       { maxBufferBytes: 100000 }
     );
 
     const numstatOutput = numstatRes.exitCode === 0 ? numstatRes.output : '';
-    const { filesChanged, insertions, deletions } = parseNumstat(numstatOutput);
+    let { filesChanged, insertions, deletions } = parseNumstat(numstatOutput);
+
+    // If raw unified diff is present, parse it to ensure 100% accurate insertion/deletion counts
+    if (fullDiff.trim()) {
+      const parsedFiles = parseUnifiedDiff(fullDiff);
+      if (parsedFiles.length > 0) {
+        const parsedInsertions = parsedFiles.reduce((sum, f) => sum + f.insertions, 0);
+        const parsedDeletions = parsedFiles.reduce((sum, f) => sum + f.deletions, 0);
+        
+        insertions = parsedInsertions;
+        deletions = parsedDeletions;
+
+        for (const pf of parsedFiles) {
+          if (pf.filename && !filesChanged.includes(pf.filename)) {
+            filesChanged.push(pf.filename);
+          }
+        }
+      }
+    }
 
     // 3. Check for untracked files (git status --porcelain)
     const statusRes = await containerService.executeCommand(

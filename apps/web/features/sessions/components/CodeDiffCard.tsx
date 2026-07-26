@@ -42,6 +42,27 @@ export function CodeDiffCard({
     return parseUnifiedDiff(diff);
   }, [diff]);
 
+  const totalInsertions = useMemo(() => {
+    if (parsedFiles.length > 0) {
+      return parsedFiles.reduce((sum, f) => sum + f.insertions, 0);
+    }
+    return insertions || 0;
+  }, [parsedFiles, insertions]);
+
+  const totalDeletions = useMemo(() => {
+    if (parsedFiles.length > 0) {
+      return parsedFiles.reduce((sum, f) => sum + f.deletions, 0);
+    }
+    return deletions || 0;
+  }, [parsedFiles, deletions]);
+
+  const totalFilesCount = useMemo(() => {
+    if (parsedFiles.length > 0) {
+      return parsedFiles.length;
+    }
+    return filesChanged?.length || 0;
+  }, [parsedFiles, filesChanged]);
+
   // Loading State
   if (isLoading) {
     return (
@@ -110,12 +131,12 @@ export function CodeDiffCard({
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2 text-on-surface bg-surface-container border border-outline-variant/20 rounded-xl px-3 py-1.5 font-medium">
             <span className="material-symbols-outlined text-sm text-on-surface-variant">folder</span>
-            <span>{filesChanged.length || parsedFiles.length} {filesChanged.length === 1 ? "File" : "Files"} Changed</span>
+            <span>{totalFilesCount} {totalFilesCount === 1 ? "File" : "Files"} Changed</span>
           </div>
 
           <div className="flex items-center gap-2 bg-surface-container border border-outline-variant/20 rounded-xl px-3 py-1.5 font-mono text-xs">
-            <span className="text-emerald-400 font-semibold">+{insertions}</span>
-            <span className="text-rose-400 font-semibold">-{deletions}</span>
+            <span className="text-emerald-400 font-semibold">+{totalInsertions}</span>
+            <span className="text-rose-400 font-semibold">-{totalDeletions}</span>
           </div>
 
           {sessionId && (

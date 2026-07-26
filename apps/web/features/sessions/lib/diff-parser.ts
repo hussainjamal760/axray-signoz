@@ -74,8 +74,15 @@ export function parseUnifiedDiff(rawDiff: string): ParsedFileDiff[] {
 
       if (!currentHunk) continue;
 
-      // Skip file metadata headers (--- a/..., +++ b/..., index ...)
-      if (line.startsWith('--- ') || line.startsWith('+++ ') || line.startsWith('index ')) {
+      // Skip file metadata headers (--- a/..., +++ b/..., index ..., \ No newline...)
+      if (
+        line.startsWith('--- ') ||
+        line.startsWith('+++ ') ||
+        line.startsWith('--- a/') ||
+        line.startsWith('+++ b/') ||
+        line.startsWith('index ') ||
+        line.startsWith('\\ No newline')
+      ) {
         continue;
       }
 

@@ -59,3 +59,60 @@ export function parseNumstat(numstatOutput: string): NumstatParsedResult {
 
   return { filesChanged, insertions, deletions };
 }
+
+export function parseUnifiedDiff(rawDiff: string): { filename: string; insertions: number; deletions: number }[] {
+  if (!rawDiff || !rawDiff.trim()) return [];
+
+  const files: { filename: string; insertions: number; deletions: number }[] = [];
+  const rawFileBlocks = rawDiff.split(/^diff --git /m).filter(Boolean);
+
+  for (const block of rawFileBlocks) {
+    const lines = block.split('\n');
+    const firstLine = lines[0] || '';
+
+    let filename = 'file';
+    const filenameMatch = firstLine.match(/a\/(.*?)\s+b\/(.*)/);
+    if (filenameMatch) {
+      filename = filenameMatch[2] || filenameMatch[1];
+    } else {
+      const parts = firstLine.trim().split(/\s+/);
+      filename = parts[parts.length - 1] || 'file';
+    }
+
+    let currentHunk = false;
+    let insertions = 0;
+    let deletions = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (/^@@\s+-\d+(?:,\d+)?\s+\+\d+(?:,\d+)?\s+@@/.test(line)) {
+        currentHunk = true;
+        continue;
+      }
+
+      if (!currentHunk) continue;
+
+      if (
+        line.startsWith('--- ') ||
+        line.startsWith('+++ ') ||
+        line.startsWith('--- a/') ||
+        line.startsWith('+++ b/') ||
+        line.startsWith('index ') ||
+        line.startsWith('\\ No newline')
+      ) {
+        continue;
+      }
+
+      if (line.startsWith('-')) {
+        deletions++;
+      } else if (line.startsWith('+')) {
+        insertions++;
+      }
+    }
+
+    files.push({ filename, insertions, deletions });
+  }
+
+  return files;
+}

@@ -1,5 +1,6 @@
 import { AgentRunSummary } from '../types/agent-runs.types';
 import { RunStatusBadge } from './RunStatusBadge';
+import { parseUnifiedDiff } from '../../sessions/lib/diff-parser';
 
 export interface AgentRunsListProps {
   runs: AgentRunSummary[];
@@ -63,8 +64,18 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
             </thead>
             <tbody className="divide-y divide-outline-variant/10">
               {runs.map((run) => {
-                const fileCount = run.filesChanged?.length || 0;
-                const hasDiff = fileCount > 0 || !!run.diff;
+                const parsedFiles = run.diff ? parseUnifiedDiff(run.diff) : [];
+                const insertions = parsedFiles.length > 0
+                  ? parsedFiles.reduce((sum, f) => sum + f.insertions, 0)
+                  : run.insertions || 0;
+                const deletions = parsedFiles.length > 0
+                  ? parsedFiles.reduce((sum, f) => sum + f.deletions, 0)
+                  : run.deletions || 0;
+                const fileCount = parsedFiles.length > 0
+                  ? parsedFiles.length
+                  : run.filesChanged?.length || 0;
+
+                const hasDiff = fileCount > 0 || insertions > 0 || deletions > 0 || !!run.diff;
 
                 return (
                   <tr
@@ -81,8 +92,8 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
                     <td className="px-6 py-4.5 font-mono">
                       {hasDiff ? (
                         <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-medium">+{run.insertions || 0}</span>
-                          <span className="text-rose-400 font-medium">-{run.deletions || 0}</span>
+                          <span className="text-emerald-400 font-medium">+{insertions}</span>
+                          <span className="text-rose-400 font-medium">-{deletions}</span>
                           <span className="text-on-surface-variant text-[11px]">
                             ({fileCount} {fileCount === 1 ? 'file' : 'files'})
                           </span>
