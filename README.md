@@ -278,20 +278,23 @@ docker compose down
 cd deploy/pours/deployment && docker compose down
 ```
 
+> **Note:** if you're running AXRAY outside Docker for local development
+> instead of the containerized flow above, use `pnpm install && pnpm dev`
+> from the repo root after Step 3 (skip Step 4).
+
 ---
 
+## 🎥 Demo Video
 
+[Watch the 60-second demo](apps/web/public/demo.mp4) — live session run, trace tree populating in real time, and traces showing up in SigNoz.
 
-### 2. Install & launch
+---
 
-```bash
-pnpm install
-pnpm dev
-```
+## 🔮 Current Scope & Future Enhancements
 
-- 📱 **AXRAY Dashboard:** `http://localhost:3000`
-- ⚙️ **AXRAY API:** `http://localhost:3001`
-- 📊 **SigNoz UI:** `http://localhost:8080`
+- **Dynamic Efficiency Heuristics:** The current Efficiency Score formula acts as a robust baseline heuristic. We plan to introduce data-driven weight adjustments by analyzing thousands of future sessions to further refine latency scoring.
+- **Foundry-Optimized Metadata Sync:** Our automated dashboard synchronization is hyper-optimized for the official Foundry-deployed SigNoz (`v0.13x`). Using custom or older SigNoz deployments may require minor connection string adjustments.
+- **Production-Grade OS Support:** The architecture is battle-tested on macOS and Linux (Unix environments). Windows developers are fully supported via WSL 2, ensuring seamless compatibility with ClickHouse container networking.
 
 ---
 
