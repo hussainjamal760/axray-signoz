@@ -7,6 +7,11 @@ import { Preloader } from "@/components/ui/Preloader";
 export const metadata: Metadata = {
   title: "AXRAY - The Flight Recorder for AI Coding Agents",
   description: "Record every decision, tool call, and trace. Bridge the gap between autonomous execution and human oversight.",
+  icons: {
+    icon: "/logo/axray-logo.png",
+    shortcut: "/logo/axray-logo.png",
+    apple: "/logo/axray-logo.png",
+  },
 };
 
 export default function RootLayout({
