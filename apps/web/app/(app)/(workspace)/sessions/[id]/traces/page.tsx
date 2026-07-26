@@ -182,17 +182,7 @@ export default function TracesExplorerPage() {
       {/* 1. Simplified Context Header (Only Run Selection Dropdown & Back Button) */}
       <section className="px-4 md:px-6 py-3 border-b border-outline-variant/20 bg-surface-container-lowest/60 backdrop-blur-md flex items-center justify-between gap-4 shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <Link
-            href={backToSessionLink}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant hover:text-white hover:border-primary-fixed/50 font-mono text-xs font-semibold transition-all shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            <span>Back to Workspace</span>
-          </Link>
-          
-          <div className="h-5 w-px bg-outline-variant/30 hidden sm:block" />
-
-          <span className="text-xs font-mono text-on-surface-variant uppercase tracking-wider font-semibold hidden md:inline-block">
+          <span className="text-xs font-mono text-on-surface-variant uppercase tracking-wider font-semibold">
             Trace Explorer
           </span>
         </div>
