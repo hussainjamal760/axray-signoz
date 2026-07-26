@@ -49,7 +49,9 @@ export default function ObserverDashboardPage() {
     }
   };
 
-  const analysisLink = id ? `/sessions/${id}/analysis` : "/sessions";
+  const analysisLink = id
+    ? `/sessions/${id}/analysis${activeRun?.id ? `?runId=${activeRun.id}` : ""}`
+    : "/sessions";
   const backToSessionLink = id ? `/sessions/${id}` : "/sessions";
 
   return (
