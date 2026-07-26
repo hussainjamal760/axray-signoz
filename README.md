@@ -13,6 +13,8 @@
 [![Docker Sandbox](https://img.shields.io/badge/Sandbox-Docker-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
+### 🌐 [**Live Demo: axray-signoz-web.vercel.app**](https://axray-signoz-web.vercel.app/)
+
 [TL;DR Pitch](#-tldr--30-second-elevator-pitch) • [Autonomous Workflow](#-the-autonomous-ai-developer-workflow) • [Time-in-Brain](#-the-hero-feature-time-in-brain-vs-time-in-environment) • [SigNoz Integration](#-signoz-alerts--embedded-dashboard) • [Quickstart](#-quickstart)
 
 ---
