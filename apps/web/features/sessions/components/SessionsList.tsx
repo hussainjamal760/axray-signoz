@@ -101,6 +101,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
       {/* Glassmorphic Workspace List */}
       <div className="space-y-4">
         {sortedSessions.map((session) => {
+          const agentStatus = session.agentStatus || 'idle';
           const cost = session.metrics?.cost ? Number(session.metrics.cost).toFixed(4) : '$0.0000';
           const tokens = session.metrics?.tokens || 0;
           const colors = statusColors[session.status] || statusColors.active;
@@ -130,11 +131,29 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
                 </div>
               </div>
 
-              {/* Middle: Status Badge */}
-              <div className="flex items-center lg:w-[24%]">
+              {/* Middle: Status Badges */}
+              <div className="flex items-center gap-3 lg:w-[24%]">
                 <div className={`px-3 py-1.5 rounded-full border text-[11px] font-semibold capitalize tracking-wide ${colors.bg} ${colors.text} ${colors.border} shadow-sm`}>
                   {session.status}
                 </div>
+
+                {/* Run Status Badge (Hidden if session is completed) */}
+                {session.status !== 'completed' && (
+                  <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm ${
+                    agentStatus === 'running'
+                      ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                      : agentStatus === 'failed'
+                      ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                      : 'bg-surface-container/40 border-outline-variant/20 text-on-surface-variant'
+                  }`}>
+                    {agentStatus === 'running' && <Loader2 size={13} className="animate-spin" />}
+                    {agentStatus === 'failed' && <AlertCircle size={13} />}
+                    {agentStatus !== 'running' && agentStatus !== 'failed' && <CheckCircle2 size={13} />}
+                    <span className="text-[11px] font-semibold capitalize">
+                      {agentStatus === 'running' ? 'Running' : agentStatus === 'failed' ? 'Failed' : 'Idle'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Right: Metrics */}
