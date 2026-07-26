@@ -40,7 +40,7 @@
 | Result | Measured | Evidence (Code) |
 | :--- | :--- | :--- |
 | **LLM Reasoning & Tool Calls Traced** | 100% (OpenTelemetry GenAI standard) | `[telemetry.ts](apps/server/src/lib/telemetry.ts)` |
-| **Command Injection & Sandbox Integrity** | 100% Blocked (`rm`, `sudo`, `chmod`) | `[container.service.ts](apps/server/src/services/container.service.ts)` |
+| **Automated Command Sanitization** | `grep`/`rg` dynamically optimized (`node_modules` excluded) to prevent memory crashes | `[container.service.ts](apps/server/src/services/container.service.ts)` |
 | **Latency Segregation (Brain vs Env)** | Distinct spans generated per execution | `[signoz-timeline.service.ts](apps/server/src/services/signoz-timeline.service.ts)` |
 | **Proactive SigNoz Alerts Synced** | Real-time via Model Context Protocol | `[signoz.service.ts](apps/server/src/services/signoz.service.ts)` |
 | **Honest Counterweight: LLM Hallucinations** | Agent relies on self-healing inside Docker | *Continuous Evaluation* |
