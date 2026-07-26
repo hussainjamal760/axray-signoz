@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -214,16 +215,14 @@ export default function SetupGuideModal({
             {/* Modal Footer Actions */}
             <div className="p-6 border-t border-outline-variant/20 bg-surface-container-lowest/80 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <a
-                  href="https://github.com/hussainjamal760/axray-signoz#readme"
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  href="/docs"
+                  onClick={onClose}
                   className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 hover:border-white/50 text-white text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-sm"
                 >
                   <BookOpen size={16} className="text-primary-fixed" />
                   <span>Read Full Docs</span>
-                  <ExternalLink size={12} className="text-on-surface-variant" />
-                </a>
+                </Link>
 
                 <button
                   onClick={() => {

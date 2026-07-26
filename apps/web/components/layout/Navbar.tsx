@@ -32,7 +32,7 @@ export function Navbar({ activePath, isSticky = false }: NavbarProps) {
     { href: "/", label: "Home" },
     { href: "/features", label: "Features" },
     { href: "/how-it-works", label: "How it Works" },
-    { href: "#", label: "Docs" },
+    { href: "/docs", label: "Docs" },
   ];
 
   return (
