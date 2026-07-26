@@ -200,7 +200,7 @@ export function CreateSessionWizard() {
           Environment Setup
         </div>
         <h1 className="text-4xl lg:text-6xl font-light tracking-tighter text-on-background">
-          Initialize <span className="font-medium text-primary-fixed">Workspace.</span>
+          Initialize <span className="font-medium text-primary-fixed">Session.</span>
         </h1>
         <p className="text-on-surface-variant text-base mt-4 max-w-xl font-light leading-relaxed">
           Select your repository and active branch. The system will provision an isolated AI agent environment instantly.
