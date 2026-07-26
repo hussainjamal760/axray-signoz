@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🛰️ AXRAY — The AI Agent Flight Recorder & Telemetry Engine
+<img src="apps/web/public/logo/axray-logo.png" alt="AXRAY Logo" width="180" />
+
+# AXRAY — The AI Agent Flight Recorder & Telemetry Engine
 
 ### *If you can't observe your AI coding agents, you don't own them.*
 
@@ -30,6 +32,44 @@
 > - ⏱️ **"Time-in-Brain" vs "Time-in-Environment":** Segregates LLM reasoning latency from container command execution with an automated **Efficiency Score (0–100)**.
 > - 🚨 **Native SigNoz MCP Integration:** Connects to SigNoz via Model Context Protocol (`signoz_list_alerts`, `signoz_execute_builder_query`) for live alert streaming and query building.
 > - 🐳 **Sandboxed Security & OTel Tracing:** Runs commands safely inside Docker while instrumenting every turn with OpenTelemetry GenAI semantic conventions.
+
+---
+
+## 📊 Hackathon Track Results & Metrics
+
+| Result | Measured | Evidence (Code) |
+| :--- | :--- | :--- |
+| **LLM Reasoning & Tool Calls Traced** | 100% (OpenTelemetry GenAI standard) | `[telemetry.ts](apps/server/src/lib/telemetry.ts)` |
+| **Command Injection & Sandbox Integrity** | 100% Blocked (`rm`, `sudo`, `chmod`) | `[container.service.ts](apps/server/src/services/container.service.ts)` |
+| **Latency Segregation (Brain vs Env)** | Distinct spans generated per execution | `[signoz-timeline.service.ts](apps/server/src/services/signoz-timeline.service.ts)` |
+| **Proactive SigNoz Alerts Synced** | Real-time via Model Context Protocol | `[signoz.service.ts](apps/server/src/services/signoz.service.ts)` |
+| **Honest Counterweight: LLM Hallucinations** | Agent relies on self-healing inside Docker | *Continuous Evaluation* |
+
+---
+
+## 📸 Platform Preview & Core Features
+
+### 1. The Autonomous Agent Workspace
+![Agent Workspace](apps/web/public/ss/agent.png)
+*The central command hub where you can watch the AI agent ingest GitHub issues, plan its reasoning, and stream execution steps live. It cleanly segregates planning from action.*
+
+### 2. Live Flight Recorder (Observer)
+![Flight Recorder Observer](apps/web/public/ss/observer.png)
+*A frame-by-frame live observer that captures every bash command, file diff, and network request executed inside the Docker Sandbox. Nothing is hidden.*
+
+### 3. OpenTelemetry Trace Trees
+![OTel Traces](apps/web/public/ss/traces.png)
+*Full OpenTelemetry trace visualization. Dive deep into the specific tokens used, exit codes, and LLM latency for every single tool invocation.*
+
+### 4. Code & Execution Analysis
+![Execution Analysis](apps/web/public/ss/analysis.png)
+*Granular breakdown of the execution phase. Understand exactly how much "Time-in-Brain" (reasoning) vs "Time-in-Environment" (executing) the agent spent.*
+
+### 5. SigNoz Alerts & Embedded Analytics
+![Analytics Dashboard 1](apps/web/public/ss/analytics.png)
+<br/>
+![Analytics Dashboard 2](apps/web/public/ss/analytics-2.png)
+*Embedded SigNoz dashboards powered by the SigNoz MCP server. Get live alerts on token anomalies, cost spikes, and system execution failures directly within AXRAY.*
 
 ---
 
