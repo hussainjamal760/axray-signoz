@@ -250,7 +250,7 @@ export const ensureRuntime = async (
         if (sessionId && runId) {
           appendTerminalLine(sessionId, runId, 'command', 'apk add --no-cache nodejs npm');
         }
-        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache nodejs npm');
+        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache nodejs npm', { timeoutMs: 180000 });
         if (installRes.exitCode === 0) {
           if (sessionId && runId) {
             appendTerminalLine(sessionId, runId, 'stdout', installRes.output);
@@ -273,7 +273,7 @@ export const ensureRuntime = async (
           if (sessionId && runId) {
             appendTerminalLine(sessionId, runId, 'command', 'npm install -g pnpm');
           }
-          const pnpmInst = await containerService.executeCommand(containerId, 'npm install -g pnpm');
+          const pnpmInst = await containerService.executeCommand(containerId, 'npm install -g pnpm', { timeoutMs: 120000 });
           if (sessionId && runId && pnpmInst.exitCode === 0) {
             appendTerminalLine(sessionId, runId, 'success', 'Successfully installed pnpm package manager');
           }
@@ -284,7 +284,7 @@ export const ensureRuntime = async (
           if (sessionId && runId) {
             appendTerminalLine(sessionId, runId, 'command', 'npm install -g yarn');
           }
-          const yarnInst = await containerService.executeCommand(containerId, 'npm install -g yarn');
+          const yarnInst = await containerService.executeCommand(containerId, 'npm install -g yarn', { timeoutMs: 120000 });
           if (sessionId && runId && yarnInst.exitCode === 0) {
             appendTerminalLine(sessionId, runId, 'success', 'Successfully installed yarn package manager');
           }
@@ -296,7 +296,7 @@ export const ensureRuntime = async (
         if (sessionId && runId) {
           appendTerminalLine(sessionId, runId, 'command', 'apk add --no-cache python3 py3-pip');
         }
-        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache python3 py3-pip');
+        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache python3 py3-pip', { timeoutMs: 180000 });
         if (installRes.exitCode === 0) {
           if (sessionId && runId) {
             appendTerminalLine(sessionId, runId, 'stdout', installRes.output);
@@ -312,7 +312,7 @@ export const ensureRuntime = async (
         if (sessionId && runId) {
           appendTerminalLine(sessionId, runId, 'command', 'apk add --no-cache go');
         }
-        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache go');
+        const installRes = await containerService.executeCommand(containerId, 'apk add --no-cache go', { timeoutMs: 180000 });
         if (installRes.exitCode === 0) {
           if (sessionId && runId) {
             appendTerminalLine(sessionId, runId, 'stdout', installRes.output);

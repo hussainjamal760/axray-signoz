@@ -65,7 +65,7 @@ export function sanitizeAndTransformCommand(command: string): string {
  */
 function getCommandDefaultTimeoutMs(command: string): number {
   const cmd = command.trim();
-  if (/(install|ci|build)\b/.test(cmd)) {
+  if (/\b(install|ci|build|apk|apt-get|yum|pacman)\b/.test(cmd)) {
     return 120000; // 120s build/install timeout
   }
   if (/(test|jest|vitest|playwright)\b/.test(cmd)) {
@@ -295,7 +295,15 @@ export const executeCommand = async (
 
     if (error?.message === 'TIMEOUT') {
       const sec = (timeoutMs / 1000).toFixed(0);
-      const timeoutOutput = `Command timed out after ${sec}s. Possible cause: recursive search or scanning large directories (e.g., node_modules, .git). Try a more specific search path or use search_files().`;
+      let timeoutOutput = `Command timed out after ${sec}s.`;
+      if (timeoutMs >= 120000) {
+        timeoutOutput += ` This may be due to slow network access or large package downloads. If this persists, check container network connectivity.`;
+      } else if (timeoutMs === 60000) {
+        timeoutOutput += ` The test suite may be hanging or taking longer than expected.`;
+      } else {
+        timeoutOutput += ` Possible cause: recursive search or scanning large directories (e.g., node_modules, .git). Try a more specific search path or use search_files().`;
+      }
+
       span.setAttribute('command.exit_code', 124);
       span.setAttribute('command.timed_out', true);
       span.setStatus({ code: SpanStatusCode.ERROR, message: `Command timed out after ${sec}s` });
