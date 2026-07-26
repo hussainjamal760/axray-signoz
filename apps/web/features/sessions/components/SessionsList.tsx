@@ -60,13 +60,13 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
           <div className="flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_currentColor]"></span>
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-              Monitored Workspaces
+              Monitored Sessions
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container/50 border border-outline-variant/30 text-on-surface-variant">
               <Activity size={14} className="text-primary-fixed" />
-              {sessions.length} Workspaces
+              {sessions.length} Sessions
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               {activeCount} Active
@@ -87,7 +87,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
           className="bg-primary-fixed hover:bg-primary-fixed/90 text-black font-semibold text-sm px-5 py-3 rounded-2xl shadow-[0_0_20px_rgba(220,238,0,0.3)] hover:shadow-[0_0_25px_rgba(220,238,0,0.5)] transition-all duration-300 flex items-center justify-center gap-2.5 w-full sm:w-auto hover:-translate-y-0.5 active:translate-y-0"
         >
           <Plus size={18} strokeWidth={2.5} />
-          Create Workspace
+          Create Session
         </button>
       </div>
 
@@ -181,7 +181,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
           <div className="p-12 bg-surface-container-lowest/50 backdrop-blur-xl rounded-3xl border border-outline-variant/30 text-center">
             <Layers className="mx-auto h-10 w-10 text-on-surface-variant/40 mb-3" />
             <p className="text-on-surface-variant font-medium text-sm">
-              No workspaces found matching your search.
+              No sessions found matching your search.
             </p>
           </div>
         )}
