@@ -23,7 +23,7 @@ import { AgentRun } from '../models/agent-run.model';
 
 const WORKSPACE_DIR = '/workspace';
 const DEFAULT_GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
-const MAX_TURNS = 25;
+const MAX_TURNS = 80;
 
 export interface AgentExecutionOptions {
   containerId: string;

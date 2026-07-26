@@ -1,6 +1,7 @@
 import { AgentRunSummary } from '../types/agent-runs.types';
 import { RunStatusBadge } from './RunStatusBadge';
 import { parseUnifiedDiff } from '../../sessions/lib/diff-parser';
+import { getRunFailureSubtitle } from '../lib/run-error-utils';
 
 export interface AgentRunsListProps {
   runs: AgentRunSummary[];
@@ -77,6 +78,8 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
 
                 const hasDiff = fileCount > 0 || insertions > 0 || deletions > 0 || !!run.diff;
 
+                const subtitle = getRunFailureSubtitle(run.status, run.errorMessage);
+
                 return (
                   <tr
                     key={run.id}
@@ -87,7 +90,14 @@ export function AgentRunsList({ runs, onSelectRun, loading }: AgentRunsListProps
                       {run.prompt}
                     </td>
                     <td className="px-6 py-4.5">
-                      <RunStatusBadge status={run.status} />
+                      <div className="flex flex-col items-start gap-1">
+                        <RunStatusBadge status={run.status} />
+                        {subtitle && (
+                          <span className="text-[10px] text-on-surface-variant/80 font-normal truncate max-w-[150px]">
+                            {subtitle}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4.5 font-mono">
                       {hasDiff ? (

@@ -284,7 +284,7 @@ export default function SessionIdPage() {
           )}
 
           {/* Failure & Error Visualization Banner */}
-          {(activeOrSelectedRun?.status === 'failed' || latestEvent?.eventType === 'run.failed') && (
+          {(activeOrSelectedRun?.status === 'failed' || activeOrSelectedRun?.status === 'incomplete' || latestEvent?.eventType === 'run.failed') && (
             <div className="col-span-12">
               <FailureVisualization
                 run={activeOrSelectedRun}
