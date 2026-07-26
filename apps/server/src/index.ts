@@ -9,6 +9,7 @@ import { config } from './config';
 import { connectDatabase } from './lib/mongo';
 import { ensureDefaultImageExists } from './lib/docker';
 import { initSocketIO } from './sockets/socket.emitter';
+import { autoImportSigNozAssets } from './services/signoz-import.service';
 
 const startServer = async () => {
   try {
@@ -18,6 +19,11 @@ const startServer = async () => {
     // 2. Pre-warm Docker runtime image asynchronously
     ensureDefaultImageExists().catch((err) => {
       console.warn('[Docker Startup Warning] Failed to pre-warm image:', err.message || err);
+    });
+
+    // 3. Auto-import SigNoz dashboard and alert rules asynchronously
+    autoImportSigNozAssets().catch((err) => {
+      console.warn('[SigNoz Auto-Import Warning] Skipped:', err.message || err);
     });
 
     // 3. Create HTTP & Socket.IO server

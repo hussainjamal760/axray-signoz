@@ -136,22 +136,25 @@ export class SpanStoreProcessor implements SpanProcessor {
 
 export const spanStoreProcessor = new SpanStoreProcessor();
 
+function getBaseOtlpEndpoint(rawEndpoint?: string): string {
+  const endpoint = rawEndpoint || process.env.OTLP_BASE_ENDPOINT || process.env.OTLP_ENDPOINT || 'http://localhost:4318';
+  return endpoint.replace(/\/(v1\/(traces|logs|metrics))?\/?$/, '');
+}
+
 function getOtlpTraceUrl(): string {
-  const endpoint = process.env.OTLP_ENDPOINT || 'http://localhost:4318';
-  if (endpoint.endsWith('/v1/traces')) return endpoint;
-  return `${endpoint.replace(/\/+$/, '')}/v1/traces`;
+  if (process.env.OTLP_TRACE_ENDPOINT) return process.env.OTLP_TRACE_ENDPOINT;
+  if (process.env.OTLP_ENDPOINT && process.env.OTLP_ENDPOINT.endsWith('/v1/traces')) return process.env.OTLP_ENDPOINT;
+  return `${getBaseOtlpEndpoint(process.env.OTLP_ENDPOINT)}/v1/traces`;
 }
 
 function getOtlpLogsUrl(): string {
-  const endpoint = process.env.OTLP_LOGS_ENDPOINT || process.env.OTLP_ENDPOINT || 'http://localhost:4318';
-  if (endpoint.endsWith('/v1/logs')) return endpoint;
-  return `${endpoint.replace(/\/+$/, '')}/v1/logs`;
+  if (process.env.OTLP_LOGS_ENDPOINT) return process.env.OTLP_LOGS_ENDPOINT;
+  return `${getBaseOtlpEndpoint(process.env.OTLP_ENDPOINT)}/v1/logs`;
 }
 
 function getOtlpMetricsUrl(): string {
-  const endpoint = process.env.OTLP_METRICS_ENDPOINT || process.env.OTLP_ENDPOINT || 'http://localhost:4318';
-  if (endpoint.endsWith('/v1/metrics')) return endpoint;
-  return `${endpoint.replace(/\/+$/, '')}/v1/metrics`;
+  if (process.env.OTLP_METRICS_ENDPOINT) return process.env.OTLP_METRICS_ENDPOINT;
+  return `${getBaseOtlpEndpoint(process.env.OTLP_ENDPOINT)}/v1/metrics`;
 }
 
 const traceUrl = getOtlpTraceUrl();

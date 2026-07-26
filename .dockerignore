@@ -1,0 +1,22 @@
+# Dependencies & artifacts
+node_modules
+**/node_modules
+.next
+**/.next
+**/dist
+**/.turbo
+.turbo
+
+# Git & Editor
+.git
+.vscode
+.idea
+
+# Environment files (injected via compose / runtime)
+.env
+.env.local
+.env.*.local
+
+# Logs & temp files
+*.log
+temp_*

@@ -17,7 +17,7 @@ function findPostgresContainer() {
 }
 
 function runSql(container, sql) {
-  // -t (tuples only), -A (unaligned) to get clean raw output
+  // -t (tuples-only), -A (unaligned) to get clean raw output without headers
   return spawnSync('docker', ['exec', '-i', container, 'psql', '-t', '-A', '-U', 'signoz', '-d', 'signoz', '-c', sql], {
     encoding: 'utf8',
   });
@@ -30,7 +30,7 @@ function runSqlInput(container, sql) {
   });
 }
 
-// Fetch the real org_id and user_id dynamically
+// Fetch the real org_id and user_id dynamically from SigNoz metastore
 function getOrgAndUser(container) {
   const orgRes = runSql(container, 'SELECT id FROM organizations LIMIT 1;');
   const userRes = runSql(container, 'SELECT id FROM users LIMIT 1;');
@@ -43,7 +43,10 @@ function getOrgAndUser(container) {
   const userId = userRes.stdout.trim();
 
   if (!orgId || !userId) {
-    throw new Error(`Failed to parse orgId or userId. Org: "${orgId}", User: "${userId}"`);
+    throw new Error(
+      `No organization or user found in SigNoz database. ` +
+      `Please complete SigNoz initial account setup at http://localhost:8080 BEFORE running this import script.`
+    );
   }
 
   return { orgId, userId };
@@ -57,12 +60,13 @@ async function main() {
 
   console.log('🔄 Fetching Organization and User UUIDs dynamically...');
   const { orgId, userId } = getOrgAndUser(container);
-  console.log(`✅ Org ID:  ${orgId}`);
-  console.log(`✅ User ID: ${userId}`);
+  console.log(`✅ Found organization: ${orgId}`);
+  console.log(`✅ Found user:         ${userId}`);
 
   // 1. Dashboard Import
   const dashPath = path.join(__dirname, 'dashboards', 'axray-groq-dashboard.json');
   if (fs.existsSync(dashPath)) {
+    console.log('\n📊 Importing dashboard...');
     const dashRaw = fs.readFileSync(dashPath, 'utf8');
     const dashObj = JSON.parse(dashRaw);
     const dashId = dashObj.uuid || '019f8c7f-8a3e-7da3-b699-5f73064d5825';
@@ -76,9 +80,9 @@ ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW(), name = 
 
     const dashRes = runSqlInput(container, dashSql);
     if (dashRes.status === 0) {
-      console.log(`\n✅ Imported dashboard: "${dashName}" (ID: ${dashId})`);
+      console.log(`  ✅ Imported dashboard: "${dashName}" (ID: ${dashId})`);
     } else {
-      console.error(`\n❌ Failed to import dashboard:`, dashRes.stderr);
+      console.error(`  ❌ Failed to import dashboard:`, dashRes.stderr);
     }
   } else {
     console.error(`\n⚠️ Dashboard file not found at ${dashPath}`);
@@ -88,7 +92,7 @@ ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW(), name = 
   const alertsPath = path.join(__dirname, 'alerts', 'axray-alert-rules.json');
   if (fs.existsSync(alertsPath)) {
     const rules = JSON.parse(fs.readFileSync(alertsPath, 'utf8'));
-    console.log(`\n🔄 Importing ${rules.length} alert rules...`);
+    console.log(`\n🚨 Importing ${rules.length} alert rules...`);
 
     let importedCount = 0;
     for (const rule of rules) {
@@ -120,9 +124,11 @@ ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW(), deleted
   console.log('\n--- Verifying database entries ---');
   const verifyRes = runSqlInput(
     container,
-    `SELECT COUNT(*) as total_dashboards FROM dashboard;\nSELECT COUNT(*) as total_rules FROM rule WHERE deleted = false;`
+    `SELECT COUNT(*) as total_dashboards FROM dashboard;\nSELECT COUNT(*) as total_rules FROM rule WHERE deleted = 0;`
   );
   console.log(verifyRes.stdout);
+
+  console.log('✅ Import complete');
 }
 
 main().catch((err) => {
