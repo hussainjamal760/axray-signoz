@@ -44,13 +44,19 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
     }
   };
 
-  // Filtered Sessions
-
-
   // Aggregate stats
   const activeCount = useMemo(() => sessions.filter(s => s.status === 'active').length, [sessions]);
   const totalTokens = useMemo(() => sessions.reduce((acc, s) => acc + (s.metrics?.tokens || 0), 0), [sessions]);
   const totalCost = useMemo(() => sessions.reduce((acc, s) => acc + (Number(s.metrics?.cost) || 0), 0), [sessions]);
+
+  // Sort sessions by last used (most recently updated first)
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => {
+      const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+  }, [sessions]);
 
   return (
     <div className="space-y-8 pb-10">
@@ -94,7 +100,7 @@ export function SessionsList({ sessions, onSelect }: SessionsListProps) {
 
       {/* Glassmorphic Workspace List */}
       <div className="space-y-4">
-        {sessions.map((session) => {
+        {sortedSessions.map((session) => {
           const agentStatus = session.agentStatus || 'idle';
           const cost = session.metrics?.cost ? Number(session.metrics.cost).toFixed(4) : '$0.0000';
           const tokens = session.metrics?.tokens || 0;

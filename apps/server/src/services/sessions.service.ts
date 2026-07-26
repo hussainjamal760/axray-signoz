@@ -46,7 +46,7 @@ export const createSession = async (
 };
 
 export const getUserSessions = async (userId: string): Promise<ISession[]> => {
-  return Session.find({ userId }).populate('latestRunId').sort({ createdAt: -1 });
+  return Session.find({ userId }).populate('latestRunId').sort({ updatedAt: -1, createdAt: -1 });
 };
 
 export const getSession = async (userId: string, sessionId: string): Promise<ISession> => {
